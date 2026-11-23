@@ -1446,9 +1446,11 @@ async function renderAiPanel(){
   try { [st, runs] = await Promise.all([api.aiSettings(), api.aiRuns()]); } catch(err){ body.innerHTML = `<div class="empty">${esc(err.message)}</div>`; return; }
   const icon = { research:'🔎', review:'🧐', publish:'📣', other:'•' };
   body.innerHTML = `<div class="panel"><h3>🤖 AI redakcia</h3>
-      <p class="small">AI niekoľkokrát denne prejde najčítanejšie slovenské správy a témy dňa, navrhne ankety s krátkym kontextom a zdrojmi, posúdi návrhy používateľov (skóre 0–100, dôvod, oprava formulácie) a schválené ankety zverejní v najvhodnejšom čase. Všetko, čo urobí, sa zapíše nižšie.</p>
+      <p class="small">AI beží 3× denne (7:21, 12:21, 18:21). Prejde najčítanejšie slovenské správy a témy dňa, vytvorí ankety s krátkym kontextom a zdrojmi, posúdi návrhy používateľov (skóre 0–100, dôvod, oprava formulácie) a ankety z fronty zverejní v najvhodnejšom čase. Návrhy používateľov vždy schvaľuješ ty. Všetko, čo urobí, sa zapíše nižšie.</p>
       <form id="aiSet" class="row2">
         <label class="check field"><input type="checkbox" id="ai_en" ${st.enabled ? 'checked' : ''}> AI redakcia zapnutá</label>
+        <label class="check field"><input type="checkbox" id="ai_auto" ${st.auto_publish ? 'checked' : ''}> AI smie vlastné ankety zverejňovať sama (bez môjho schválenia)</label>
+        <div class="field"><label class="l">Min. skóre na samostatné zverejnenie</label><input type="number" id="ai_min" min="0" max="100" value="${st.auto_min_score ?? 60}"></div>
         <div class="field"><label class="l">Nových AI ankiet denne</label><input type="number" id="ai_n" min="0" max="20" value="${st.polls_per_day ?? 3}"></div>
         <div class="field"><label class="l">Časy zverejňovania</label><input type="text" id="ai_slots" value="${esc(st.publish_slots || '')}"></div>
         <div class="field"><label class="l">Predvolené trvanie ankety (dni)</label><input type="number" id="ai_dur" min="1" max="90" value="${st.default_duration ?? 7}"></div>
@@ -1459,7 +1461,7 @@ async function renderAiPanel(){
       : '<p class="small">Zatiaľ žiadne behy. AI redakcia sa spustí po zapnutí naplánovaných úloh.</p>'}</div>`;
   $('#aiSet').addEventListener('submit', async e => {
     e.preventDefault();
-    try { await api.saveAiSettings({ enabled: $('#ai_en').checked, polls_per_day: Number($('#ai_n').value), publish_slots: $('#ai_slots').value.trim(),
+    try { await api.saveAiSettings({ enabled: $('#ai_en').checked, auto_publish: $('#ai_auto').checked, auto_min_score: Number($('#ai_min').value), polls_per_day: Number($('#ai_n').value), publish_slots: $('#ai_slots').value.trim(),
       default_duration: Number($('#ai_dur').value), notes: $('#ai_notes').value.trim() || null }); toast('Nastavenia AI uložené.'); }
     catch(err){ toast(err.message, true); }
   });

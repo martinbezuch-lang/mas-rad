@@ -7,13 +7,27 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script>try{var t=localStorage.getItem('mr_theme')||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');document.documentElement.dataset.theme=t}catch(e){}</script>
 <style>
   :root{
     --bg:#f5f6f8; --card:#ffffff; --ink:#151a24; --muted:#6a7282; --line:#e4e7ec;
     --accent:#0b4ea2; --accent-soft:#e7effa;
     --up:#1f9d55; --up-soft:#e3f5ea; --down:#d63b3b; --down-soft:#fbe7e7; --track:#e9ecf1;
     --radius:14px; --shadow:0 1px 2px rgba(16,24,40,.05),0 4px 16px rgba(16,24,40,.05);
+    --head:#fafbfc; --hover:#f3f5f8; --field:#ffffff; --onink:#ffffff;
+    --demo-bg:#fff7e0; --demo-line:#f3df9e; --demo-ink:#6b5000;
+    color-scheme: light;
   }
+  [data-theme="dark"]{
+    --bg:#0e1117; --card:#161a22; --ink:#e7e9ee; --muted:#9aa3b3; --line:#272d38;
+    --accent:#6ea8ff; --accent-soft:#1b2940;
+    --up:#34c06f; --up-soft:#14301f; --down:#ff6b6b; --down-soft:#3a1d1f; --track:#2a303b;
+    --shadow:0 1px 2px rgba(0,0,0,.3),0 4px 16px rgba(0,0,0,.25);
+    --head:#1a1f28; --hover:#1c212b; --field:#0f131a; --onink:#0e1117;
+    --demo-bg:#2b2410; --demo-line:#5a4a1a; --demo-ink:#f1d98a;
+    color-scheme: dark;
+  }
+  body{transition:background .2s,color .2s}
   *{box-sizing:border-box}
   html,body{margin:0}
   body{font-family:Manrope,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--ink);font-size:15px;line-height:1.45}
@@ -29,16 +43,19 @@
   .logo-mark svg{width:18px;height:18px}
   .user{display:flex;align-items:center;gap:10px;font-size:14px;color:var(--muted);min-width:0}
   .user .email{max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  .badge{background:#151a24;color:#fff;font-size:11px;font-weight:700;padding:3px 8px;border-radius:99px;letter-spacing:.04em}
+  .badge{background:var(--ink);color:var(--onink);font-size:11px;font-weight:700;padding:3px 8px;border-radius:99px;letter-spacing:.04em}
 
   .btn{border:1px solid var(--line);background:var(--card);border-radius:10px;padding:8px 14px;font-weight:600;font-size:14px;transition:background .15s,border-color .15s}
-  .btn:hover{background:#f0f2f5}
-  .btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
-  .btn.primary:hover{background:#093f84}
+  .btn:hover{background:var(--hover)}
+  .btn.primary{background:var(--accent);border-color:var(--accent);color:var(--onink)}
+  .btn.primary:hover{filter:brightness(.9);background:var(--accent)}
   .btn.danger{color:var(--down);border-color:#f1c4c4}
   .btn.danger:hover{background:var(--down-soft)}
   .btn.ghost{border-color:transparent;background:transparent;color:var(--muted)}
-  .btn.ghost:hover{background:#eef0f3;color:var(--ink)}
+  .btn.ghost:hover{background:var(--hover);color:var(--ink)}
+  .theme-btn{border:1px solid var(--line);background:var(--card);border-radius:10px;width:38px;height:38px;display:grid;place-items:center;color:var(--ink);flex:none}
+  .theme-btn:hover{background:var(--hover)}
+  .theme-btn svg{width:18px;height:18px}
   .btn:disabled{opacity:.55;cursor:not-allowed}
 
   /* hero */
@@ -47,7 +64,7 @@
   .hero p{margin:6px 0 0;color:var(--muted);max-width:620px}
 
   .notice{margin:14px 0 0;padding:10px 14px;border-radius:10px;font-size:13.5px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
-  .notice.demo{display:block;background:#fff7e0;border:1px solid #f3df9e;color:#6b5000}
+  .notice.demo{display:block;background:var(--demo-bg);border:1px solid var(--demo-line);color:var(--demo-ink)}
   .notice.admin{background:#151a24;color:#e9ecf1}
   .notice.admin .btn{background:transparent;color:#fff;border-color:#3a4252;padding:5px 10px;font-size:13px}
   .notice.admin .btn:hover{background:#262d3b}
@@ -59,20 +76,21 @@
   .chip{border:1px solid var(--line);background:var(--card);border-radius:99px;padding:6px 12px;font-size:13.5px;font-weight:600;color:var(--muted)}
   .chip .n{opacity:.6;font-weight:500;margin-left:4px}
   .chip:hover{color:var(--ink)}
-  .chip.on{background:var(--ink);border-color:var(--ink);color:#fff}
+  .chip.on{background:var(--ink);border-color:var(--ink);color:var(--onink)}
   .tools-right{display:flex;gap:8px;flex-wrap:wrap}
-  .search,.sort{border:1px solid var(--line);background:var(--card);border-radius:10px;padding:8px 12px;font-size:14px}
+  .search,.sort{border:1px solid var(--line);background:var(--field);border-radius:10px;padding:8px 12px;font-size:14px}
   .search{width:200px}
 
   /* list */
   .list{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;margin-bottom:40px}
-  .row{display:grid;grid-template-columns:48px 1.3fr 1fr 56px 120px 168px 150px;align-items:center;gap:10px;padding:10px 16px;border-top:1px solid var(--line)}
-  .row.head{border-top:0;background:#fafbfc;font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;padding-top:12px;padding-bottom:12px}
-  .row:not(.head):hover{background:#fbfcfd}
+  .row{display:grid;grid-template-columns:48px 2.2fr 56px 120px 168px 150px;align-items:center;gap:10px;padding:10px 16px;border-top:1px solid var(--line)}
+  .row.head{border-top:0;background:var(--head);font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;padding-top:12px;padding-bottom:12px}
+  .row:not(.head):hover{background:var(--hover)}
   .rank{font-weight:800;color:var(--muted);font-variant-numeric:tabular-nums}
   .row:not(.head) .rank.top{color:var(--accent)}
   .last{font-weight:700}
-  .nick{display:block;font-weight:500;font-size:12.5px;color:var(--muted)}
+  .nick{font-weight:600;color:var(--accent)}
+  .detail{display:block;font-weight:500;font-size:12.5px;color:var(--muted)}
   .age{font-variant-numeric:tabular-nums}
   .tag{display:inline-block;font-size:12px;font-weight:700;padding:3px 9px;border-radius:99px;background:var(--accent-soft);color:var(--accent)}
   .votes{display:flex;gap:8px}
@@ -97,7 +115,6 @@
     .row{grid-template-columns:36px 1fr auto;grid-template-areas:"rank name chart" "rank meta chart" "rank votes votes";row-gap:6px;padding:14px}
     .rank{grid-area:rank;align-self:start;padding-top:2px}
     .namecell{grid-area:name}
-    .first{display:none}
     .meta{grid-area:meta;display:flex;flex-wrap:wrap;gap:4px 8px;align-items:center;color:var(--muted);font-size:13px}
     .row .age,.row .cat{display:none}
     .votes{grid-area:votes}
@@ -116,9 +133,9 @@
   .dialog h2{margin:0 0 4px;font-size:22px;letter-spacing:-.02em}
   .dialog .sub{margin:0 0 18px;color:var(--muted);font-size:14px}
   .x{position:absolute;top:14px;right:14px;border:0;background:transparent;font-size:22px;line-height:1;color:var(--muted);padding:6px;border-radius:8px}
-  .x:hover{background:#f0f2f5}
-  .oauth{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:11px;border-radius:11px;border:1px solid var(--line);background:#fff;font-weight:700;margin-bottom:10px}
-  .oauth:hover{background:#f7f8fa}
+  .x:hover{background:var(--hover)}
+  .oauth{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:11px;border-radius:11px;border:1px solid var(--line);background:var(--field);font-weight:700;margin-bottom:10px}
+  .oauth:hover{background:var(--hover)}
   .oauth.fb{background:#1877f2;border-color:#1877f2;color:#fff}
   .oauth.fb:hover{background:#1468d8}
   .oauth svg{width:20px;height:20px}
@@ -126,7 +143,7 @@
   .or::before,.or::after{content:"";flex:1;height:1px;background:var(--line)}
   .field{margin-bottom:14px}
   .field label.l{display:block;font-weight:700;font-size:13.5px;margin-bottom:6px}
-  .field input[type=text],.field input[type=email],.field input[type=number],.field input[type=date],.field select{width:100%;border:1px solid var(--line);border-radius:10px;padding:9px 12px;background:#fff}
+  .field input[type=text],.field input[type=email],.field input[type=number],.field input[type=date],.field select{width:100%;border:1px solid var(--line);border-radius:10px;padding:9px 12px;background:var(--field)}
   .field input:focus,.field select:focus,.search:focus,.sort:focus{outline:2px solid #b9cff0;border-color:var(--accent)}
   .seg{display:flex;gap:8px}
   .seg label{flex:1;border:1px solid var(--line);border-radius:10px;padding:9px;text-align:center;font-weight:600;cursor:pointer}
@@ -144,6 +161,8 @@
   .atable th,.atable td{text-align:left;padding:7px 8px;border-top:1px solid var(--line)}
   .atable th{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;border-top:0}
   .atable td:last-child{text-align:right;white-space:nowrap}
+  .atable tr.pending td{background:var(--demo-bg)}
+  .pill{font-size:11px;font-weight:700;padding:2px 7px;border-radius:99px;background:var(--demo-line);color:var(--demo-ink)}
   .atable .btn{padding:4px 9px;font-size:12.5px}
   .admin-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
   .admin-grid .field{margin-bottom:10px}
@@ -151,7 +170,7 @@
   .box h3{margin:0 0 10px;font-size:15px}
   @media (max-width:640px){.admin-grid,.row2{grid-template-columns:1fr}}
 
-  #toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(20px);background:#151a24;color:#fff;padding:11px 18px;border-radius:12px;font-weight:600;font-size:14px;opacity:0;pointer-events:none;transition:all .25s;z-index:60;max-width:calc(100% - 32px)}
+  #toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(20px);background:var(--ink);color:var(--onink);padding:11px 18px;border-radius:12px;font-weight:600;font-size:14px;opacity:0;pointer-events:none;transition:all .25s;z-index:60;max-width:calc(100% - 32px)}
   #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
   #toast.err{background:var(--down)}
   footer{color:var(--muted);font-size:12.5px;text-align:center;padding:0 0 30px}
@@ -210,7 +229,7 @@ const CONFIG = {
 };
 const DEMO = !CONFIG.SUPABASE_URL || !CONFIG.SUPABASE_ANON_KEY;
 
-const CATEGORIES = ['Politik','Influencer','YouTuber','Spevák','Herec','Športovec','Moderátor','Iné'];
+const CATEGORIES = ['Politik','Influencer','YouTuber','Spevák','Herec','Športovec','Moderátor','Komik','Iné'];
 const REGIONS = ['Bratislavský','Trnavský','Trenčiansky','Nitriansky','Žilinský','Banskobystrický','Prešovský','Košický','Zahraničie'];
 
 const SEED = [
@@ -257,7 +276,16 @@ function ageOf(p){
     if (now.getMonth() < b.getMonth() || (now.getMonth() === b.getMonth() && now.getDate() < b.getDate())) a--;
     return a;
   }
-  return now.getFullYear() - p.birth_year;
+  return p.birth_year ? now.getFullYear() - p.birth_year : null;
+}
+function fullName(p){
+  const parts = [p.first_name, p.nickname && (p.first_name || p.last_name) ? '„' + p.nickname + '“' : null, p.last_name].filter(Boolean);
+  return parts.length ? parts.join(' ') : (p.nickname || '');
+}
+function sortKey(p){ return p.last_name || p.nickname || p.first_name || ''; }
+function nameHTML(p){
+  if (!p.first_name && !p.last_name) return `<span class="last">${esc(p.nickname)}</span>`;
+  return `<span class="last">${esc(p.first_name || '')}${p.nickname ? ` <span class="nick">„${esc(p.nickname)}“</span>` : ''} ${esc(p.last_name || '')}</span>`;
 }
 let toastTimer;
 function toast(msg, isErr){
@@ -273,8 +301,8 @@ function makeDemoApi(){
   if (!store.get(K.persons)){
     let s = 7;
     const rnd = () => (s = (s * 9301 + 49297) % 233280) / 233280;
-    store.set(K.persons, SEED.map((r, i) => ({
-      id: i + 1, last_name:r[0], first_name:r[1], nickname:r[2], birth_year:r[3], birth_date:r[4], category:r[5],
+      store.set(K.persons, SEED.map((r, i) => ({
+      id: i + 1, last_name:r[0], first_name:r[1], nickname:r[2], birth_year:r[3], birth_date:r[4], category:r[5], detail:r[6] || null, approved:true,
       seed_up: Math.round(rnd() * 140 + 10), seed_down: Math.round(rnd() * 110 + 5)
     })));
   }
@@ -297,9 +325,11 @@ function makeDemoApi(){
       return { ...p, is_admin: !!sess.demoAdmin };
     },
     async saveProfile(uid, p){ const all = store.get(K.profiles, {}); all[uid] = p; store.set(K.profiles, all); },
+    async listAllPersons(){ return persons(); },
+    async approvePerson(id){ store.set(K.persons, persons().map(p => p.id === id ? { ...p, approved: true } : p)); },
     async listPersons(){
       const v = votes();
-      return persons().map(p => ({
+      return persons().filter(p => p.approved !== false).map(p => ({
         ...p,
         up: p.seed_up + v.filter(x => x.person_id === p.id && x.value === 1).length,
         down: p.seed_down + v.filter(x => x.person_id === p.id && x.value === -1).length
@@ -352,10 +382,12 @@ async function makeSupabaseApi(){
       else chk(await sb.from('profiles').insert({ id: uid, ...p }));
     },
     async listPersons(){ return chk(await sb.from('person_scores').select('*')); },
+    async listAllPersons(){ return chk(await sb.from('persons').select('*').order('last_name')); },
+    async approvePerson(id){ chk(await sb.from('persons').update({ approved: true }).eq('id', id)); },
     async myVotes(uid){ return chk(await sb.from('votes').select('person_id,value').eq('user_id', uid).eq('is_test', false)); },
     async vote(uid, isAdmin, pid, value){ chk(await sb.rpc('cast_vote', { p_person_id: pid, p_value: value })); },
     async savePerson(p){
-      const row = { last_name:p.last_name, first_name:p.first_name, nickname:p.nickname, birth_year:p.birth_year, birth_date:p.birth_date, category:p.category };
+      const row = { last_name:p.last_name, first_name:p.first_name, nickname:p.nickname, birth_year:p.birth_year, birth_date:p.birth_date, category:p.category, detail:p.detail, approved:p.approved };
       if (p.id) chk(await sb.from('persons').update(row).eq('id', p.id));
       else chk(await sb.from('persons').insert(row));
     },
@@ -391,17 +423,23 @@ function sorted(list){
     ratio: (a, b) => ratio(b) - ratio(a) || (b.up + b.down) - (a.up + a.down),
     votes: (a, b) => (b.up + b.down) - (a.up + a.down),
     name:  () => 0,
-    age:   (a, b) => ageOf(b) - ageOf(a),
+    age:   (a, b) => (ageOf(b) ?? -1) - (ageOf(a) ?? -1),
   }[state.sort];
-  return [...list].sort((a, b) => by(a, b) || collator.compare(a.last_name, b.last_name) || collator.compare(a.first_name, b.first_name));
+  return [...list].sort((a, b) => by(a, b) || collator.compare(sortKey(a), sortKey(b)) || collator.compare(a.first_name || '', b.first_name || ''));
 }
 
+const ICON_MOON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>';
+const ICON_SUN = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>';
+function themeBtn(){
+  const dark = document.documentElement.dataset.theme === 'dark';
+  return `<button class="theme-btn" data-act="theme" title="${dark ? 'Svetlý režim' : 'Tmavý režim'}" aria-label="${dark ? 'Prepnúť na svetlý režim' : 'Prepnúť na tmavý režim'}">${dark ? ICON_SUN : ICON_MOON}</button>`;
+}
 function renderUser(){
   const el = $('#userArea');
   if (!state.user){
-    el.innerHTML = `<button class="btn primary" data-act="login">Prihlásiť sa</button>`;
+    el.innerHTML = themeBtn() + `<button class="btn primary" data-act="login">Prihlásiť sa</button>`;
   } else {
-    el.innerHTML = `${isAdmin() ? '<span class="badge">ADMIN</span>' : ''}
+    el.innerHTML = themeBtn() + `${isAdmin() ? '<span class="badge">ADMIN</span>' : ''}
       <span class="email" title="${esc(state.user.email)}">${esc(state.user.email || '')}</span>
       <button class="btn ghost" data-act="profile">Profil</button>
       <button class="btn" data-act="logout">Odhlásiť</button>`;
@@ -423,8 +461,8 @@ function renderList(){
   const q = state.q.trim().toLocaleLowerCase('sk');
   const list = sorted(state.persons.filter(p =>
     (state.cat === 'all' || p.category === state.cat) &&
-    (!q || `${p.last_name} ${p.first_name} ${p.nickname || ''}`.toLocaleLowerCase('sk').includes(q))));
-  const head = `<div class="row head"><div>#</div><div>Priezvisko</div><div>Meno</div><div>Vek</div><div>Kategória</div><div>Hlasuj</div><div>Pomer</div></div>`;
+    (!q || `${p.last_name || ''} ${p.first_name || ''} ${p.nickname || ''} ${p.detail || ''}`.toLocaleLowerCase('sk').includes(q))));
+  const head = `<div class="row head"><div>#</div><div>Meno a priezvisko</div><div>Vek</div><div>Kategória</div><div>Hlasuj</div><div>Pomer</div></div>`;
   if (!list.length){ $('#list').innerHTML = head + `<div class="empty">Nenašli sa žiadne osobnosti.</div>`; return; }
   $('#list').innerHTML = head + list.map((p, i) => {
     const mine = state.myVotes.get(p.id);
@@ -434,14 +472,13 @@ function renderList(){
     const age = ageOf(p);
     return `<div class="row">
       <div class="rank ${i < 3 && state.sort === 'score' ? 'top' : ''}">${i + 1}.</div>
-      <div class="namecell"><span class="last">${esc(p.last_name)}</span>${p.nickname ? `<span class="nick">„${esc(p.nickname)}“</span>` : ''}</div>
-      <div class="first">${esc(p.first_name)}</div>
-      <div class="age">${age}</div>
+      <div class="namecell">${nameHTML(p)}${p.detail ? `<span class="detail">${esc(p.detail)}</span>` : ''}</div>
+      <div class="age">${age ?? '–'}</div>
       <div class="cat"><span class="tag">${esc(p.category)}</span></div>
-      <div class="meta"><span>${esc(p.first_name)} · ${age} r.</span><span class="tag">${esc(p.category)}</span></div>
+      <div class="meta">${age != null ? `<span>${age} r.</span>` : ''}<span class="tag">${esc(p.category)}</span></div>
       <div class="votes">
-        <button class="thumb up ${mine === 1 ? 'chosen' : ''}" data-vote="1" data-id="${p.id}" ${locked ? 'disabled' : ''} title="Páči sa mi" aria-label="Palec hore pre ${esc(p.first_name)} ${esc(p.last_name)}">${ICON_THUMB}<span>${p.up}</span></button>
-        <button class="thumb down ${mine === -1 ? 'chosen' : ''}" data-vote="-1" data-id="${p.id}" ${locked ? 'disabled' : ''} title="Nepáči sa mi" aria-label="Palec dole pre ${esc(p.first_name)} ${esc(p.last_name)}">${ICON_THUMB}<span>${p.down}</span></button>
+        <button class="thumb up ${mine === 1 ? 'chosen' : ''}" data-vote="1" data-id="${p.id}" ${locked ? 'disabled' : ''} title="Páči sa mi" aria-label="Palec hore pre ${esc(fullName(p))}">${ICON_THUMB}<span>${p.up}</span></button>
+        <button class="thumb down ${mine === -1 ? 'chosen' : ''}" data-vote="-1" data-id="${p.id}" ${locked ? 'disabled' : ''} title="Nepáči sa mi" aria-label="Palec dole pre ${esc(fullName(p))}">${ICON_THUMB}<span>${p.down}</span></button>
       </div>
       <div class="chart">${donut(p.up, p.down)}<div class="chart-txt">${pct === null ? '<b>–</b>bez hlasov' : `<b>${pct} %</b>${t} ${t === 1 ? 'hlas' : (t < 5 ? 'hlasy' : 'hlasov')}`}</div></div>
     </div>`;
@@ -537,21 +574,25 @@ function personForm(p = {}){
     <h3>${p.id ? 'Upraviť osobnosť' : 'Pridať osobnosť'}</h3>
     <input type="hidden" id="pid" value="${p.id || ''}">
     <div class="admin-grid">
-      <div class="field"><label class="l">Priezvisko</label><input type="text" id="pln" required value="${esc(p.last_name || '')}"></div>
-      <div class="field"><label class="l">Meno</label><input type="text" id="pfn" required value="${esc(p.first_name || '')}"></div>
-      <div class="field"><label class="l">Prezývka (nepovinné)</label><input type="text" id="pnick" value="${esc(p.nickname || '')}"></div>
-      <div class="field"><label class="l">Rok narodenia</label><input type="number" id="pby" required min="1900" max="${new Date().getFullYear()}" value="${p.birth_year || ''}"></div>
+      <div class="field"><label class="l">Meno</label><input type="text" id="pfn" value="${esc(p.first_name || '')}"></div>
+      <div class="field"><label class="l">Priezvisko</label><input type="text" id="pln" value="${esc(p.last_name || '')}"></div>
+      <div class="field"><label class="l">Pseudonym / prezývka</label><input type="text" id="pnick" value="${esc(p.nickname || '')}"></div>
+      <div class="field"><label class="l">Rok narodenia</label><input type="number" id="pby" min="1900" max="${new Date().getFullYear()}" value="${p.birth_year || ''}"></div>
       <div class="field"><label class="l">Dátum narodenia (nepovinné)</label><input type="date" id="pbd" value="${p.birth_date || ''}"></div>
       <div class="field"><label class="l">Kategória</label><select id="pcat" required>${CATEGORIES.map(c => `<option ${p.category === c ? 'selected' : ''}>${c}</option>`).join('')}</select></div>
+      <div class="field" style="grid-column:span 2"><label class="l">Strana / šport / platforma</label><input type="text" id="pdet" value="${esc(p.detail || '')}" placeholder="napr. Smer-SD · minister, hokej · NHL, Instagram ≈ 80 tis."></div>
+      <div class="field"><label class="l">Stav</label><label class="check" style="margin-top:9px"><input type="checkbox" id="papp" ${p.approved === false ? '' : 'checked'}> Schválená (viditeľná)</label></div>
     </div>
     <div class="err" id="aErr"></div>
     <div class="actions">${p.id ? '<button type="button" class="btn ghost" data-act="admin">Zrušiť úpravu</button>' : ''}<button class="btn primary" type="submit">${p.id ? 'Uložiť zmeny' : 'Pridať'}</button></div>
   </form>`;
 }
 
-function openAdmin(editId){
-  const editing = editId ? state.persons.find(p => p.id === editId) : null;
-  const list = [...state.persons].sort((a, b) => collator.compare(a.last_name, b.last_name));
+async function openAdmin(editId){
+  try { state.all = (await api.listAllPersons()).map(p => ({ ...p, id: Number(p.id) })); } catch(e){ state.all = state.persons; }
+  const editing = editId ? state.all.find(p => p.id === editId) : null;
+  const list = [...state.all].sort((a, b) => (a.approved === false ? 0 : 1) - (b.approved === false ? 0 : 1) || collator.compare(sortKey(a), sortKey(b)));
+  const pendingCount = list.filter(p => p.approved === false).length;
   openModal(`
     <h2>Správa osobností a hlasov</h2>
     <p class="sub">Viditeľné iba pre administrátora.</p>
@@ -565,20 +606,22 @@ function openAdmin(editId){
       </div>
     </div>
     <div class="box" style="margin-bottom:0">
-      <h3>Osobnosti (${list.length})</h3>
-      <table class="atable"><thead><tr><th>Priezvisko</th><th>Meno</th><th>Vek</th><th>Kategória</th><th></th></tr></thead><tbody>
-      ${list.map(p => `<tr><td><b>${esc(p.last_name)}</b>${p.nickname ? ` <span class="small">(${esc(p.nickname)})</span>` : ''}</td><td>${esc(p.first_name)}</td><td>${ageOf(p)}</td><td>${esc(p.category)}</td>
-        <td><button class="btn" data-edit="${p.id}">Upraviť</button> <button class="btn danger" data-del="${p.id}">Zmazať</button></td></tr>`).join('')}
+      <h3>Osobnosti (${list.length})${pendingCount ? ` · <span class="pill">${pendingCount} čaká na schválenie</span>` : ''}</h3>
+      <table class="atable"><thead><tr><th>Meno</th><th>Kategória</th><th>Detail</th><th></th></tr></thead><tbody>
+      ${list.map(p => `<tr class="${p.approved === false ? 'pending' : ''}"><td><b>${esc(fullName(p))}</b>${ageOf(p) != null ? ` <span class="small">${ageOf(p)} r.</span>` : ''}</td><td>${esc(p.category)}</td><td class="small">${esc(p.detail || '')}</td>
+        <td>${p.approved === false ? `<button class="btn primary" data-approve="${p.id}">Schváliť</button> ` : ''}<button class="btn" data-edit="${p.id}">Upraviť</button> <button class="btn danger" data-del="${p.id}">Zmazať</button></td></tr>`).join('')}
       </tbody></table>
     </div>`, true);
   $('#personForm').addEventListener('submit', async e => {
     e.preventDefault();
     const p = {
       id: Number($('#pid').value) || undefined,
-      last_name: $('#pln').value.trim(), first_name: $('#pfn').value.trim(),
-      nickname: $('#pnick').value.trim() || null, birth_year: Number($('#pby').value),
-      birth_date: $('#pbd').value || null, category: $('#pcat').value
+      last_name: $('#pln').value.trim() || null, first_name: $('#pfn').value.trim() || null,
+      nickname: $('#pnick').value.trim() || null, birth_year: Number($('#pby').value) || null,
+      birth_date: $('#pbd').value || null, category: $('#pcat').value,
+      detail: $('#pdet').value.trim() || null, approved: $('#papp').checked
     };
+    if (!p.last_name && !p.first_name && !p.nickname){ $('#aErr').textContent = 'Vyplňte meno, priezvisko alebo pseudonym.'; return; }
     if (p.birth_date) p.birth_year = Number(p.birth_date.slice(0, 4));
     try { await api.savePerson(p); await loadPersons(); render(); openAdmin(); toast(p.id ? 'Zmeny uložené.' : 'Osobnosť pridaná.'); }
     catch(err){ $('#aErr').textContent = err.message; }
@@ -626,6 +669,10 @@ document.addEventListener('click', async e => {
     return;
   }
   if (t.dataset.edit) return openAdmin(Number(t.dataset.edit));
+  if (t.dataset.approve){
+    try { await api.approvePerson(Number(t.dataset.approve)); await loadPersons(); render(); openAdmin(); toast('Osobnosť schválená.'); } catch(err){ toast(err.message, true); }
+    return;
+  }
   if (t.dataset.del){
     if (!confirmClick(t, 'Naozaj?')) return;
     try { await api.deletePerson(Number(t.dataset.del)); await loadPersons(); render(); openAdmin(); toast('Osobnosť zmazaná.'); } catch(err){ toast(err.message, true); }
@@ -641,6 +688,12 @@ document.addEventListener('click', async e => {
     case 'logout': return api.signOut();
     case 'profile': return openProfile();
     case 'admin': return openAdmin();
+    case 'theme': {
+      const next = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+      document.documentElement.dataset.theme = next;
+      try { localStorage.setItem('mr_theme', next); } catch {}
+      return renderUser();
+    }
   }
 });
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('#modal').hidden) closeModal(); });

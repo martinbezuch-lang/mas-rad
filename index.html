@@ -343,6 +343,30 @@
     .mprof-photo{max-width:260px}
     .mform-top{flex-direction:column}
   }
+
+  /* ankety v2 */
+  .ptabs{margin:4px 0 12px}
+  .pdates{font-size:12px;color:var(--muted);margin-top:4px}
+  .pctx{margin-top:6px;font-size:13px}
+  .pctx summary{cursor:pointer;color:var(--accent);font-weight:700;font-size:12.5px}
+  .pctx p{margin:6px 0;white-space:pre-line;color:var(--ink)}
+  .pctx ul{margin:4px 0 0;padding-left:18px}
+  .pmeta{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:11.5px;color:var(--muted);margin-top:8px}
+  .src{font-weight:800;padding:1px 7px;border-radius:99px;background:var(--accent-soft);color:var(--accent)}
+  .src-ai{background:#efe7ff;color:#6741d9} .src-user{background:var(--up-soft);color:var(--up)}
+  [data-theme="dark"] .src-ai{background:#2a2142;color:#b197fc}
+  .apoll .q{font-weight:800;font-size:15px}
+  .aifix{margin-top:8px;font-size:13px;background:var(--hover);border-radius:9px;padding:7px 10px}
+  .aifix .btn{padding:2px 8px;font-size:12px;margin-left:6px}
+  .aiscore{display:flex;gap:10px;align-items:center;margin-top:8px;font-size:13px;border-radius:9px;padding:7px 10px}
+  .aiscore > b{font-size:20px;min-width:38px;text-align:center}
+  .aiscore.hi{background:var(--up-soft)} .aiscore.hi > b{color:var(--up)}
+  .aiscore.mid{background:var(--demo-bg)} .aiscore.mid > b{color:var(--demo-ink)}
+  .aiscore.lo{background:var(--down-soft)} .aiscore.lo > b{color:var(--down)}
+  .airun{border-top:1px solid var(--line);padding:8px 0;font-size:13px}
+  .airun:first-of-type{border-top:0}
+  .airun ul{margin:4px 0 0;padding-left:18px}
+  .viewtoggle{white-space:nowrap}
 </style>
 </head>
 <body>
@@ -586,9 +610,11 @@ async function makeSupabaseApi(){
    ===================================================================== */
 const state = { user:null, profile:null, persons:[], myVotes:new Map(), cat:'all', q:'', sort:'score',
   tab:'masrad', trust:null, trustById:new Map(), tkind:'politik', tq:'', tsort:'score', myTrust:new Map(), cmp:new Set(), detailIds:null, days:90, bdId:null, tl:null,
-  polls:null, myPolls:new Map(), pcat:'all', miss:null, missPage:1, anns:[], lastDraw:null };
+  polls:null, myPolls:new Map(), pcat:'all', ptab:'public', asUser:false, miss:null, missPage:1, anns:[], lastDraw:null };
 let api;
-const isAdmin = () => !!state.profile?.is_admin;
+const realAdmin = () => !!state.profile?.is_admin;
+const isAdmin = () => realAdmin() && !state.asUser;
+state.asUser = !!store.get('mr_as_user', false);
 
 const ICON_THUMB = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 10v12"/><path d="M15 5.88 14 10h5.83a2 2 0 0 1 1.92 2.56l-2.33 8A2 2 0 0 1 17.5 22H4a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h2.76a2 2 0 0 0 1.79-1.11L12 2a3.13 3.13 0 0 1 3 3.88Z"/></svg>';
 const ICON_G = '<svg viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="m6.3 14.7 6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg>';
@@ -626,7 +652,7 @@ function renderUser(){
   if (!state.user){
     el.innerHTML = bell + themeBtn() + `<button class="btn primary" data-act="login">Prihlásiť sa</button>`;
   } else {
-    el.innerHTML = bell + themeBtn() + `${isAdmin() ? '<span class="badge">ADMIN</span>' : ''}
+    el.innerHTML = bell + themeBtn() + `${realAdmin() ? `<button class="btn viewtoggle" data-act="asuser" title="Prepnúť pohľad admin / používateľ">${state.asUser ? '👤 Pohľad: používateľ' : '🛠 Pohľad: admin'}</button>` : ''}${isAdmin() ? '<span class="badge">ADMIN</span>' : ''}
       <span class="email" title="${esc(state.user.email)}">${esc(state.user.email || '')}</span>
       <button class="btn ghost" data-act="profile">Profil</button>
       <button class="btn" data-act="logout">Odhlásiť</button>`;
@@ -980,12 +1006,18 @@ function demoExtra(){
     async listPolls(){
       const pv = store.get(K.pv, []), me = store.get('mr_session', {})?.id;
       return store.get(K.polls, []).map(q => { const vs = pv.filter(v => v.poll_id === q.id), vis = !q.active || isAdm() || vs.some(v => v.user_id === me);
-        return { category:'Iné', ...q, total: vs.length, up: vis ? vs.filter(v => v.value === 1).length : null, down: vis ? vs.filter(v => v.value === -1).length : null }; });
+        const base = { category:'Iné', status:'aktivna', source:'admin', duration_days:7, sources:[], published_at:q.created_at, ends_at:new Date(Date.parse(q.created_at) + 7 * 864e5).toISOString(), ...q };
+        const act = base.status === 'aktivna' && (!base.ends_at || Date.parse(base.ends_at) > Date.now());
+        return { ...base, active: act, mine: base.submitted_by === me, total: vs.length, up: (vis || !act) ? vs.filter(v => v.value === 1).length : null, down: (vis || !act) ? vs.filter(v => v.value === -1).length : null }; });
     },
     async myPolls(uid){ return store.get(K.pv, []).filter(v => v.user_id === uid); },
     async setPoll(uid, id, v){ const pv = store.get(K.pv, []).filter(x => !(x.user_id === uid && x.poll_id === id)); if (v) pv.push({ poll_id:id, user_id:uid, value:v }); store.set(K.pv, pv); },
     async savePoll(q){ crud(K.polls).save({ active:true, ...q }); },
     async deletePoll(id){ crud(K.polls).del(id); },
+    async submitPoll(r){ crud(K.polls).save({ question:r.question, category:r.category, context:r.context || null, sources: r.url ? [{ title:'Zdroj od autora', url:r.url }] : [], status:'navrh', source:'user', submitted_by: store.get('mr_session', {}).id, published_at:null, ends_at:null }); },
+    async aiSettings(){ return store.get('mr_ai_set', { enabled:false, polls_per_day:3, publish_slots:'07:30, 12:00, 18:30', default_duration:7, notes:null }); },
+    async saveAiSettings(x){ store.set('mr_ai_set', { ...store.get('mr_ai_set', {}), ...x }); },
+    async aiRuns(){ return [{ kind:'research', summary:'Ukážka: nájdené 3 témy dňa', created_at:new Date().toISOString(), details:{ topics:[{ title:'Ukážková téma', url:'https://example.com', note:'vysoký záujem' }] } }]; },
     async listLotteries(){ return store.get(K.lots, []); },
     async myTickets(uid){
       const pv = store.get(K.pv, []).filter(v => v.user_id === uid).length;
@@ -1028,6 +1060,10 @@ function liveExtra(sb, chk){
     async setPoll(uid, id, v){ chk(await sb.rpc('set_poll_vote', { p_poll:id, p_value:v })); },
     async savePoll(q){ const { id, ...row } = q; await upsert('polls', row, id); },
     async deletePoll(id){ chk(await sb.from('polls').delete().eq('id', id)); },
+    async submitPoll(r){ return chk(await sb.rpc('submit_poll', { p_question:r.question, p_category:r.category, p_description:r.description || null, p_context:r.context || null, p_url:r.url || null })); },
+    async aiSettings(){ return chk(await sb.from('ai_settings').select('*').eq('id', 1).single()); },
+    async saveAiSettings(x){ chk(await sb.from('ai_settings').update(x).eq('id', 1)); },
+    async aiRuns(){ return chk(await sb.from('ai_runs').select('*').order('created_at', { ascending:false }).limit(30)); },
     async listLotteries(){ return chk(await sb.from('lotteries').select('id,title,prize,sponsor,sponsor_url,description,ends_at,active,drawn_at,winner_label,created_at').order('created_at', { ascending:false })); },
     async myTickets(){ return chk(await sb.rpc('my_tickets')); },
     async saveLottery(l){ const { id, ...row } = l; await upsert('lotteries', row, id); },
@@ -1306,55 +1342,184 @@ async function openTrustAdmin(){
 async function refreshTrust(){ await loadTrust(); if (state.tab === 'dovera') showDovera(); }
 
 /* ---------- ANKETY ---------- */
+const POLL_CATS = ['Politika','Ekonomika','Spoločnosť','Zdravie','Vzdelávanie','Veda a technológie','Šport','Kultúra','Životné prostredie','Doprava','Zábava','Iné'];
+const SRC_LABEL = { admin:'Admin', ai:'AI', user:'Používateľ' };
+const USER_STATUS = { navrh:'čaká na posúdenie', na_schvalenie:'posudzuje redakcia', schvalena:'schválená – čoskoro ju zverejníme', zamietnuta:'nezverejnená', aktivna:'zverejnená' };
+const DURATIONS = [1, 3, 7, 14, 30];
+const fmtDT = iso => iso ? new Date(iso).toLocaleString('sk-SK', { day:'numeric', month:'numeric', hour:'2-digit', minute:'2-digit' }) : '–';
+const fmtD = iso => iso ? new Date(iso).toLocaleDateString('sk-SK', { day:'numeric', month:'numeric', year:'numeric' }) : '';
+const plusDays = (n, from) => new Date((from ? Date.parse(from) : Date.now()) + n * 864e5).toISOString();
+const pollEnded = q => q.ends_at && Date.parse(q.ends_at) <= Date.now();
+const scoreCls = s => s >= 70 ? 'hi' : s >= 50 ? 'mid' : 'lo';
+
+async function loadPolls(){ state.polls = (await api.listPolls()).map(q => ({ ...q, id: Number(q.id), sources: q.sources || [] })); }
 async function showAnkety(){
   const el = $('#view-ankety');
   if (!state.polls){
     el.innerHTML = '<div class="empty">Načítavam…</div>';
-    try { state.polls = (await api.listPolls()).map(q => ({ ...q, id: Number(q.id) })); }
-    catch(err){ el.innerHTML = `<div class="empty">Nepodarilo sa načítať ankety: ${esc(err.message)}</div>`; return; }
+    try { await loadPolls(); } catch(err){ el.innerHTML = `<div class="empty">Nepodarilo sa načítať ankety: ${esc(err.message)}</div>`; return; }
   }
   if (state.tab === 'ankety') renderPolls();
 }
-const POLL_CATS = ['Politika','Ekonomika','Spoločnosť','Zdravie','Vzdelávanie','Veda a technológie','Šport','Kultúra','Životné prostredie','Doprava','Zábava','Iné'];
 function renderPolls(){
-  const el = $('#view-ankety');
+  const el = $('#view-ankety'), adm = isAdmin();
+  if (!adm) state.ptab = 'public';
+  const by = s => state.polls.filter(q => q.status === s).length;
+  const tabs = [['public', 'Zverejnené', by('aktivna')], ['na_schvalenie', 'Na schválenie', by('na_schvalenie')], ['schvalena', 'Fronta na zverejnenie', by('schvalena')],
+    ['navrh', 'Čaká na AI', by('navrh')], ['zamietnuta', 'Archív', by('zamietnuta')], ['ai', '🤖 AI redakcia', null]];
+  const mine = state.polls.filter(q => q.mine && q.status !== 'aktivna');
   el.innerHTML = `<section class="hero"><h1>Ankety</h1>
-      <p>Krátke otázky – palec hore znamená áno, palec dole nie. Výsledok prebiehajúcej ankety uvidíte po zahlasovaní, výsledky uzavretých ankiet sú verejné. Odpoveď môžete kedykoľvek zmeniť alebo zrušiť a každá zodpovedaná anketa vám pridá tiket do prebiehajúcich <a href="#ankety" data-act="sponsor">losovaní</a>.</p></section>
-    ${isAdmin() ? `<form class="panel" id="pollForm"><h3 style="margin-bottom:10px">Nová anketa</h3>
-      <div class="field"><input type="text" id="pq" required minlength="3" maxlength="300" placeholder="Otázka, napr. Mala by sa zaviesť štvordňová pracovná doba?"></div>
-      <div class="row2"><div class="field"><input type="text" id="pd" maxlength="500" placeholder="Doplňujúci popis (nepovinné)"></div>
-      <div class="field"><select id="pc" aria-label="Kategória">${POLL_CATS.map(c => `<option>${c}</option>`).join('')}</select></div></div>
-      <div class="err" id="pqErr"></div><div class="actions"><button class="btn primary">Pridať anketu</button></div></form>` : ''}
-    <div class="toolbar"><div class="chips" id="pollChips"></div></div>
-    <div class="list" id="pollList"></div>`;
-  renderPollList();
-  const f = $('#pollForm');
-  if (f) f.addEventListener('submit', async e => {
+      <p>Krátke otázky – palec hore znamená áno, palec dole nie. Výsledok prebiehajúcej ankety uvidíte po zahlasovaní, po skončení ankety je výsledok verejný. Odpoveď môžete kedykoľvek zmeniť alebo zrušiť a každá zodpovedaná anketa vám pridá tiket do prebiehajúcich <a href="#ankety" data-act="sponsor">losovaní</a>.</p>
+      <div class="actions" style="justify-content:flex-start;margin-top:12px">${state.user ? '<button class="btn primary" data-act="poll-suggest">➕ Navrhnúť anketu</button>' : '<button class="btn" data-act="login">Prihláste sa a navrhnite anketu</button>'}${adm ? '<button class="btn" data-act="poll-new">Nová anketa (admin)</button>' : ''}</div></section>
+    ${adm ? `<div class="chips ptabs">${tabs.map(([k, l, n]) => `<button class="chip ${state.ptab === k ? 'on' : ''}" data-ptab="${k}">${l}${n != null ? `<span class="n">${n}</span>` : ''}</button>`).join('')}</div>` : ''}
+    ${!adm && mine.length ? `<div class="panel"><h3>Moje návrhy</h3>${mine.map(q => `<div class="mrowi"><span>${esc(q.question)}</span><b>${USER_STATUS[q.status]}</b></div>`).join('')}</div>` : ''}
+    <div id="pollBody"></div>`;
+  renderPollBody();
+}
+function renderPollBody(){
+  const t = state.ptab || 'public';
+  if (t === 'ai') return renderAiPanel();
+  if (t !== 'public'){
+    const list = state.polls.filter(q => q.status === t).sort((a, b) => (a.created_at < b.created_at ? 1 : -1));
+    const help = { na_schvalenie:'Návrhy posúdené AI. Rozhodni: zverejniť (pôjde do fronty, čas zvolí AI) alebo nezverejniť (archív).',
+      schvalena:'Schválené ankety, ktoré AI zverejní v najvhodnejšom čase. Môžeš ich zverejniť aj hneď.',
+      navrh:'Nové návrhy, ktoré AI ešte neposúdila.', zamietnuta:'Nezverejnené ankety aj s hodnotením AI.' }[t];
+    $('#pollBody').innerHTML = `<p class="small">${help}</p>` + (list.length ? list.map(adminPollCard).join('') : '<div class="list"><div class="empty">Nič tu nie je.</div></div>');
+    return;
+  }
+  const pub = state.polls.filter(q => q.status === 'aktivna');
+  const counts = {}; pub.forEach(q => counts[q.category || 'Iné'] = (counts[q.category || 'Iné'] || 0) + 1);
+  if (state.pcat !== 'all' && !counts[state.pcat]) state.pcat = 'all';
+  const list = pub.filter(q => state.pcat === 'all' || (q.category || 'Iné') === state.pcat)
+    .sort((a, b) => (b.active - a.active) || ((a.published_at || a.created_at) < (b.published_at || b.created_at) ? 1 : -1));
+  $('#pollBody').innerHTML = `<div class="toolbar"><div class="chips">${`<button class="chip ${state.pcat === 'all' ? 'on' : ''}" data-pcat="all">Všetky<span class="n">${pub.length}</span></button>` +
+      POLL_CATS.filter(c => counts[c]).map(c => `<button class="chip ${state.pcat === c ? 'on' : ''}" data-pcat="${esc(c)}">${esc(c)}<span class="n">${counts[c]}</span></button>`).join('')}</div></div>
+    <div class="list">${list.length ? list.map(pollRow).join('') : '<div class="empty">Zatiaľ tu nie sú žiadne ankety.</div>'}</div>`;
+}
+function renderPollList(){ renderPollBody(); }
+function pollContext(q){
+  const src = (q.sources || []).filter(s => /^https?:\/\//i.test(s.url || ''));
+  if (!q.context && !src.length) return '';
+  return `<details class="pctx"><summary>Kontext${src.length ? ' a zdroje' : ''}</summary>${q.context ? `<p>${esc(q.context)}</p>` : ''}${src.length ? `<ul>${src.map(s => `<li><a href="${esc(s.url)}" target="_blank" rel="noopener nofollow">${esc(s.title || s.url)}</a></li>`).join('')}</ul>` : ''}</details>`;
+}
+function pollMeta(q){
+  return `<div class="pmeta"><span class="src src-${q.source}">${SRC_LABEL[q.source] || q.source}</span>
+    <span>vytvorená ${fmtDT(q.created_at)}</span>${q.reviewed_at ? `<span>AI ${fmtDT(q.reviewed_at)}</span>` : ''}
+    ${q.decided_at ? `<span>rozhodnuté ${fmtDT(q.decided_at)}</span>` : ''}
+    ${q.published_at ? `<span>zverejnená ${fmtDT(q.published_at)}</span>` : q.status === 'schvalena' ? `<span>plán: ${q.scheduled_at ? fmtDT(q.scheduled_at) : 'čas zvolí AI'}</span>` : ''}
+    ${q.ends_at ? `<span>koniec ${fmtDT(q.ends_at)}</span>` : `<span>trvanie ${q.duration_days} d</span>`}</div>`;
+}
+function pollRow(q){
+  const mine = state.myPolls.get(q.id) || 0, total = q.total ?? 0, ended = pollEnded(q);
+  const shown = q.up != null && !(realAdmin() && state.asUser && q.active && !mine);
+  const th = (v, cls, lbl) => `<button class="thumb tog ${cls} ${mine === v ? 'chosen' : ''}" data-pvote="${v}" data-id="${q.id}" ${q.active ? '' : 'disabled'} title="${mine === v ? 'Kliknite znova pre zrušenie' : lbl}" aria-pressed="${mine === v}" aria-label="${lbl}">${ICON_THUMB}<span>${shown ? (v === 1 ? q.up : q.down) : lbl}</span></button>`;
+  const pct = shown ? pctOf(q.up, q.down) : null;
+  const res = shown
+    ? `${bar(q.up, q.down)}<div class="chart-txt">${pct === null ? 'bez hlasov' : `<b>${pct} %</b> áno · ${hlasov(total)}`}</div>`
+    : `<div class="bar bar-none"></div><div class="chart-txt">${hlasov(total)} · ${state.user ? 'výsledok po hlasovaní' : 'prihláste sa a hlasujte'}</div>`;
+  const dates = `<div class="pdates">${ended ? `Skončila ${fmtD(q.ends_at)}` : `Od ${fmtD(q.published_at || q.created_at)}${q.ends_at ? ` do ${fmtD(q.ends_at)}` : ''}`}</div>`;
+  return `<div class="poll ${q.active ? '' : 'closed'}"><div><div class="q">${esc(q.question)}${q.active ? '' : ' <span class="pill">ukončená</span>'}</div>
+      <div class="d"><span class="tag">${esc(q.category || 'Iné')}</span>${q.description ? ' ' + esc(q.description) : ''}</div>
+      ${dates}${pollContext(q)}
+      ${isAdmin() ? pollMeta(q) + `<div class="actions" style="justify-content:flex-start;margin-top:8px"><select class="sort" data-pcatset="${q.id}" aria-label="Kategória">${POLL_CATS.map(c => `<option ${c === q.category ? 'selected' : ''}>${c}</option>`).join('')}</select>${q.active ? `<button class="btn" data-pend="${q.id}">Ukončiť teraz</button>` : ''}<button class="btn" data-pext="${q.id}">Predĺžiť o 7 dní</button><button class="btn danger" data-pdel="${q.id}">Zmazať</button></div>` : ''}</div>
+    <div class="votes">${th(1, 'up', 'Áno')}${th(-1, 'down', 'Nie')}</div>
+    <div class="chart">${res}</div></div>`;
+}
+function adminPollCard(q){
+  const s = q.ai_score;
+  const durSel = `<select class="sort" id="pdur_${q.id}" aria-label="Trvanie">${DURATIONS.map(d => `<option value="${d}" ${d === q.duration_days ? 'selected' : ''}>${d} ${d === 1 ? 'deň' : d < 5 ? 'dni' : 'dní'}</option>`).join('')}</select>`;
+  const catSel = `<select class="sort" data-pcatset="${q.id}" aria-label="Kategória">${POLL_CATS.map(c => `<option ${c === q.category ? 'selected' : ''}>${c}</option>`).join('')}</select>`;
+  let acts = '';
+  if (q.status === 'na_schvalenie' || q.status === 'navrh') acts = `${catSel}${durSel}<button class="btn primary" data-papprove="${q.id}">Zverejniť (do fronty)</button><button class="btn" data-pnow="${q.id}">Zverejniť hneď</button><button class="btn danger" data-preject="${q.id}">Nezverejniť</button>`;
+  else if (q.status === 'schvalena') acts = `${durSel}<button class="btn primary" data-pnow="${q.id}">Zverejniť hneď</button><button class="btn" data-pback="${q.id}">Vrátiť na schválenie</button><button class="btn danger" data-preject="${q.id}">Nezverejniť</button>`;
+  else if (q.status === 'zamietnuta') acts = `<button class="btn" data-pback="${q.id}">Obnoviť na schválenie</button><button class="btn danger" data-pdel="${q.id}">Zmazať natrvalo</button>`;
+  return `<div class="panel apoll">
+    <div class="q">${esc(q.question)}</div>${q.description ? `<div class="small">${esc(q.description)}</div>` : ''}
+    ${q.ai_question && q.ai_question !== q.question ? `<div class="aifix">✏️ Návrh AI: „${esc(q.ai_question)}“ <button class="btn" data-puseai="${q.id}">Použiť</button></div>` : ''}
+    ${s != null ? `<div class="aiscore ${scoreCls(s)}"><b>${s}</b><span><b>${s >= 50 ? 'ÁNO' : 'NIE'}</b> – ${esc(q.ai_reason || '')}</span></div>` : q.status === 'navrh' ? '<div class="small">⏳ AI posúdenie čaká na najbližší beh AI redakcie.</div>' : ''}
+    ${pollContext(q)}${pollMeta(q)}
+    <div class="actions" style="justify-content:flex-start;flex-wrap:wrap;margin-top:10px">${acts}</div></div>`;
+}
+async function renderAiPanel(){
+  const body = $('#pollBody'); body.innerHTML = '<div class="empty">Načítavam…</div>';
+  let st = {}, runs = [];
+  try { [st, runs] = await Promise.all([api.aiSettings(), api.aiRuns()]); } catch(err){ body.innerHTML = `<div class="empty">${esc(err.message)}</div>`; return; }
+  const icon = { research:'🔎', review:'🧐', publish:'📣', other:'•' };
+  body.innerHTML = `<div class="panel"><h3>🤖 AI redakcia</h3>
+      <p class="small">AI niekoľkokrát denne prejde najčítanejšie slovenské správy a témy dňa, navrhne ankety s krátkym kontextom a zdrojmi, posúdi návrhy používateľov (skóre 0–100, dôvod, oprava formulácie) a schválené ankety zverejní v najvhodnejšom čase. Všetko, čo urobí, sa zapíše nižšie.</p>
+      <form id="aiSet" class="row2">
+        <label class="check field"><input type="checkbox" id="ai_en" ${st.enabled ? 'checked' : ''}> AI redakcia zapnutá</label>
+        <div class="field"><label class="l">Nových AI ankiet denne</label><input type="number" id="ai_n" min="0" max="20" value="${st.polls_per_day ?? 3}"></div>
+        <div class="field"><label class="l">Časy zverejňovania</label><input type="text" id="ai_slots" value="${esc(st.publish_slots || '')}"></div>
+        <div class="field"><label class="l">Predvolené trvanie ankety (dni)</label><input type="number" id="ai_dur" min="1" max="90" value="${st.default_duration ?? 7}"></div>
+        <div class="field" style="grid-column:1/-1"><label class="l">Pokyny pre AI</label><textarea id="ai_notes" placeholder="napr. viac tém zo športu, vyhýbať sa bulváru…">${esc(st.notes || '')}</textarea></div>
+        <div class="actions" style="grid-column:1/-1"><button class="btn primary">Uložiť</button></div></form></div>
+    <div class="panel"><h3>Denník behov</h3>${runs.length ? runs.map(r => `<div class="airun"><div><b>${icon[r.kind] || '•'} ${esc(r.summary)}</b> <span class="small">${fmtDT(r.created_at)}</span></div>
+      ${Array.isArray(r.details?.topics) && r.details.topics.length ? `<ul>${r.details.topics.map(tp => `<li>${tp.url ? `<a href="${esc(tp.url)}" target="_blank" rel="noopener">${esc(tp.title || tp.url)}</a>` : esc(tp.title || '')}${tp.note ? ` – <span class="small">${esc(tp.note)}</span>` : ''}</li>`).join('')}</ul>` : ''}</div>`).join('')
+      : '<p class="small">Zatiaľ žiadne behy. AI redakcia sa spustí po zapnutí naplánovaných úloh.</p>'}</div>`;
+  $('#aiSet').addEventListener('submit', async e => {
     e.preventDefault();
-    try { await api.savePoll({ question: $('#pq').value.trim(), description: $('#pd').value.trim() || null, category: $('#pc').value, active: true }); state.polls = null; toast('Anketa pridaná.'); showAnkety(); }
-    catch(err){ $('#pqErr').textContent = err.message; }
+    try { await api.saveAiSettings({ enabled: $('#ai_en').checked, polls_per_day: Number($('#ai_n').value), publish_slots: $('#ai_slots').value.trim(),
+      default_duration: Number($('#ai_dur').value), notes: $('#ai_notes').value.trim() || null }); toast('Nastavenia AI uložené.'); }
+    catch(err){ toast(err.message, true); }
   });
 }
-function renderPollList(){
-  const counts = {}; state.polls.forEach(q => counts[q.category || 'Iné'] = (counts[q.category || 'Iné'] || 0) + 1);
-  if (state.pcat !== 'all' && !counts[state.pcat]) state.pcat = 'all';
-  $('#pollChips').innerHTML = `<button class="chip ${state.pcat === 'all' ? 'on' : ''}" data-pcat="all">Všetky<span class="n">${state.polls.length}</span></button>` +
-    POLL_CATS.filter(c => counts[c]).map(c => `<button class="chip ${state.pcat === c ? 'on' : ''}" data-pcat="${esc(c)}">${esc(c)}<span class="n">${counts[c]}</span></button>`).join('');
-  const polls = state.polls.filter(q => state.pcat === 'all' || (q.category || 'Iné') === state.pcat)
-    .sort((a, b) => (b.active - a.active) || (a.created_at < b.created_at ? 1 : -1));
-  $('#pollList').innerHTML = polls.length ? polls.map(q => {
-    const mine = state.myPolls.get(q.id) || 0, shown = q.up != null, total = q.total ?? ((q.up || 0) + (q.down || 0));
-    const th = (v, cls, lbl) => `<button class="thumb tog ${cls} ${mine === v ? 'chosen' : ''}" data-pvote="${v}" data-id="${q.id}" ${q.active ? '' : 'disabled'} title="${mine === v ? 'Kliknite znova pre zrušenie' : lbl}" aria-pressed="${mine === v}" aria-label="${lbl}">${ICON_THUMB}<span>${shown ? (v === 1 ? q.up : q.down) : lbl}</span></button>`;
-    const pct = shown ? pctOf(q.up, q.down) : null;
-    const res = shown
-      ? `${bar(q.up, q.down)}<div class="chart-txt">${pct === null ? 'bez hlasov' : `<b>${pct} %</b> áno · ${hlasov(total)}`}</div>`
-      : `<div class="bar bar-none"></div><div class="chart-txt">${hlasov(total)} · ${state.user ? 'výsledok po hlasovaní' : 'prihláste sa a hlasujte'}</div>`;
-    return `<div class="poll ${q.active ? '' : 'closed'}"><div><div class="q">${esc(q.question)}${q.active ? '' : ' <span class="pill">uzavretá</span>'}</div>
-        <div class="d"><span class="tag">${esc(q.category || 'Iné')}</span>${q.description ? ' ' + esc(q.description) : ''}</div>
-        ${isAdmin() ? `<div class="actions" style="justify-content:flex-start;margin-top:8px"><select class="sort" data-pcatset="${q.id}" aria-label="Kategória">${POLL_CATS.map(c => `<option ${c === q.category ? 'selected' : ''}>${c}</option>`).join('')}</select><button class="btn" data-ptoggle="${q.id}">${q.active ? 'Uzavrieť' : 'Znovu otvoriť'}</button><button class="btn danger" data-pdel="${q.id}">Zmazať</button></div>` : ''}</div>
-      <div class="votes">${th(1, 'up', 'Áno')}${th(-1, 'down', 'Nie')}</div>
-      <div class="chart">${res}</div></div>`;
-  }).join('') : '<div class="empty">Zatiaľ tu nie sú žiadne ankety.</div>';
+function openPollSuggest(){
+  if (!state.user) return openLogin();
+  if (!state.profile) return openProfile();
+  openModal(`<h2>Navrhnúť anketu</h2><p class="sub">Návrh najprv posúdi AI (zrozumiteľnosť, neutralita, aktuálnosť) a potom redakcia. O stave sa dozviete v sekcii Ankety → Moje návrhy.</p>
+    <form id="sugForm">
+      <div class="field"><label class="l" for="sq">Otázka (odpoveď áno / nie)</label><input type="text" id="sq" required minlength="10" maxlength="300" placeholder="Mala by…?"></div>
+      <div class="field"><label class="l" for="sc">Kategória</label><select id="sc">${POLL_CATS.map(c => `<option>${c}</option>`).join('')}</select></div>
+      <div class="field"><label class="l" for="sx">Prečo je otázka dôležitá? <span class="small">(nepovinné)</span></label><textarea id="sx" maxlength="1000"></textarea></div>
+      <div class="field"><label class="l" for="su">Odkaz na článok <span class="small">(nepovinné)</span></label><input type="text" id="su" maxlength="500" placeholder="https://…"></div>
+      <div class="err" id="sErr"></div><div class="actions"><button type="button" class="btn ghost" data-close>Zrušiť</button><button class="btn primary">Odoslať návrh</button></div></form>`);
+  $('#sugForm').addEventListener('submit', async e => {
+    e.preventDefault();
+    try { await api.submitPoll({ question: $('#sq').value.trim(), category: $('#sc').value, context: $('#sx').value.trim(), url: $('#su').value.trim() });
+      closeModal(); toast('Ďakujeme! Návrh čaká na posúdenie.'); state.polls = null; showAnkety(); }
+    catch(err){ $('#sErr').textContent = err.message; }
+  });
+}
+function openPollNew(){
+  openModal(`<h2>Nová anketa</h2>
+    <form id="newPoll">
+      <div class="field"><label class="l" for="nq">Otázka</label><input type="text" id="nq" required minlength="3" maxlength="300"></div>
+      <div class="row2"><div class="field"><label class="l" for="nc">Kategória</label><select id="nc">${POLL_CATS.map(c => `<option>${c}</option>`).join('')}</select></div>
+        <div class="field"><label class="l" for="nd">Trvanie</label><select id="nd">${DURATIONS.map(d => `<option value="${d}" ${d === 7 ? 'selected' : ''}>${d} ${d === 1 ? 'deň' : d < 5 ? 'dni' : 'dní'}</option>`).join('')}</select></div></div>
+      <div class="field"><label class="l" for="ndesc">Krátky popis <span class="small">(nepovinné)</span></label><input type="text" id="ndesc" maxlength="300"></div>
+      <div class="field"><label class="l" for="nx">Kontext – krátky článok <span class="small">(nepovinné)</span></label><textarea id="nx" maxlength="3000"></textarea></div>
+      <div class="row2"><div class="field"><label class="l" for="nut">Názov zdroja</label><input type="text" id="nut" maxlength="200"></div>
+        <div class="field"><label class="l" for="nu">Odkaz na zdroj</label><input type="text" id="nu" maxlength="500" placeholder="https://…"></div></div>
+      <div class="seg field"><label><input type="radio" name="nwhen" value="now" checked>Zverejniť hneď</label><label><input type="radio" name="nwhen" value="queue">Do fronty – čas zvolí AI</label></div>
+      <div class="err" id="nErr"></div><div class="actions"><button type="button" class="btn ghost" data-close>Zrušiť</button><button class="btn primary">Vytvoriť</button></div></form>`);
+  $('#newPoll').addEventListener('submit', async e => {
+    e.preventDefault();
+    const d = Number($('#nd').value), now = new Date().toISOString(), queue = document.querySelector('input[name=nwhen]:checked').value === 'queue';
+    const url = $('#nu').value.trim();
+    try {
+      await api.savePoll({ question: $('#nq').value.trim(), category: $('#nc').value, description: $('#ndesc').value.trim() || null, context: $('#nx').value.trim() || null,
+        sources: /^https?:\/\//i.test(url) ? [{ title: $('#nut').value.trim() || url, url }] : [], source: 'admin', duration_days: d, decided_at: now,
+        status: queue ? 'schvalena' : 'aktivna', published_at: queue ? null : now, ends_at: queue ? null : plusDays(d) });
+      closeModal(); toast(queue ? 'Anketa je vo fronte.' : 'Anketa zverejnená.'); state.polls = null; showAnkety();
+    } catch(err){ $('#nErr').textContent = err.message; }
+  });
+}
+async function onPollAdmin(t){
+  const d = t.dataset, id = Number(d.papprove || d.pnow || d.preject || d.pback || d.puseai || d.pend || d.pext || 0);
+  if (!id) return false;
+  const q = state.polls.find(x => x.id === id); if (!q) return true;
+  const dur = Number($('#pdur_' + id)?.value || q.duration_days || 7), now = new Date().toISOString();
+  let patch, msg;
+  if (d.papprove){ patch = { status:'schvalena', decided_at: now, duration_days: dur }; msg = 'Schválené – AI ju zverejní v najvhodnejšom čase.'; }
+  else if (d.pnow){ patch = { status:'aktivna', decided_at: q.decided_at || now, published_at: now, ends_at: plusDays(dur), duration_days: dur }; msg = 'Anketa zverejnená.'; }
+  else if (d.preject){ patch = { status:'zamietnuta', decided_at: now }; msg = 'Presunuté do archívu.'; }
+  else if (d.pback){ patch = { status:'na_schvalenie', decided_at: null, scheduled_at: null }; msg = 'Vrátené na schválenie.'; }
+  else if (d.puseai){ patch = { question: q.ai_question }; msg = 'Použitá formulácia od AI.'; }
+  else if (d.pend){ patch = { ends_at: now }; msg = 'Anketa ukončená – výsledok je teraz verejný.'; }
+  else if (d.pext){ patch = { ends_at: plusDays(7, q.ends_at && Date.parse(q.ends_at) > Date.now() ? q.ends_at : null) }; msg = 'Predĺžené o 7 dní.'; }
+  try { await api.savePoll({ id, ...patch }); toast(msg); await loadPolls(); renderPolls(); } catch(err){ toast(err.message, true); }
+  return true;
 }
 async function onPollVote(btn){
   if (!state.user) return openLogin();
@@ -1365,8 +1530,8 @@ async function onPollVote(btn){
   try {
     await api.setPoll(state.user.id, id, next);
     next ? state.myPolls.set(id, next) : state.myPolls.delete(id);
-    state.polls = (await api.listPolls()).map(q => ({ ...q, id: Number(q.id) }));
-    toast(next ? 'Odpoveď uložená' : 'Odpoveď zrušená'); renderPollList();
+    await loadPolls();
+    toast(next ? 'Odpoveď uložená' : 'Odpoveď zrušená'); renderPollBody();
   } catch(err){ toast(err.message, true); btn.disabled = false; }
 }
 
@@ -1793,6 +1958,8 @@ function openAnn(){
 /* ---------- ďalšie udalosti pre nové sekcie ---------- */
 async function onExtraClick(t){
   const d = t.dataset;
+  if (await onPollAdmin(t)) return true;
+  if (d.ptab){ state.ptab = d.ptab; renderPolls(); return true; }
   if (await onMissClick(t)) return true;
   if (d.open){ location.hash = detailHash([Number(d.open)]); return true; }
   if (d.tvote){ onTrustVote(t); return true; }
@@ -1818,6 +1985,10 @@ async function onExtraClick(t){
     case 'titems': openTrustAdmin(); return true;
     case 'compare': location.hash = detailHash([...state.cmp]); return true;
     case 'cmp-clear': state.cmp.clear(); renderTrustRows(); return true;
+    case 'poll-suggest': openPollSuggest(); return true;
+    case 'poll-new': openPollNew(); return true;
+    case 'asuser': state.asUser = !state.asUser; store.set('mr_as_user', state.asUser); state.ptab = 'public'; state.miss = null;
+      renderUser(); render(); route(); toast(state.asUser ? 'Web teraz vidíte ako bežný používateľ.' : 'Web teraz vidíte ako admin.'); return true;
     case 'del-test-users': {
       if (!confirmClick(t, 'Naozaj? Kliknite znova')) return true;
       try { const n = await api.deleteTestUsers(); toast(`Zmazaných ${n} testovacích používateľov.`);

@@ -92,6 +92,8 @@
   .nick{font-weight:600;color:var(--accent)}
   .detail{display:block;font-weight:500;font-size:11.5px;color:var(--muted);margin-top:2px}
   .gen{font-size:12.5px;color:var(--muted)}
+  .cat{display:flex;align-items:center;gap:6px;min-width:0;white-space:nowrap}
+  .cat .detail,.meta .detail{display:inline;margin:0;overflow:hidden;text-overflow:ellipsis}
   .age{font-variant-numeric:tabular-nums}
   .tag{display:inline-block;font-size:11px;font-weight:700;padding:2px 8px;border-radius:99px;background:var(--accent-soft);color:var(--accent)}
   .votes{display:flex;gap:6px}
@@ -476,7 +478,7 @@ function renderList(){
       <div class="namecell">${nameHTML(p)}</div>
       <div class="gen">${genderLabel(p)}</div>
       <div class="cat"><span class="tag">${esc(p.category)}</span>${p.detail ? `<span class="detail">${esc(p.detail)}</span>` : ''}</div>
-      <div class="meta"><span>${genderLabel(p)}</span><span class="tag">${esc(p.category)}</span>${p.detail ? `<span class="detail" style="flex-basis:100%">${esc(p.detail)}</span>` : ''}</div>
+      <div class="meta"><span>${genderLabel(p)}</span><span class="tag">${esc(p.category)}</span>${p.detail ? `<span class="detail">${esc(p.detail)}</span>` : ''}</div>
       <div class="votes">
         <button class="thumb up ${mine === 1 ? 'chosen' : ''}" data-vote="1" data-id="${p.id}" ${locked ? 'disabled' : ''} title="Páči sa mi" aria-label="Palec hore pre ${esc(fullName(p))}">${ICON_THUMB}<span>${p.up}</span></button>
         <button class="thumb down ${mine === -1 ? 'chosen' : ''}" data-vote="-1" data-id="${p.id}" ${locked ? 'disabled' : ''} title="Nepáči sa mi" aria-label="Palec dole pre ${esc(fullName(p))}">${ICON_THUMB}<span>${p.down}</span></button>

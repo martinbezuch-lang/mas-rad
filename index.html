@@ -300,6 +300,49 @@
     .trow .chart-txt{white-space:normal}
   }
   @media (max-width:430px){ .logo .lt{display:none} .badge{display:none} }
+
+  /* MISS */
+  .nav a.miss-tab{color:#c2255c}
+  [data-theme="dark"] .nav a.miss-tab{color:#f783ac}
+  .nav a.miss-tab.on{background:#ffe3ec;color:#a61e4d}
+  [data-theme="dark"] .nav a.miss-tab.on{background:#3b1626;color:#faa2c1}
+  .miss-bar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:12px}
+  .miss-bar .spacer{flex:1}
+  .pager{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0}
+  .mgroup{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:12px 14px 14px;margin-bottom:14px}
+  .mgroup-h{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:10px;font-size:13px}
+  .mrow{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px}
+  .mcard{text-align:center;min-width:0}
+  .mphoto{position:relative;display:grid;place-items:center;width:100%;aspect-ratio:3/4;border-radius:12px;overflow:hidden;border:0;padding:0;
+    background:linear-gradient(135deg,#f783ac,#845ef7);color:#fff;font-size:38px;font-weight:800;cursor:pointer}
+  .mphoto img{width:100%;height:100%;object-fit:cover;display:block}
+  .mphoto .crown{position:absolute;top:6px;right:6px;font-style:normal;font-size:20px;filter:drop-shadow(0 1px 2px rgba(0,0,0,.4))}
+  .mphoto.sm{width:56px;flex:none;font-size:20px;cursor:default}
+  .mname{font-weight:800;font-size:14px;margin-top:7px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .mmeta{font-size:12px;color:var(--muted);margin:2px 0 7px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .mvote{width:100%;padding:6px 4px}
+  .mvotes{font-size:12px;color:var(--muted);margin-top:5px;font-variant-numeric:tabular-nums}
+  .mvotes b{color:var(--ink);font-size:14px}
+  .mprof{display:grid;grid-template-columns:240px 1fr;gap:20px}
+  .mprof-photo{aspect-ratio:3/4;border-radius:14px;overflow:hidden;background:linear-gradient(135deg,#f783ac,#845ef7);display:grid;place-items:center;color:#fff;font-size:60px;font-weight:800}
+  .mprof-photo img{width:100%;height:100%;object-fit:cover}
+  .mstat{background:var(--accent-soft);border-radius:9px;padding:7px 10px;font-size:13px;margin-bottom:10px}
+  .mrowi{display:flex;justify-content:space-between;gap:10px;border-top:1px solid var(--line);padding:6px 0;font-size:13px}
+  .mrowi span{color:var(--muted)}
+  .mlinks{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+  .mlinks a{text-decoration:none}
+  .mform-top{display:flex;gap:16px;align-items:flex-start}
+  .mup{width:130px;flex:none;font-size:15px}
+  .mpend{display:grid;gap:10px}
+  .mpc{display:flex;gap:12px;align-items:flex-start;border:1px solid var(--line);border-radius:11px;padding:10px}
+  .row2 > input{width:100%;border:1px solid var(--line);border-radius:10px;padding:9px 12px;background:var(--field)}
+  @media (max-width:760px){
+    .mrow{grid-template-columns:none;grid-auto-flow:column;grid-auto-columns:44%;overflow-x:auto;scroll-snap-type:x mandatory;padding-bottom:4px}
+    .mcard{scroll-snap-align:start}
+    .mprof{grid-template-columns:1fr}
+    .mprof-photo{max-width:260px}
+    .mform-top{flex-direction:column}
+  }
 </style>
 </head>
 <body>
@@ -319,6 +362,7 @@
   <a href="#dovera-media" data-tab="media">Médiá</a>
   <a href="#dovera-institucie" data-tab="institucia">Inštitúcie</a>
   <a href="#oblubenost" data-tab="masrad">Obľúbenosť</a>
+  <a href="#miss" data-tab="miss" class="miss-tab">👑 MISS 2026</a>
   <span class="spacer"></span>
   <button class="sponsor-btn" data-act="sponsor">🎁<span class="sp"> Sponzoring</span><span class="lbl"> a súťaže</span></button>
 </div></nav>
@@ -349,6 +393,7 @@
   </div>
   <div id="view-dovera" hidden></div>
   <div id="view-ankety" hidden></div>
+  <div id="view-miss" hidden></div>
 </main>
 
 <footer class="wrap" id="footer">Skóre = počet 👍 mínus počet 👎. Výsledky sú orientačné a nepredstavujú reprezentatívny prieskum.</footer>
@@ -448,7 +493,7 @@ function makeDemoApi(){
   }
   const persons = () => store.get(K.persons, []);
   const votes = () => store.get(K.votes, []);
-  return { ...demoExtra(),
+  return { ...demoExtra(), ...demoMiss(),
     mode: 'demo',
     async getUser(){ return store.get(K.session, null); },
     onAuth(){},
@@ -508,7 +553,7 @@ async function makeSupabaseApi(){
   const sb = createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
   const redirectTo = location.origin + location.pathname;
   const chk = ({ data, error }) => { if (error) throw new Error(error.message); return data; };
-  return { ...liveExtra(sb, chk),
+  return { ...liveExtra(sb, chk), ...liveMiss(sb, chk),
     mode: 'live',
     async getUser(){ const { data } = await sb.auth.getSession(); const u = data.session?.user; return u ? { id:u.id, email:u.email } : null; },
     onAuth(cb){ sb.auth.onAuthStateChange((evt) => { if (evt === 'SIGNED_IN' || evt === 'SIGNED_OUT') setTimeout(cb, 0); }); },
@@ -541,7 +586,7 @@ async function makeSupabaseApi(){
    ===================================================================== */
 const state = { user:null, profile:null, persons:[], myVotes:new Map(), cat:'all', q:'', sort:'score',
   tab:'masrad', trust:null, trustById:new Map(), tkind:'politik', tq:'', tsort:'score', myTrust:new Map(), cmp:new Set(), detailIds:null, days:90, bdId:null, tl:null,
-  polls:null, myPolls:new Map(), pcat:'all', anns:[], lastDraw:null };
+  polls:null, myPolls:new Map(), pcat:'all', miss:null, missPage:1, anns:[], lastDraw:null };
 let api;
 const isAdmin = () => !!state.profile?.is_admin;
 
@@ -638,7 +683,7 @@ async function loadAuth(){
   if (state.user && state.profile){
     (await api.myVotes(state.user.id)).forEach(v => state.myVotes.set(Number(v.person_id), v.value));
   }
-  state.myTrust = new Map(); state.myPolls = new Map();
+  state.myTrust = new Map(); state.myPolls = new Map(); state.miss = null;
   if (state.user && state.profile){
     const [t, pv] = await Promise.all([api.myTrust(state.user.id).catch(() => []), api.myPolls(state.user.id).catch(() => [])]);
     t.forEach(v => state.myTrust.set(Number(v.item_id), v.value));
@@ -823,6 +868,7 @@ const KIND_HASH = { politik:'#dovera', media:'#dovera-media', institucia:'#dover
 const ANN_ICON = { info:'ℹ️', sutaz:'🎁', dolezite:'⚠️' };
 const ICON_BELL = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>';
 const FOOT = {
+  miss: 'Súťaž je určená iba pre plnoleté ženy. Profily schvaľuje administrátor. Hlasy za kredity sú nevratné.',
   masrad: 'Skóre = počet 👍 mínus počet 👎. Výsledky sú orientačné a nepredstavujú reprezentatívny prieskum.',
   dovera: 'Dôvera = podiel 👍 zo všetkých aktuálnych hlasov. Hlas môžete kedykoľvek zmeniť alebo zrušiť. Graf v čase ukazuje stav hlasov na konci každého dňa (UTC).',
   ankety: 'Výsledky ankiet sú orientačné a nepredstavujú reprezentatívny prieskum.'
@@ -1003,10 +1049,10 @@ function markNav(key){ document.querySelectorAll('.nav a[data-tab]').forEach(a =
 const KIND_Q = { politik:'Dôverujete politikom?', media:'Dôverujete médiám?', institucia:'Dôverujete inštitúciám?' };
 function route(){
   const h = decodeURIComponent(location.hash.replace(/^#/, ''));
-  const tab = (h.startsWith('dovera') || h.startsWith('d-')) ? 'dovera' : h === 'ankety' ? 'ankety' : 'masrad';
+  const tab = (h.startsWith('dovera') || h.startsWith('d-')) ? 'dovera' : h === 'ankety' ? 'ankety' : (h === 'miss' || h.startsWith('miss-')) ? 'miss' : 'masrad';
   state.tab = tab;
   if (tab !== 'dovera') markNav(tab);
-  ['masrad', 'dovera', 'ankety'].forEach(t => { $('#view-' + t).hidden = t !== tab; });
+  ['masrad', 'dovera', 'ankety', 'miss'].forEach(t => { $('#view-' + t).hidden = t !== tab; });
   $('#footer').textContent = FOOT[tab];
   if (tab === 'dovera'){
     if (h === 'dovera-media') state.tkind = 'media';
@@ -1016,6 +1062,7 @@ function route(){
     state.detailIds = h.startsWith('d-') ? [...new Set(h.slice(2).split('-').map(Number).filter(Boolean))].slice(0, 3) : null;
     showDovera();
   } else if (tab === 'ankety') showAnkety();
+  else if (tab === 'miss') showMiss(h.startsWith('miss-') ? Number(h.slice(5)) : null);
 }
 
 /* ---------- DÔVERA ---------- */
@@ -1323,6 +1370,316 @@ async function onPollVote(btn){
   } catch(err){ toast(err.message, true); btn.disabled = false; }
 }
 
+/* =====================================================================
+   MISS – súťaž o dievča roka
+   ===================================================================== */
+const COUNTRIES = [['SK','Slovensko'],['CZ','Česko'],['PL','Poľsko'],['HU','Maďarsko'],['AT','Rakúsko'],['DE','Nemecko'],['UA','Ukrajina'],
+  ['RO','Rumunsko'],['BG','Bulharsko'],['HR','Chorvátsko'],['SI','Slovinsko'],['RS','Srbsko'],['IT','Taliansko'],['ES','Španielsko'],
+  ['FR','Francúzsko'],['GB','Spojené kráľovstvo'],['IE','Írsko'],['NL','Holandsko'],['BE','Belgicko'],['CH','Švajčiarsko'],['SE','Švédsko'],
+  ['NO','Nórsko'],['DK','Dánsko'],['FI','Fínsko'],['PT','Portugalsko'],['GR','Grécko'],['LT','Litva'],['LV','Lotyšsko'],['EE','Estónsko'],
+  ['MD','Moldavsko'],['TR','Turecko'],['US','USA'],['CA','Kanada'],['BR','Brazília'],['MX','Mexiko'],['CO','Kolumbia'],['TH','Thajsko'],
+  ['VN','Vietnam'],['PH','Filipíny'],['XX','Iná krajina']];
+const COUNTRY = Object.fromEntries(COUNTRIES);
+const flagOf = c => !c || c === 'XX' ? '🌍' : String.fromCodePoint(...[...c].map(ch => 127397 + ch.charCodeAt(0)));
+const LINK_DEFS = [['instagram','Instagram','https://instagram.com/'],['tiktok','TikTok','https://www.tiktok.com/@'],['youtube','YouTube','https://youtube.com/@'],
+  ['onlyfans','OnlyFans','https://onlyfans.com/'],['x','X / Twitter','https://x.com/'],['linktree','Linktree','https://linktr.ee/'],['web','Web','']];
+const MISS_PER_PAGE = 10;
+const missPhoto = p => !p ? '' : (DEMO ? p : `${CONFIG.SUPABASE_URL}/storage/v1/object/public/miss/${p}`);
+function normLink(key, v){
+  v = (v || '').trim(); if (!v) return '';
+  if (/^https?:\/\//i.test(v)) return v;
+  const base = LINK_DEFS.find(l => l[0] === key)?.[2];
+  return base ? base + v.replace(/^@/, '') : 'https://' + v;
+}
+function fmtLeft(ms){ const t = Math.ceil(ms / 6e4), h = Math.floor(t / 60), m = t % 60; return h ? `${h} h ${m} min` : `${m} min`; }
+
+/* ---------- DEMO backend ---------- */
+function demoMiss(){
+  const K = { set:'mr_miss_set', c:'mr_miss_c', v:'mr_miss_v', w:'mr_miss_w' };
+  const sess = () => store.get('mr_session', {});
+  if (!store.get(K.set)){
+    store.set(K.set, { id:1, title:'MISS 2026', registration_until:'2027-06-30T21:59:59Z', current_round:1, voting_open:true, group_size:5, vote_hours:12 });
+    const names = ['Lucia','Natália','Simona','Kristína','Veronika','Michaela','Barbora','Petra','Dominika','Nikola','Laura','Ema','Sofia','Zuzana','Tereza','Klára','Anna','Monika','Lenka','Viktória','Alexandra','Diana','Ivana','Martina','Karolína','Paulína','Sára','Adriána','Bianka','Denisa','Eva','Jana'];
+    const cc = ['SK','SK','SK','CZ','SK','PL','HU','SK','UA','CZ','AT','SK'];
+    store.set(K.c, names.map((n, i) => ({ id:i + 1, user_id:'fake-' + i, first_name:n, country:cc[i % cc.length], birth_date:`${1990 + (i * 7) % 16}-0${1 + i % 9}-1${i % 9}`,
+      photo_path:null, city:'Bratislava', favorite_food:'sushi', favorite_city:'Paríž', hobbies:'cestovanie, joga', about:'Ahoj, som ' + n + '!',
+      links:{ instagram:'https://instagram.com/example' }, status:'approved', round:1, group_no:Math.floor(i / 5) + 1, eliminated_round:null, created_at:new Date().toISOString() })));
+    store.set(K.v, names.map((n, i) => ({ contestant_id:i + 1, user_id:'fake', round:1, group_no:Math.floor(i / 5) + 1, votes:Math.floor(Math.random() * 60), paid:false, created_at:'2026-01-01T00:00:00Z' })));
+  }
+  const age = d => { const b = new Date(d), n = new Date(); let a = n.getFullYear() - b.getFullYear(); if (n < new Date(n.getFullYear(), b.getMonth(), b.getDate())) a--; return a; };
+  const votesOf = c => store.get(K.v, []).filter(v => v.contestant_id === c.id && v.round === c.round).reduce((s, v) => s + v.votes, 0);
+  const pub = c => ({ ...c, age: age(c.birth_date), votes: votesOf(c) });
+  return {
+    async missSettings(){ return store.get(K.set); },
+    async missSaveSettings(s){ store.set(K.set, { ...store.get(K.set), ...s }); },
+    async missBoard(){ const st = store.get(K.set); return store.get(K.c, []).filter(c => c.status === 'approved' && !c.eliminated_round && c.round === st.current_round && c.group_no).map(pub); },
+    async missProfile(id){ const c = store.get(K.c, []).find(x => x.id === id); return c ? pub(c) : null; },
+    async myMissVotes(uid, round){ return store.get(K.v, []).filter(v => v.user_id === uid && v.round === round); },
+    async missVote(uid, id, credits){
+      const st = store.get(K.set), c = store.get(K.c, []).find(x => x.id === id), n = credits || 0, vs = store.get(K.v, []);
+      if (!n){ const last = vs.filter(v => v.user_id === uid && v.round === c.round && v.group_no === c.group_no && !v.paid).map(v => v.created_at).sort().pop();
+        if (last && Date.now() - Date.parse(last) < st.vote_hours * 36e5 && !sess().demoAdmin) throw new Error('V tejto pätici môžete znova hlasovať neskôr.'); }
+      else { const w = store.get(K.w, {}); if ((w[uid] || 0) < n) throw new Error('Nemáte dostatok kreditov.'); w[uid] -= n; store.set(K.w, w); }
+      vs.push({ contestant_id:id, user_id:uid, round:c.round, group_no:c.group_no, votes:n || 1, paid:!!n, created_at:new Date().toISOString() }); store.set(K.v, vs);
+    },
+    async myContestant(uid){ return store.get(K.c, []).find(c => c.user_id === uid) || null; },
+    async saveContestant(uid, row){
+      const l = store.get(K.c, []), i = l.findIndex(c => c.user_id === uid);
+      if (age(row.birth_date) < 18) throw new Error('Do súťaže sa môžu prihlásiť iba osoby staršie ako 18 rokov.');
+      if (i >= 0) l[i] = { ...l[i], ...row, status: sess().demoAdmin ? l[i].status : 'pending' };
+      else l.push({ ...row, id: Math.max(0, ...l.map(c => c.id)) + 1, user_id:uid, status:'pending', round:store.get(K.set).current_round, group_no:null, eliminated_round:null, created_at:new Date().toISOString() });
+      store.set(K.c, l);
+    },
+    async uploadMissPhoto(uid, blob){ return await new Promise(r => { const fr = new FileReader(); fr.onload = () => r(fr.result); fr.readAsDataURL(blob); }); },
+    async missWallet(uid){ return store.get(K.w, {})[uid] || 0; },
+    async missPending(){ return store.get(K.c, []).filter(c => c.status === 'pending'); },
+    async missSetStatus(id, status){
+      const l = store.get(K.c, []), c = l.find(x => x.id === id); c.status = status;
+      if (status === 'approved' && !c.group_no){ const st = store.get(K.set); const act = l.filter(x => x.round === c.round && x.group_no && !x.eliminated_round && x.id !== c.id);
+        let g = Math.max(1, ...act.map(x => x.group_no)); if (act.filter(x => x.group_no === g).length >= st.group_size) g++; c.group_no = g; }
+      store.set(K.c, l);
+    },
+    async missCloseRound(){ throw new Error('V demo režime nie je k dispozícii.'); },
+    async missGrant(email, amount){ const w = store.get(K.w, {}), uid = sess().id; w[uid] = (w[uid] || 0) + amount; store.set(K.w, w); return w[uid]; }
+  };
+}
+
+/* ---------- SUPABASE backend ---------- */
+function liveMiss(sb, chk){
+  return {
+    async missSettings(){ return chk(await sb.from('miss_settings').select('*').eq('id', 1).single()); },
+    async missSaveSettings(s){ chk(await sb.from('miss_settings').update(s).eq('id', 1)); },
+    async missBoard(){ return chk(await sb.from('miss_board').select('*')); },
+    async missProfile(id){ return chk(await sb.from('miss_profiles').select('*').eq('id', id).maybeSingle()); },
+    async myMissVotes(uid, round){ return chk(await sb.from('miss_votes').select('contestant_id,group_no,votes,paid,created_at').eq('round', round)); },
+    async missVote(uid, id, credits){ return chk(await sb.rpc('miss_vote', { p_contestant:id, p_credits:credits || 0 })); },
+    async myContestant(uid){ return chk(await sb.from('miss_contestants').select('*').eq('user_id', uid).maybeSingle()); },
+    async saveContestant(uid, row){
+      const cur = chk(await sb.from('miss_contestants').select('id').eq('user_id', uid).maybeSingle());
+      if (cur) chk(await sb.from('miss_contestants').update(row).eq('id', cur.id));
+      else chk(await sb.from('miss_contestants').insert({ ...row, user_id:uid }));
+    },
+    async uploadMissPhoto(uid, blob){
+      const path = `${uid}/${Date.now()}.jpg`;
+      const { error } = await sb.storage.from('miss').upload(path, blob, { contentType:'image/jpeg', upsert:false });
+      if (error) throw error; return path;
+    },
+    async missWallet(){ const r = chk(await sb.from('miss_wallets').select('credits').maybeSingle()); return r ? r.credits : 0; },
+    async missPending(){ return chk(await sb.from('miss_contestants').select('*').eq('status', 'pending').order('created_at')); },
+    async missSetStatus(id, status){ chk(await sb.from('miss_contestants').update({ status }).eq('id', id)); },
+    async missCloseRound(n){ return chk(await sb.rpc('miss_close_round', { p_advance:n })); },
+    async missGrant(email, amount){ return chk(await sb.rpc('miss_grant_credits', { p_email:email, p_amount:amount })); }
+  };
+}
+
+/* ---------- zobrazenie ---------- */
+async function showMiss(openId){
+  const el = $('#view-miss');
+  if (!state.miss){
+    el.innerHTML = '<div class="empty">Načítavam…</div>';
+    try { await loadMiss(); } catch(err){ el.innerHTML = `<div class="empty">Nepodarilo sa načítať súťaž: ${esc(err.message)}</div>`; return; }
+  }
+  if (state.tab !== 'miss') return;
+  renderMiss();
+  if (openId) openMissProfile(openId);
+}
+async function loadMiss(){
+  const [st, board] = await Promise.all([api.missSettings(), api.missBoard()]);
+  const mine = state.user ? await Promise.all([api.myMissVotes(state.user.id, st.current_round).catch(() => []), api.missWallet(state.user.id).catch(() => 0), api.myContestant(state.user.id).catch(() => null)]) : [[], 0, null];
+  state.miss = { st, board: board.map(c => ({ ...c, id: Number(c.id) })), myVotes: mine[0], credits: mine[1], me: mine[2] };
+  const a = document.querySelector('.nav a[data-tab="miss"]'); if (a) a.textContent = '👑 ' + st.title;
+}
+function missCooldown(group){
+  const m = state.miss, hrs = m.st.vote_hours * 36e5;
+  const mine = m.myVotes.filter(v => v.group_no === group && !v.paid).sort((a, b) => a.created_at < b.created_at ? 1 : -1)[0];
+  if (!mine) return null;
+  const left = Date.parse(mine.created_at) + hrs - Date.now();
+  return left > 0 ? { left, contestant: Number(mine.contestant_id) } : null;
+}
+function renderMiss(){
+  const m = state.miss, st = m.st, el = $('#view-miss');
+  const groups = [...new Set(m.board.map(c => c.group_no))].sort((a, b) => a - b);
+  const pages = Math.max(1, Math.ceil(groups.length / MISS_PER_PAGE));
+  state.missPage = Math.min(Math.max(1, state.missPage || 1), pages);
+  const shown = groups.slice((state.missPage - 1) * MISS_PER_PAGE, state.missPage * MISS_PER_PAGE);
+  const regOpen = Date.now() < Date.parse(st.registration_until);
+  const isWoman = state.profile?.gender === 'zena';
+  let cta = '';
+  if (m.me) cta = `<button class="btn primary" data-act="miss-signup">Môj súťažný profil</button> <span class="pill">${{ pending:'čaká na schválenie', approved:'schválený', rejected:'zamietnutý' }[m.me.status]}</span>`;
+  else if (regOpen && (!state.user || isWoman)) cta = `<button class="btn primary" data-act="miss-signup">Prihlásiť sa do súťaže</button>`;
+  else if (regOpen && state.profile) cta = `<span class="small">Do súťaže sa môžu prihlásiť iba ženy.</span>`;
+  const pager = pages > 1 ? `<div class="pager">${Array.from({ length: pages }, (_, i) => `<button class="chip ${state.missPage === i + 1 ? 'on' : ''}" data-mpage="${i + 1}">${i + 1}</button>`).join('')}</div>` : '';
+  el.innerHTML = `
+    <section class="hero miss-hero"><h1>👑 ${esc(st.title)}</h1>
+      <p>Súťaž o dievča roka. Hlasuje sa celý rok v kolách – z každej pätice postupujú najlepšie do ďalšieho kola. V každej pätici máte <b>1 hlas každých ${st.vote_hours} hodín</b> (nekumuluje sa) a ďalšie hlasy môžete pridať za kredity.
+      ${regOpen ? `Prihlásiť sa môžu ženy staršie ako 18 rokov do <b>${new Date(st.registration_until).toLocaleDateString('sk-SK')}</b>.` : 'Registrácia je uzavretá.'}</p>
+      <div class="miss-bar"><span class="pill">${st.current_round}. kolo</span>${st.voting_open ? '' : '<span class="pill">hlasovanie pozastavené</span>'}
+        <span class="small">${m.board.length} súťažiacich · ${groups.length} pätíc</span><span class="spacer"></span>
+        ${state.user ? `<span class="small">Kredity: <b>${m.credits}</b></span> <button class="btn" data-act="miss-credits">Kúpiť kredity</button>` : ''} ${cta}</div>
+    </section>
+    ${isAdmin() ? '<div id="missAdmin"></div>' : ''}
+    ${pager}
+    ${shown.length ? shown.map(g => missGroup(g)).join('') : '<div class="list"><div class="empty">Zatiaľ tu nie sú žiadne schválené súťažiace.</div></div>'}
+    ${pager}`;
+  if (isAdmin()) renderMissAdmin();
+}
+function missGroup(g){
+  const list = state.miss.board.filter(c => c.group_no === g).sort((a, b) => a.id - b.id);
+  const cd = state.user ? missCooldown(g) : null;
+  const lead = Math.max(...list.map(c => c.votes));
+  return `<section class="mgroup"><div class="mgroup-h"><b>Pätica ${g}</b>${cd ? `<span class="small">Ďalší hlas v tejto pätici o ${fmtLeft(cd.left)}</span>` : ''}</div>
+    <div class="mrow">${list.map(c => {
+      const ph = missPhoto(c.photo_path), mineHere = cd && cd.contestant === c.id;
+      return `<div class="mcard">
+        <button class="mphoto" data-mopen="${c.id}" aria-label="Profil ${esc(c.first_name)}">${ph ? `<img src="${esc(ph)}" alt="${esc(c.first_name)}" loading="lazy">` : `<span>${esc(c.first_name[0] || '?')}</span>`}${c.votes === lead && lead > 0 ? '<i class="crown" title="Vedie v pätici">👑</i>' : ''}</button>
+        <div class="mname">${esc(c.first_name)}</div>
+        <div class="mmeta">${flagOf(c.country)} ${esc(COUNTRY[c.country] || c.country)} · ${c.age} r.</div>
+        <button class="btn ${mineHere ? '' : 'primary'} mvote" data-mvote="${c.id}" ${cd || !state.miss.st.voting_open ? 'disabled' : ''}>${mineHere ? '✓ Váš hlas' : 'Hlasovať'}</button>
+        <div class="mvotes"><b>${c.votes}</b> ${c.votes === 1 ? 'hlas' : (c.votes > 1 && c.votes < 5 ? 'hlasy' : 'hlasov')}</div>
+      </div>`; }).join('')}</div></section>`;
+}
+async function onMissVote(id, credits){
+  if (!state.user) return openLogin();
+  if (!state.profile) return openProfile();
+  try {
+    await api.missVote(state.user.id, id, credits || 0);
+    toast(credits ? `Pridaných ${credits} hlasov 👑` : 'Hlas zaznamenaný 👑');
+    await loadMiss(); renderMiss();
+    return true;
+  } catch(err){ toast(err.message, true); return false; }
+}
+async function openMissProfile(id){
+  openModal('<div class="empty">Načítavam…</div>');
+  let c; try { c = await api.missProfile(id); } catch(err){ openModal(`<p>${esc(err.message)}</p>`); return; }
+  if (!c){ openModal('<h2>Profil neexistuje</h2><p class="sub">Súťažiaca nebola nájdená alebo ešte nebola schválená.</p>'); return; }
+  const ph = missPhoto(c.photo_path), links = c.links || {};
+  const inRound = !c.eliminated_round && c.round === state.miss?.st.current_round && c.status === 'approved';
+  const row = (l, v) => v ? `<div class="mrowi"><span>${l}</span><b>${esc(v)}</b></div>` : '';
+  openModal(`<div class="mprof">
+    <div class="mprof-photo">${ph ? `<img src="${esc(ph)}" alt="${esc(c.first_name)}">` : `<span>${esc(c.first_name[0] || '?')}</span>`}</div>
+    <div class="mprof-body"><h2>${esc(c.first_name)}</h2>
+      <p class="sub">${flagOf(c.country)} ${esc(COUNTRY[c.country] || c.country)} · ${c.age} rokov${c.city ? ' · ' + esc(c.city) : ''}</p>
+      ${inRound ? `<div class="mstat"><b>${c.votes}</b> hlasov v ${c.round}. kole · pätica ${c.group_no}</div>` : c.eliminated_round ? `<div class="mstat">Súťaž ukončila v ${c.eliminated_round}. kole</div>` : ''}
+      ${row('Obľúbené jedlo', c.favorite_food)}${row('Obľúbené mesto', c.favorite_city)}${row('Voľný čas', c.hobbies)}
+      ${c.about ? `<p style="white-space:pre-line;margin:10px 0">${esc(c.about)}</p>` : ''}
+      <div class="mlinks">${LINK_DEFS.filter(([k]) => links[k]).map(([k, l]) => `<a class="chip" href="${esc(normLink(k, links[k]))}" target="_blank" rel="nofollow noopener ugc">${l}</a>`).join('')}</div>
+      ${inRound ? `<div class="box" style="margin-top:14px"><b>Podporte ${esc(c.first_name)}</b>
+        <div class="actions" style="justify-content:flex-start;flex-wrap:wrap;margin-top:8px">
+          <button class="btn primary" data-mvote="${c.id}" data-close-after="1">Hlasovať (1 bezplatný hlas)</button>
+          <input type="number" id="mcred" min="1" max="100000" value="10" class="search" style="width:90px" aria-label="Počet kreditov">
+          <button class="btn" data-mvotecred="${c.id}">Pridať hlasy za kredity</button></div>
+        <p class="small" style="margin:6px 0 0">1 kredit = 1 hlas. ${state.user ? `Máte ${state.miss?.credits ?? 0} kreditov.` : ''}</p></div>` : ''}
+      <p class="small" style="margin-top:10px">Odkaz na profil: <a href="#miss-${c.id}">${esc(location.origin + location.pathname)}#miss-${c.id}</a></p>
+    </div></div>`, true);
+}
+function openMissCredits(){
+  openModal(`<h2>Kredity</h2><p class="sub">Kreditmi pridáte súťažiacej ľubovoľný počet hlasov navyše (1 kredit = 1 hlas).</p>
+    <div class="box"><b>Balíky kreditov pripravujeme.</b><p class="small" style="margin:6px 0 0">Online platba (karta, Apple Pay, Google Pay) bude spustená čoskoro. Momentálne máte ${state.miss?.credits ?? 0} kreditov.</p></div>`);
+}
+async function openMissSignup(){
+  if (!state.user) return openLogin();
+  if (!state.profile) return openProfile();
+  const me = state.miss.me || {}, L = me.links || {};
+  const maxBirth = new Date(Date.now() - 18 * 365.25 * 864e5).toISOString().slice(0, 10);
+  openModal(`<h2>${me.id ? 'Môj súťažný profil' : 'Prihláška do súťaže'}</h2>
+    <p class="sub">Profil sa zverejní po schválení administrátorom. Zmena fotky alebo mena ide znova na schválenie.</p>
+    <form id="missForm">
+      <div class="mform-top"><label class="mphoto mup" id="mupLbl">${me.photo_path ? `<img src="${esc(missPhoto(me.photo_path))}" alt="">` : '<span>+ fotka</span>'}<input type="file" id="mfile" accept="image/*" hidden></label>
+        <div style="flex:1">
+          <div class="field"><label class="l" for="mfn">Krstné meno</label><input type="text" id="mfn" required minlength="2" maxlength="40" value="${esc(me.first_name || '')}"></div>
+          <div class="row2"><div class="field"><label class="l" for="mco">Krajina</label><select id="mco">${COUNTRIES.map(([c, n]) => `<option value="${c}" ${(me.country || 'SK') === c ? 'selected' : ''}>${flagOf(c)} ${n}</option>`).join('')}</select></div>
+          <div class="field"><label class="l" for="mbd">Dátum narodenia</label><input type="date" id="mbd" required max="${maxBirth}" value="${esc(me.birth_date || '')}" ${me.id ? 'disabled' : ''}></div></div>
+        </div></div>
+      <div class="row2"><div class="field"><label class="l" for="mci">Mesto, kde žijem</label><input type="text" id="mci" maxlength="80" value="${esc(me.city || '')}"></div>
+        <div class="field"><label class="l" for="mff">Obľúbené jedlo</label><input type="text" id="mff" maxlength="120" value="${esc(me.favorite_food || '')}"></div>
+        <div class="field"><label class="l" for="mfc">Obľúbené mesto</label><input type="text" id="mfc" maxlength="120" value="${esc(me.favorite_city || '')}"></div>
+        <div class="field"><label class="l" for="mho">Voľný čas</label><input type="text" id="mho" maxlength="300" value="${esc(me.hobbies || '')}"></div></div>
+      <div class="field"><label class="l" for="mab">O mne</label><textarea id="mab" maxlength="1000">${esc(me.about || '')}</textarea></div>
+      <div class="field"><label class="l">Moje odkazy <span class="small">(stačí meno účtu alebo celý odkaz)</span></label>
+        <div class="row2">${LINK_DEFS.map(([k, l]) => `<input type="text" id="ml_${k}" maxlength="200" placeholder="${l}" value="${esc(L[k] || '')}">`).join('')}</div></div>
+      ${me.id ? '' : `<label class="check field"><input type="checkbox" id="mok" required> Potvrdzujem, že mám viac ako 18 rokov, fotografia zobrazuje mňa a súhlasím so zverejnením profilu v súťaži.</label>`}
+      <div class="err" id="mErr"></div>
+      <div class="actions"><button type="button" class="btn ghost" data-close>Zrušiť</button><button class="btn primary" id="msave">${me.id ? 'Uložiť zmeny' : 'Odoslať prihlášku'}</button></div>
+    </form>`, true);
+  let photoBlob = null;
+  $('#mfile').addEventListener('change', async e => {
+    const f = e.target.files[0]; if (!f) return;
+    try { photoBlob = await resizeImage(f, 1000); $('#mupLbl').querySelector('img, span').outerHTML = `<img src="${URL.createObjectURL(photoBlob)}" alt="">`; }
+    catch { $('#mErr').textContent = 'Fotku sa nepodarilo načítať.'; }
+  });
+  $('#missForm').addEventListener('submit', async e => {
+    e.preventDefault(); const btn = $('#msave'); btn.disabled = true; $('#mErr').textContent = '';
+    try {
+      if (!photoBlob && !me.photo_path) throw new Error('Pridajte profilovú fotku.');
+      const links = {}; LINK_DEFS.forEach(([k]) => { const v = normLink(k, $('#ml_' + k).value); if (v) links[k] = v; });
+      const row = { first_name: $('#mfn').value.trim(), country: $('#mco').value, city: $('#mci').value.trim() || null, favorite_food: $('#mff').value.trim() || null,
+        favorite_city: $('#mfc').value.trim() || null, hobbies: $('#mho').value.trim() || null, about: $('#mab').value.trim() || null, links };
+      if (!me.id) row.birth_date = $('#mbd').value;
+      if (photoBlob) row.photo_path = await api.uploadMissPhoto(state.user.id, photoBlob);
+      await api.saveContestant(state.user.id, row);
+      toast(me.id ? 'Profil uložený.' : 'Prihláška odoslaná – čaká na schválenie.');
+      closeModal(); await loadMiss(); renderMiss();
+    } catch(err){ $('#mErr').textContent = err.message; btn.disabled = false; }
+  });
+}
+function resizeImage(file, max){
+  return new Promise((res, rej) => {
+    const img = new Image(); img.onerror = rej;
+    img.onload = () => { const k = Math.min(1, max / Math.max(img.width, img.height)); const cv = document.createElement('canvas');
+      cv.width = Math.round(img.width * k); cv.height = Math.round(img.height * k); cv.getContext('2d').drawImage(img, 0, 0, cv.width, cv.height);
+      cv.toBlob(b => b ? res(b) : rej(new Error('blob')), 'image/jpeg', 0.85); URL.revokeObjectURL(img.src); };
+    img.src = URL.createObjectURL(file);
+  });
+}
+async function renderMissAdmin(){
+  const el = $('#missAdmin'); if (!el) return;
+  const st = state.miss.st; let pend = [];
+  try { pend = await api.missPending(); } catch {}
+  const local = new Date(Date.parse(st.registration_until) - new Date().getTimezoneOffset() * 6e4).toISOString().slice(0, 16);
+  el.innerHTML = `<div class="panel"><h3>Admin – ${esc(st.title)}</h3>
+    <h4 class="sec" style="margin-top:12px">Čakajú na schválenie (${pend.length})</h4>
+    ${pend.length ? `<div class="mpend">${pend.map(c => `<div class="mpc"><div class="mphoto sm">${c.photo_path ? `<img src="${esc(missPhoto(c.photo_path))}" alt="">` : `<span>${esc(c.first_name[0])}</span>`}</div>
+      <div><b>${esc(c.first_name)}</b> ${flagOf(c.country)} · nar. ${esc(c.birth_date)}<br><span class="small">${esc(c.about || '').slice(0, 80)}</span>
+      <div class="actions" style="justify-content:flex-start;margin-top:6px"><button class="btn primary" data-mst="approved" data-id="${c.id}">Schváliť</button><button class="btn danger" data-mst="rejected" data-id="${c.id}">Zamietnuť</button></div></div></div>`).join('')}</div>` : '<p class="small">Žiadne nové prihlášky.</p>'}
+    <form id="missSet" class="row2" style="margin-top:14px">
+      <div class="field"><label class="l">Názov súťaže</label><input type="text" id="mst_t" value="${esc(st.title)}"></div>
+      <div class="field"><label class="l">Koniec registrácie</label><input type="datetime-local" id="mst_r" value="${local}"></div>
+      <label class="check field"><input type="checkbox" id="mst_o" ${st.voting_open ? 'checked' : ''}> Hlasovanie otvorené</label>
+      <div class="actions"><button class="btn">Uložiť nastavenia</button></div></form>
+    <div class="actions" style="justify-content:flex-start;flex-wrap:wrap;margin-top:6px">
+      <input type="email" id="mg_e" class="search" placeholder="e-mail používateľa"><input type="number" id="mg_a" class="search" style="width:90px" value="100">
+      <button class="btn" data-act="miss-grant">Pripísať kredity</button>
+      <span class="spacer" style="flex:1"></span>
+      <select id="mcl_n" class="sort"><option value="1">postupuje 1 z pätice</option><option value="2">postupujú 2 z pätice</option></select>
+      <button class="btn danger" data-act="miss-close">Ukončiť ${st.current_round}. kolo</button></div>
+    <p class="small">Ukončenie kola je nevratné: z každej pätice postúpia najlepšie, ostatné vypadnú a postupujúce sa náhodne rozdelia do nových pätíc. Dá sa spustiť až po skončení registrácie.</p></div>`;
+  $('#missSet').addEventListener('submit', async e => {
+    e.preventDefault();
+    try { await api.missSaveSettings({ title: $('#mst_t').value.trim() || 'MISS', registration_until: new Date($('#mst_r').value).toISOString(), voting_open: $('#mst_o').checked });
+      toast('Nastavenia uložené.'); await loadMiss(); renderMiss(); } catch(err){ toast(err.message, true); }
+  });
+}
+async function onMissClick(t){
+  const d = t.dataset;
+  if (d.mopen){ openMissProfile(Number(d.mopen)); return true; }
+  if (d.mvote){ t.disabled = true; const ok = await onMissVote(Number(d.mvote)); if (ok && d.closeAfter) closeModal(); else t.disabled = false; return true; }
+  if (d.mvotecred){ const n = Math.floor(Number($('#mcred').value)); if (!(n > 0)) return true; if (await onMissVote(Number(d.mvotecred), n)) closeModal(); return true; }
+  if (d.mpage){ state.missPage = Number(d.mpage); renderMiss(); window.scrollTo({ top: 0, behavior: 'smooth' }); return true; }
+  if (d.mst){ try { await api.missSetStatus(Number(d.id), d.mst); toast(d.mst === 'approved' ? 'Schválené.' : 'Zamietnuté.'); await loadMiss(); renderMiss(); } catch(err){ toast(err.message, true); } return true; }
+  switch (d.act){
+    case 'miss-signup': openMissSignup(); return true;
+    case 'miss-credits': openMissCredits(); return true;
+    case 'miss-grant': try { const b = await api.missGrant($('#mg_e').value.trim(), Number($('#mg_a').value)); toast(`Pripísané. Zostatok: ${b} kreditov.`); await loadMiss(); renderMiss(); } catch(err){ toast(err.message, true); } return true;
+    case 'miss-close': {
+      if (!confirmClick(t, 'Naozaj? Kliknite znova')) return true;
+      try { const r = await api.missCloseRound(Number($('#mcl_n').value)); toast(`Začalo ${r.round}. kolo: postúpilo ${r.advanced}, vypadlo ${r.eliminated}.`); state.missPage = 1; await loadMiss(); renderMiss(); }
+      catch(err){ toast(err.message, true); }
+      return true;
+    }
+  }
+  return false;
+}
+
 /* ---------- SPONZORING ---------- */
 function lotCard(l){
   const url = safeUrl(l.sponsor_url);
@@ -1436,6 +1793,7 @@ function openAnn(){
 /* ---------- ďalšie udalosti pre nové sekcie ---------- */
 async function onExtraClick(t){
   const d = t.dataset;
+  if (await onMissClick(t)) return true;
   if (d.open){ location.hash = detailHash([Number(d.open)]); return true; }
   if (d.tvote){ onTrustVote(t); return true; }
   if (d.pvote){ onPollVote(t); return true; }

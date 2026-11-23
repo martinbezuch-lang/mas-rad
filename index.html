@@ -392,7 +392,7 @@ async function makeSupabaseApi(){
     async myVotes(uid){ return chk(await sb.from('votes').select('person_id,value').eq('user_id', uid).eq('is_test', false)); },
     async vote(uid, isAdmin, pid, value){ chk(await sb.rpc('cast_vote', { p_person_id: pid, p_value: value })); },
     async savePerson(p){
-      const row = { last_name:p.last_name, first_name:p.first_name, nickname:p.nickname, birth_year:p.birth_year, birth_date:p.birth_date, category:p.category, detail:p.detail, approved:p.approved, gender:p.gender };
+      const row = { last_name:p.last_name, first_name:p.first_name, nickname:p.nickname, birth_year:p.birth_year, birth_date:p.birth_date, category:p.category, detail:p.detail, approved:p.approved, gender:p.gender, entity:p.entity || 'osoba' };
       if (p.id) chk(await sb.from('persons').update(row).eq('id', p.id));
       else chk(await sb.from('persons').insert(row));
     },
@@ -584,6 +584,7 @@ function personForm(p = {}){
       <div class="field"><label class="l">Dátum narodenia (nepovinné)</label><input type="date" id="pbd" value="${p.birth_date || ''}"></div>
       <div class="field"><label class="l">Kategória</label><select id="pcat" required>${CATEGORIES.map(c => `<option ${p.category === c ? 'selected' : ''}>${c}</option>`).join('')}</select></div>
       <div class="field"><label class="l">Pohlavie</label><select id="pgen"><option value="">neuvedené</option><option value="M" ${p.gender === 'M' ? 'selected' : ''}>muž</option><option value="Ž" ${p.gender === 'Ž' ? 'selected' : ''}>žena</option></select></div>
+      <div class="field"><label class="l">Typ</label><select id="pent"><option value="osoba" ${(p.entity || 'osoba') === 'osoba' ? 'selected' : ''}>jeden človek</option><option value="skupina" ${p.entity === 'skupina' ? 'selected' : ''}>skupina / značka</option><option value="overiť" ${p.entity === 'overiť' ? 'selected' : ''}>na overenie</option></select></div>
       <div class="field" style="grid-column:span 2"><label class="l">Strana / šport / platforma</label><input type="text" id="pdet" value="${esc(p.detail || '')}" placeholder="napr. Smer-SD · minister, hokej · NHL, Instagram ≈ 80 tis."></div>
       <div class="field"><label class="l">Stav</label><label class="check" style="margin-top:9px"><input type="checkbox" id="papp" ${p.approved === false ? '' : 'checked'}> Schválená (viditeľná)</label></div>
     </div>
@@ -595,7 +596,7 @@ function personForm(p = {}){
 async function openAdmin(editId){
   try { state.all = (await api.listAllPersons()).map(p => ({ ...p, id: Number(p.id) })); } catch(e){ state.all = state.persons; }
   const editing = editId ? state.all.find(p => p.id === editId) : null;
-  const list = [...state.all].sort((a, b) => (a.approved === false ? 0 : 1) - (b.approved === false ? 0 : 1) || collator.compare(sortKey(a), sortKey(b)));
+  const list = [...state.all].sort((a, b) => (a.approved === false ? 0 : 1) - (b.approved === false ? 0 : 1) || (a.entity === 'overiť' ? 0 : 1) - (b.entity === 'overiť' ? 0 : 1) || collator.compare(sortKey(a), sortKey(b)));
   const pendingCount = list.filter(p => p.approved === false).length;
   openModal(`
     <h2>Správa osobností a hlasov</h2>
@@ -610,10 +611,10 @@ async function openAdmin(editId){
       </div>
     </div>
     <div class="box" style="margin-bottom:0">
-      <h3>Osobnosti (${list.length})${pendingCount ? ` · <span class="pill">${pendingCount} čaká na schválenie</span>` : ''}</h3>
-      <table class="atable"><thead><tr><th>Meno</th><th>Kategória</th><th>Detail</th><th></th></tr></thead><tbody>
-      ${list.map(p => `<tr class="${p.approved === false ? 'pending' : ''}"><td><b>${esc(fullName(p))}</b> <span class="small">${genderLabel(p)}</span></td><td>${esc(p.category)}</td><td class="small">${esc(p.detail || '')}</td>
-        <td>${p.approved === false ? `<button class="btn primary" data-approve="${p.id}">Schváliť</button> ` : ''}<button class="btn" data-edit="${p.id}">Upraviť</button> <button class="btn danger" data-del="${p.id}">Zmazať</button></td></tr>`).join('')}
+      <h3>Osobnosti (${list.length})${pendingCount ? ` · <span class="pill">${pendingCount} čaká na schválenie</span>` : ''}${list.filter(p => p.entity === 'overiť').length ? ` · <span class="pill">${list.filter(p => p.entity === 'overiť').length} na overenie</span>` : ''}</h3>
+      <table class="atable"><thead><tr><th>Meno</th><th>Typ</th><th>Kategória</th><th>Detail</th><th></th></tr></thead><tbody>
+      ${list.map(p => `<tr class="${p.approved === false ? 'pending' : ''}"><td><b>${esc(fullName(p))}</b> <span class="small">${genderLabel(p)}</span></td><td>${p.entity === 'overiť' ? '<span class="pill">overiť</span>' : p.entity === 'skupina' ? 'skupina' : '<span class="small">človek</span>'}</td><td>${esc(p.category)}</td><td class="small">${esc(p.detail || '')}</td>
+        <td>${p.approved === false ? `<button class="btn primary" data-approve="${p.id}">Schváliť</button> ` : ''}${p.entity === 'overiť' ? `<button class="btn" data-entity-ok="${p.id}">Je to 1 človek</button> ` : ''}<button class="btn" data-edit="${p.id}">Upraviť</button> <button class="btn danger" data-del="${p.id}">Zmazať</button></td></tr>`).join('')}
       </tbody></table>
     </div>`, true);
   $('#personForm').addEventListener('submit', async e => {
@@ -623,7 +624,7 @@ async function openAdmin(editId){
       last_name: $('#pln').value.trim() || null, first_name: $('#pfn').value.trim() || null,
       nickname: $('#pnick').value.trim() || null, birth_year: Number($('#pby').value) || null,
       birth_date: $('#pbd').value || null, category: $('#pcat').value,
-      detail: $('#pdet').value.trim() || null, approved: $('#papp').checked, gender: $('#pgen').value || null
+      detail: $('#pdet').value.trim() || null, approved: $('#papp').checked, gender: $('#pgen').value || null, entity: $('#pent').value
     };
     if (!p.last_name && !p.first_name && !p.nickname){ $('#aErr').textContent = 'Vyplňte meno, priezvisko alebo pseudonym.'; return; }
     if (p.birth_date) p.birth_year = Number(p.birth_date.slice(0, 4));
@@ -673,6 +674,11 @@ document.addEventListener('click', async e => {
     return;
   }
   if (t.dataset.edit) return openAdmin(Number(t.dataset.edit));
+  if (t.dataset.entityOk){
+    const p = (state.all || []).find(x => x.id === Number(t.dataset.entityOk));
+    try { await api.savePerson({ ...p, entity: 'osoba' }); await loadPersons(); openAdmin(); toast('Označené ako jeden človek.'); } catch(err){ toast(err.message, true); }
+    return;
+  }
   if (t.dataset.approve){
     try { await api.approvePerson(Number(t.dataset.approve)); await loadPersons(); render(); openAdmin(); toast('Osobnosť schválená.'); } catch(err){ toast(err.message, true); }
     return;

@@ -62,6 +62,7 @@
   .hero{padding:22px 0 8px}
   .hero h1{margin:0;font-size:clamp(22px,3.4vw,30px);font-weight:800;letter-spacing:-.03em}
   .hero p{margin:4px 0 0;color:var(--muted);max-width:620px;font-size:13.5px}
+  .hero a{color:var(--accent)}
 
   .notice{margin:12px 0 0;padding:8px 12px;border-radius:9px;font-size:12.5px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
   .notice.demo{display:block;background:var(--demo-bg);border:1px solid var(--demo-line);color:var(--demo-ink)}
@@ -179,6 +180,126 @@
   #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
   #toast.err{background:var(--down)}
   footer{color:var(--muted);font-size:12.5px;text-align:center;padding:0 0 30px}
+
+  /* ---------- séria grafov (validované pre CVD) ---------- */
+  :root{--s1:#0b4ea2;--s2:#e8590c;--s3:#7048e8}
+  [data-theme="dark"]{--s1:#4c8dff;--s2:#e06a12;--s3:#9a7bf5}
+
+  /* navigácia */
+  .nav{background:var(--card);border-bottom:1px solid var(--line)}
+  .nav .wrap{display:flex;align-items:center;gap:4px;height:44px;overflow-x:auto}
+  .nav a{padding:6px 12px;border-radius:8px;font-weight:700;font-size:13.5px;color:var(--muted);text-decoration:none;white-space:nowrap}
+  .nav a:hover{background:var(--hover);color:var(--ink)}
+  .nav a.on{background:var(--accent-soft);color:var(--accent)}
+  .nav .spacer{flex:1}
+  .sponsor-btn{border:1px solid #e9c46a;background:linear-gradient(135deg,#fff4d6,#ffe6a8);color:#6b4a00;border-radius:99px;padding:5px 12px;font-weight:800;font-size:12.5px;white-space:nowrap;flex:none}
+  .sponsor-btn:hover{filter:brightness(.97)}
+  [data-theme="dark"] .sponsor-btn{background:#3a2f10;border-color:#6b5520;color:#f6d77a}
+  .bell{position:relative}
+  .bell .dot{position:absolute;top:-5px;right:-5px;background:var(--down);color:#fff;font-size:10px;font-weight:800;min-width:16px;height:16px;border-radius:99px;display:grid;place-items:center;padding:0 4px;line-height:1}
+  a.chip{text-decoration:none;display:inline-block}
+
+  /* oznámenia */
+  .ann-banner{margin:14px 0 0;padding:10px 14px;border-radius:11px;background:var(--accent-soft);border:1px solid var(--line);display:flex;gap:10px;align-items:flex-start;flex-wrap:wrap}
+  .ann-banner.sutaz{background:var(--demo-bg);border-color:var(--demo-line)}
+  .ann-banner.dolezite{background:var(--down-soft)}
+  .ann-banner .t,.ann .t{font-weight:800}
+  .ann-banner .b,.ann .b{font-size:13px;white-space:pre-line;margin-top:2px}
+  .ann-banner .spacer{flex:1}
+  .ann-banner .btn{padding:4px 10px;font-size:12.5px}
+  .ann{border-top:1px solid var(--line);padding:12px 0}
+  .ann:first-of-type{border-top:0}
+  .ann .when{font-size:11.5px;color:var(--muted)}
+  .ann.unread .t::after{content:"nové";margin-left:8px;font-size:10px;background:var(--down);color:#fff;padding:1px 6px;border-radius:99px;vertical-align:middle}
+  .ann .actions{justify-content:flex-start}
+  .ann .btn{padding:3px 9px;font-size:12px}
+
+  /* dôvera – zoznam */
+  .row.trow{grid-template-columns:24px 34px 1fr 150px 170px}
+  .trow .namecell{cursor:pointer;min-width:0}
+  .trow .namecell:hover .last{text-decoration:underline}
+  .trow .detail{display:block}
+  .cmp{width:16px;height:16px;accent-color:var(--accent);margin:0;cursor:pointer}
+  .thumb.tog:disabled{opacity:.6}
+  .cmpbar{position:sticky;bottom:12px;z-index:5;background:var(--ink);color:var(--onink);border-radius:12px;padding:8px 12px;margin:0 0 10px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:13px;box-shadow:var(--shadow)}
+  .cmpbar .btn{padding:5px 10px}
+  .cmpbar .btn.ghost{color:var(--onink);opacity:.8}
+  @media (max-width:860px){
+    .row.trow{grid-template-columns:24px 1fr 112px;grid-template-areas:"cmp name chart" "cmp votes votes"}
+    .trow .cmpc{grid-area:cmp;align-self:start;padding-top:2px}
+    .trow .rank{display:none}
+  }
+
+  /* dôvera – detail */
+  .panel{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px 18px;margin:16px 0}
+  .panel h3{margin:0;font-size:15px}
+  .dhead{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .dhead .spacer{flex:1}
+  a.btn{text-decoration:none;display:inline-block}
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin:14px 0 18px}
+  .tcard{border:1px solid var(--line);border-radius:12px;padding:12px;min-width:0}
+  .tc-top{display:flex;align-items:center;gap:8px}
+  .tc-top b{font-size:14.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .tc-top .x2{margin-left:auto;border:0;background:transparent;color:var(--muted);font-size:18px;line-height:1;padding:2px 6px;border-radius:6px}
+  .tc-top .x2:hover{background:var(--hover);color:var(--ink)}
+  .sw{width:12px;height:12px;border-radius:3px;flex:none;display:inline-block}
+  .tc-mid{display:flex;align-items:baseline;gap:8px;margin:8px 0 6px}
+  .big{font-size:28px;font-weight:800;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+  .dtools{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:space-between;margin-bottom:10px}
+  .seg-sm{display:inline-flex;border:1px solid var(--line);border-radius:9px;overflow:hidden;flex-wrap:wrap}
+  .seg-sm button{border:0;background:var(--card);padding:5px 10px;font-size:12.5px;font-weight:700;color:var(--muted)}
+  .seg-sm button+button{border-left:1px solid var(--line)}
+  .seg-sm button.on{background:var(--ink);color:var(--onink)}
+  .chartbox{position:relative;min-height:120px;touch-action:pan-y}
+  .chartbox svg{display:block}
+  .chartbox text{font-size:11px;fill:var(--muted);font-family:inherit}
+  .tip{position:absolute;top:8px;pointer-events:none;background:var(--card);border:1px solid var(--line);box-shadow:var(--shadow);border-radius:9px;padding:7px 10px;font-size:12px;min-width:170px;z-index:2}
+  .tip .h{font-weight:800;margin-bottom:4px}
+  .tip .r{display:flex;gap:6px;align-items:center;white-space:nowrap;margin-top:2px}
+  .tip .r .sw{width:9px;height:9px}
+  .tip .me{color:var(--muted);margin-top:4px;border-top:1px solid var(--line);padding-top:4px}
+  .chart-legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-top:6px;align-items:center}
+  .chart-legend span{display:inline-flex;align-items:center;gap:6px}
+  .mylog{font-size:12.5px;color:var(--muted);margin-top:10px}
+  .mylog li{margin:2px 0}
+  .bd-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px 28px}
+  .bd h4{margin:0 0 6px;font-size:11.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+  .bdr{display:grid;grid-template-columns:110px 1fr 86px;gap:8px;align-items:center;font-size:12.5px;padding:3px 0}
+  .bdr .v{text-align:right;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
+  .bdr .v b{color:var(--ink)}
+
+  /* ankety */
+  .poll{padding:14px 16px;border-top:1px solid var(--line);display:grid;grid-template-columns:1fr 150px 190px;gap:14px;align-items:center}
+  .poll:first-child{border-top:0}
+  .poll .q{font-weight:700;font-size:14.5px}
+  .poll .d{font-size:12.5px;color:var(--muted);margin-top:2px}
+  .poll.closed{opacity:.7}
+  @media (max-width:700px){.poll{grid-template-columns:1fr}}
+
+  /* sponzoring */
+  h3.sec{font-size:15px;margin:18px 0 10px}
+  .lot{border:1px solid var(--demo-line);background:var(--demo-bg);border-radius:12px;padding:14px;margin-bottom:12px}
+  .lot.done{background:var(--card);border-color:var(--line)}
+  .lot .prize{font-size:21px;font-weight:800;letter-spacing:-.01em;margin:2px 0}
+  .lot .actions{justify-content:flex-start;margin-top:10px}
+  .lot a{color:inherit}
+  .rules ul{margin:6px 0 8px;padding-left:18px;font-size:13px}
+  .rules li{margin:3px 0}
+  .ideas{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
+  .idea{border:1px solid var(--line);border-radius:11px;padding:11px 12px;font-size:12.5px;color:var(--muted)}
+  .idea b{display:block;color:var(--ink);font-size:13.5px;margin-bottom:3px}
+  .field textarea{width:100%;border:1px solid var(--line);border-radius:10px;padding:9px 12px;background:var(--field);font:inherit;color:inherit;min-height:70px;resize:vertical}
+  .field input[type=datetime-local]{width:100%;border:1px solid var(--line);border-radius:10px;padding:9px 12px;background:var(--field)}
+  .win{border:2px solid var(--up);background:var(--up-soft);border-radius:12px;padding:12px;margin-bottom:12px}
+  @media (max-width:640px){.ideas{grid-template-columns:1fr}}
+  @media (max-width:640px){
+    .user{gap:6px} .user .email{display:none} .user .btn{padding:6px 9px}
+    .sponsor-btn .lbl{display:none}
+    .nav .wrap{gap:0;padding:0 10px} .nav a{padding:6px 7px;font-size:13px} .sponsor-btn{padding:5px 9px;font-size:12px}
+    .tools-right #dvSearch{flex:1 1 100%}
+    .trow .chart-txt{white-space:normal}
+  }
+  @media (max-width:430px){ .logo .lt{display:none} .badge{display:none} }
 </style>
 </head>
 <body>
@@ -187,17 +308,26 @@
   <div class="wrap">
     <div class="logo">
       <div class="logo-mark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M7 10v12"/><path d="M15 5.88 14 10h5.83a2 2 0 0 1 1.92 2.56l-2.33 8A2 2 0 0 1 17.5 22H4a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h2.76a2 2 0 0 0 1.79-1.11L12 2a3.13 3.13 0 0 1 3 3.88Z"/></svg></div>
-      Máš rád...?
+      <span class="lt">Máš rád...?</span>
     </div>
     <div class="user" id="userArea"></div>
   </div>
 </header>
+<nav class="nav" aria-label="Sekcie"><div class="wrap">
+  <a href="#" data-tab="masrad">Máš rád...?</a>
+  <a href="#dovera" data-tab="dovera">Doverujete?</a>
+  <a href="#ankety" data-tab="ankety">Ankety</a>
+  <span class="spacer"></span>
+  <button class="sponsor-btn" data-act="sponsor">🎁 Sponzoring<span class="lbl"> a súťaže</span></button>
+</div></nav>
 
 <main class="wrap">
+  <div id="notices"></div>
+  <div id="annBanner"></div>
+  <div id="view-masrad">
   <section class="hero">
     <h1>Máš rád...?</h1>
     <p>Anketa obľúbenosti slovenských osobností. Daj palec hore alebo dole. Každý zaregistrovaný hlasujúci môže za každú osobnosť hlasovať iba raz.</p>
-    <div id="notices"></div>
   </section>
 
   <div class="toolbar">
@@ -214,9 +344,12 @@
   </div>
 
   <div class="list" id="list"><div class="empty">Načítavam…</div></div>
+  </div>
+  <div id="view-dovera" hidden></div>
+  <div id="view-ankety" hidden></div>
 </main>
 
-<footer class="wrap">Skóre = počet 👍 mínus počet 👎. Výsledky sú orientačné a nepredstavujú reprezentatívny prieskum.</footer>
+<footer class="wrap" id="footer">Skóre = počet 👍 mínus počet 👎. Výsledky sú orientačné a nepredstavujú reprezentatívny prieskum.</footer>
 
 <div class="modal" id="modal" hidden><div class="dialog" id="dialog" role="dialog" aria-modal="true"></div></div>
 <div id="toast" role="status"></div>
@@ -313,7 +446,7 @@ function makeDemoApi(){
   }
   const persons = () => store.get(K.persons, []);
   const votes = () => store.get(K.votes, []);
-  return {
+  return { ...demoExtra(),
     mode: 'demo',
     async getUser(){ return store.get(K.session, null); },
     onAuth(){},
@@ -373,7 +506,7 @@ async function makeSupabaseApi(){
   const sb = createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
   const redirectTo = location.origin + location.pathname;
   const chk = ({ data, error }) => { if (error) throw new Error(error.message); return data; };
-  return {
+  return { ...liveExtra(sb, chk),
     mode: 'live',
     async getUser(){ const { data } = await sb.auth.getSession(); const u = data.session?.user; return u ? { id:u.id, email:u.email } : null; },
     onAuth(cb){ sb.auth.onAuthStateChange((evt) => { if (evt === 'SIGNED_IN' || evt === 'SIGNED_OUT') setTimeout(cb, 0); }); },
@@ -404,7 +537,9 @@ async function makeSupabaseApi(){
 /* =====================================================================
    STAV A VYKRESĽOVANIE
    ===================================================================== */
-const state = { user:null, profile:null, persons:[], myVotes:new Map(), cat:'all', q:'', sort:'score' };
+const state = { user:null, profile:null, persons:[], myVotes:new Map(), cat:'all', q:'', sort:'score',
+  tab:'masrad', trust:null, trustById:new Map(), tkind:'politik', tq:'', tsort:'score', myTrust:new Map(), cmp:new Set(), detailIds:null, days:90, bdId:null, tl:null,
+  polls:null, myPolls:new Map(), anns:[], lastDraw:null };
 let api;
 const isAdmin = () => !!state.profile?.is_admin;
 
@@ -439,17 +574,19 @@ function themeBtn(){
 }
 function renderUser(){
   const el = $('#userArea');
+  const nU = (state.anns ? unreadAnns().length : 0);
+  const bell = `<button class="theme-btn bell" data-act="ann" title="Oznámenia" aria-label="Oznámenia${nU ? ' – ' + nU + ' nových' : ''}">${ICON_BELL}${nU ? `<span class="dot">${nU}</span>` : ''}</button>`;
   if (!state.user){
-    el.innerHTML = themeBtn() + `<button class="btn primary" data-act="login">Prihlásiť sa</button>`;
+    el.innerHTML = bell + themeBtn() + `<button class="btn primary" data-act="login">Prihlásiť sa</button>`;
   } else {
-    el.innerHTML = themeBtn() + `${isAdmin() ? '<span class="badge">ADMIN</span>' : ''}
+    el.innerHTML = bell + themeBtn() + `${isAdmin() ? '<span class="badge">ADMIN</span>' : ''}
       <span class="email" title="${esc(state.user.email)}">${esc(state.user.email || '')}</span>
       <button class="btn ghost" data-act="profile">Profil</button>
       <button class="btn" data-act="logout">Odhlásiť</button>`;
   }
   let n = '';
   if (api.mode === 'demo') n += `<div class="notice demo">⚠️ <span><b>Demo režim</b> – hlasy a registrácie sa ukladajú iba v tomto prehliadači. Pre ostrú prevádzku doplňte Supabase kľúče (pozri README).</span></div>`;
-  if (isAdmin()) n += `<div class="notice admin"><span><b>Admin:</b> neobmedzené hlasovanie je zapnuté. Vaše hlasy sú označené ako testovacie.</span><span class="spacer"></span><button class="btn" data-act="admin">Správa osobností a hlasov</button></div>`;
+  if (isAdmin()) n += `<div class="notice admin"><span><b>Admin:</b> neobmedzené hlasovanie je zapnuté. Vaše hlasy sú označené ako testovacie.</span><span class="spacer"></span><button class="btn" data-act="admin">Správa osobností a hlasov</button><button class="btn" data-act="ann">Oznámenia</button><button class="btn" data-act="sponsor">Losovania</button></div>`;
   $('#notices').innerHTML = n;
 }
 
@@ -499,6 +636,12 @@ async function loadAuth(){
   if (state.user && state.profile){
     (await api.myVotes(state.user.id)).forEach(v => state.myVotes.set(Number(v.person_id), v.value));
   }
+  state.myTrust = new Map(); state.myPolls = new Map();
+  if (state.user && state.profile){
+    const [t, pv] = await Promise.all([api.myTrust(state.user.id).catch(() => []), api.myPolls(state.user.id).catch(() => [])]);
+    t.forEach(v => state.myTrust.set(Number(v.item_id), v.value));
+    pv.forEach(v => state.myPolls.set(Number(v.poll_id), v.value));
+  }
 }
 
 /* ---------------- modálne okná ---------------- */
@@ -546,6 +689,11 @@ function openProfile(){
           <label><input type="radio" name="gender" value="muz" ${p.gender === 'muz' ? 'checked' : ''} required>Muž</label>
           <label><input type="radio" name="gender" value="zena" ${p.gender === 'zena' ? 'checked' : ''}>Žena</label>
         </div></div>
+      <div class="field"><label class="l">Kde bývate?</label>
+        <div class="seg">
+          <label><input type="radio" name="settle" value="mesto" ${p.settlement === 'mesto' ? 'checked' : ''} required>V meste</label>
+          <label><input type="radio" name="settle" value="vidiek" ${p.settlement === 'vidiek' ? 'checked' : ''}>Na vidieku (obec)</label>
+        </div></div>
       <div class="row2">
         <div class="field"><label class="l" for="by">Rok narodenia</label>
           <select id="by" required><option value="">Vyberte…</option>${years.map(v => `<option ${p.birth_year === v ? 'selected' : ''}>${v}</option>`).join('')}</select></div>
@@ -562,11 +710,12 @@ function openProfile(){
     e.preventDefault();
     const data = {
       gender: document.querySelector('input[name=gender]:checked')?.value,
+      settlement: document.querySelector('input[name=settle]:checked')?.value,
       birth_year: Number($('#by').value), region: $('#rg').value, municipality: $('#mu').value.trim()
     };
     try {
       await api.saveProfile(state.user.id, data);
-      await loadAuth(); closeModal(); render();
+      await loadAuth(); closeModal(); render(); if (state.tab !== 'masrad') route();
       toast('Profil uložený. Môžete hlasovať!');
     } catch(err){ $('#pErr').textContent = err.message; }
   });
@@ -660,12 +809,645 @@ async function onVote(btn){
   }
 }
 
+/* =====================================================================
+   DÔVERA · ANKETY · SPONZORING · OZNÁMENIA
+   ===================================================================== */
+const KIND_LABEL = { politik:'Politici', media:'Médiá', institucia:'Inštitúcie' };
+const KIND_ONE = { politik:'politik', media:'médium', institucia:'inštitúcia' };
+const KIND_HASH = { politik:'#dovera', media:'#dovera-media', institucia:'#dovera-institucie' };
+const ANN_ICON = { info:'ℹ️', sutaz:'🎁', dolezite:'⚠️' };
+const ICON_BELL = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>';
+const FOOT = {
+  masrad: 'Skóre = počet 👍 mínus počet 👎. Výsledky sú orientačné a nepredstavujú reprezentatívny prieskum.',
+  dovera: 'Dôvera = podiel 👍 zo všetkých aktuálnych hlasov. Hlas môžete kedykoľvek zmeniť alebo zrušiť. Graf v čase ukazuje stav hlasov na konci každého dňa (UTC).',
+  ankety: 'Výsledky ankiet sú orientačné a nepredstavujú reprezentatívny prieskum.'
+};
+const SPONSOR_IDEAS = [
+  ['Losovanie o výhru', 'Firma venuje sumu alebo produkt. Všetkým pošleme oznámenie „Hrá sa o … vďaka firme …“, logo a odkaz sú pri súťaži počas celého trvania.'],
+  ['Sponzorovaná anketa', 'Firma položí vlastnú otázku (zreteľne označenú ako sponzorovaná) a dostane súhrnné anonymné výsledky podľa pohlavia, veku, kraja a mesta/vidieka.'],
+  ['Partner sekcie', 'Logo a odkaz pri sekcii na mesiac, napr. „Rebríček dôvery v médiá prináša …“.'],
+  ['Dátový report', 'Mesačný prehľad trendov obľúbenosti a dôvery (PDF/CSV) – iba agregované čísla, nikdy osobné údaje.'],
+  ['Odmena za hlasovanie', 'Zľavový kód alebo darček pre každého, kto v danom týždni hlasuje. Partner získa návštevnosť, anketa účasť.'],
+  ['Charitatívna výzva', 'Firma daruje napr. 1 € na dobrú vec za každých 100 hlasov – s oznámením a priebežným počítadlom.'],
+  ['Partner týždňa', 'Krátka správa partnera v okne oznámení, jasne označená ako „Partner“.'],
+  ['Tipovacia súťaž', 'Hlasujúci tipujú, kto bude na 1. mieste alebo ako dopadne anketa. Najpresnejší tipéri vyhrajú ceny partnera.']
+];
+const fmtDate = iso => iso ? new Date(iso).toLocaleString('sk-SK', { day:'numeric', month:'numeric', year:'numeric', hour:'2-digit', minute:'2-digit' }) : '';
+const fmtDay = (d, y) => `${+d.slice(8, 10)}. ${+d.slice(5, 7)}.${y ? ' ' + d.slice(0, 4) : ''}`;
+const addDays = (d, n) => new Date(Date.parse(d + 'T00:00:00Z') + n * 864e5).toISOString().slice(0, 10);
+const todayUTC = () => new Date().toISOString().slice(0, 10);
+const pctOf = (up, down) => (up + down) ? Math.round(up / (up + down) * 100) : null;
+const hlasov = t => `${t} ${t === 1 ? 'hlas' : (t > 1 && t < 5 ? 'hlasy' : 'hlasov')}`;
+const safeUrl = u => /^https?:\/\//i.test(u || '') ? u : '';
+
+/* ---------- spoločný výpočet časovej osi (demo) ---------- */
+function computeTimeline(events, ids, days){
+  const today = todayUTC();
+  const evs = events.filter(e => ids.includes(e.item_id)).sort((a, b) => a.created_at < b.created_at ? -1 : a.created_at > b.created_at ? 1 : 0);
+  let start = addDays(today, -(Math.min(Math.max(days || 90, 1), 3650) - 1));
+  const first = evs.length ? evs[0].created_at.slice(0, 10) : today;
+  if (first > start) start = first;
+  const out = [];
+  for (const id of ids){
+    const mine = evs.filter(e => e.item_id === id); const cur = new Map(); let j = 0;
+    for (let d = start; d <= today; d = addDays(d, 1)){
+      while (j < mine.length && mine[j].created_at.slice(0, 10) <= d){ cur.set(mine[j].user_id, mine[j].value); j++; }
+      let up = 0, down = 0; cur.forEach(v => { if (v === 1) up++; else if (v === -1) down++; });
+      out.push({ item_id:id, day:d, up, down });
+    }
+  }
+  return out;
+}
+
+/* ---------- DEMO backend pre nové sekcie ---------- */
+const DEMO_MEDIA = [['STVR (Slovenská televízia a rozhlas)','verejnoprávne médium'],['TV Markíza','televízia'],['TV JOJ','televízia'],['TA3','spravodajská televízia'],['Aktuality.sk','spravodajský web'],['SME','denník'],['Denník N','denník'],['Pravda','denník'],['Nový Čas / Pluska.sk','denník'],['Topky.sk','spravodajský web'],['Startitup','online médium'],['TASR','tlačová agentúra']];
+const DEMO_INST = [['Prezident SR','ústavný orgán'],['Národná rada SR','parlament'],['Vláda SR','výkonná moc'],['Ústavný súd SR','súdna moc'],['Policajný zbor SR','bezpečnosť'],['Národná banka Slovenska','centrálna banka'],['Európska únia','medzinárodná'],['NATO','medzinárodná']];
+function demoExtra(){
+  const K = { items:'mr_ti', ev:'mr_tev', fake:'mr_fake', polls:'mr_polls', pv:'mr_pv', lots:'mr_lots', anns:'mr_anns', sreq:'mr_sreq', profiles:'mr_profiles', persons:'mr_persons', votes:'mr_votes' };
+  let s = 11; const rnd = () => (s = (s * 9301 + 49297) % 233280) / 233280;
+  const now = Date.now();
+  if (!store.get(K.items)){
+    const pol = store.get(K.persons, []).filter(p => p.category === 'Politik').map(p => ({ kind:'politik', name: fullName(p), detail: p.detail || null, person_id: p.id }));
+    const items = [...pol, ...DEMO_MEDIA.map(([n, d]) => ({ kind:'media', name:n, detail:d })), ...DEMO_INST.map(([n, d]) => ({ kind:'institucia', name:n, detail:d }))]
+      .map((x, i) => ({ id: i + 1, active: true, ...x }));
+    const fake = Array.from({ length: 70 }, (_, i) => ({ id: 'fake-' + i, gender: rnd() < .5 ? 'muz' : 'zena', birth_year: 1945 + Math.floor(rnd() * 62), region: REGIONS[Math.floor(rnd() * 8)], settlement: rnd() < .55 ? 'mesto' : 'vidiek' }));
+    const ev = [];
+    items.forEach(it => {
+      const p = .2 + rnd() * .6, drift = (rnd() - .5) * .5;
+      fake.forEach(u => {
+        if (rnd() > .55) return;
+        const t0 = now - Math.floor(rnd() * 150) * 864e5 - Math.floor(rnd() * 864e5);
+        ev.push({ item_id: it.id, user_id: u.id, value: rnd() < p ? 1 : -1, created_at: new Date(t0).toISOString() });
+        if (rnd() < .3){ const t1 = t0 + Math.floor(rnd() * (now - t0)); ev.push({ item_id: it.id, user_id: u.id, value: rnd() < p + drift ? 1 : (rnd() < .15 ? 0 : -1), created_at: new Date(t1).toISOString() }); }
+      });
+    });
+    store.set(K.items, items); store.set(K.ev, ev); store.set(K.fake, fake);
+    const polls = [
+      { id:1, question:'Mala by sa na Slovensku zaviesť štvordňová pracovná doba?', description:'Pri zachovaní rovnakej mzdy.', active:true, created_at:new Date(now - 9 * 864e5).toISOString() },
+      { id:2, question:'Mali by byť sociálne siete zakázané pre deti do 15 rokov?', description:null, active:true, created_at:new Date(now - 4 * 864e5).toISOString() },
+      { id:3, question:'Prijali by ste euro ešte raz?', description:null, active:true, created_at:new Date(now - 864e5).toISOString() }
+    ];
+    const pv = []; polls.forEach(q => { const p = .3 + rnd() * .5; fake.forEach(u => { if (rnd() < .6) pv.push({ poll_id:q.id, user_id:u.id, value: rnd() < p ? 1 : -1 }); }); });
+    store.set(K.polls, polls); store.set(K.pv, pv);
+    store.set(K.lots, [{ id:1, title:'Vianočné losovanie', prize:'300 €', sponsor:'Ukážková firma s.r.o.', sponsor_url:'https://example.com', description:'Hrá sa medzi všetkými, ktorí hlasujú.', ends_at:new Date(now + 20 * 864e5).toISOString(), active:true, drawn_at:null, winner_label:null, created_at:new Date().toISOString() }]);
+    store.set(K.anns, [{ id:1, title:'Hrá sa o 300 € vďaka firme Ukážková firma s.r.o.!', body:'Stačí hlasovať aspoň v jednej sekcii. Každá zodpovedaná anketa = tiket navyše.', kind:'sutaz', active:true, created_at:new Date().toISOString() }]);
+  }
+  const items = () => store.get(K.items, []), evs = () => store.get(K.ev, []);
+  const latest = (filter) => { const m = new Map(); evs().filter(filter).sort((a, b) => a.created_at < b.created_at ? -1 : 1).forEach(e => m.set(e.item_id + '|' + e.user_id, e)); return [...m.values()].filter(e => e.value !== 0); };
+  const nextId = list => Math.max(0, ...list.map(x => x.id)) + 1;
+  const crud = key => ({
+    save(o){ const l = store.get(key, []); if (o.id){ const i = l.findIndex(x => x.id === o.id); l[i] = { ...l[i], ...o }; } else l.unshift({ ...o, id: nextId(l), created_at: new Date().toISOString() }); store.set(key, l); },
+    del(id){ store.set(key, store.get(key, []).filter(x => x.id !== id)); }
+  });
+  const profileOf = uid => uid.startsWith('fake-') ? store.get(K.fake, []).find(f => f.id === uid) : store.get(K.profiles, {})[uid];
+  const isAdm = () => !!store.get('mr_session', {}).demoAdmin;
+  return {
+    async listTrust(){
+      const cur = latest(() => true);
+      return items().filter(i => i.active || isAdm()).map(i => ({ ...i, up: cur.filter(e => e.item_id === i.id && e.value === 1).length, down: cur.filter(e => e.item_id === i.id && e.value === -1).length }));
+    },
+    async myTrust(uid){ return latest(e => e.user_id === uid).map(e => ({ item_id: e.item_id, value: e.value })); },
+    async myTrustEvents(uid, ids){ return evs().filter(e => e.user_id === uid && ids.includes(e.item_id)); },
+    async setTrust(uid, id, v){
+      const cur = latest(e => e.user_id === uid && e.item_id === id)[0]?.value || 0;
+      if (cur === v) return;
+      const l = evs(); l.push({ item_id:id, user_id:uid, value:v, created_at:new Date().toISOString() }); store.set(K.ev, l);
+    },
+    async trustTimeline(ids, days){ return computeTimeline(evs(), ids, days); },
+    async trustBreakdown(id){
+      const cur = latest(e => e.item_id === id), y = new Date().getFullYear(), m = new Map();
+      const add = (dim, b, v) => { const k = dim + '|' + b; const r = m.get(k) || { dim, bucket:b, up:0, down:0 }; v === 1 ? r.up++ : r.down++; m.set(k, r); };
+      cur.forEach(e => { const p = profileOf(e.user_id); if (!p) return; const a = y - p.birth_year;
+        add('pohlavie', p.gender === 'muz' ? 'Muži' : 'Ženy', e.value);
+        add('vek', a < 18 ? 'do 17' : a < 30 ? '18–29' : a < 45 ? '30–44' : a < 60 ? '45–59' : '60+', e.value);
+        add('kraj', p.region, e.value);
+        add('sidlo', p.settlement === 'mesto' ? 'Mesto' : p.settlement === 'vidiek' ? 'Vidiek' : 'Neuvedené', e.value); });
+      return [...m.values()].filter(r => r.up + r.down >= 3 || isAdm());
+    },
+    async saveTrustItem(it){ crud(K.items).save(it); },
+    async deleteTrustItem(id){ crud(K.items).del(id); },
+    async listPolls(){ const pv = store.get(K.pv, []); return store.get(K.polls, []).filter(q => q.active || isAdm()).map(q => ({ ...q, up: pv.filter(v => v.poll_id === q.id && v.value === 1).length, down: pv.filter(v => v.poll_id === q.id && v.value === -1).length })); },
+    async myPolls(uid){ return store.get(K.pv, []).filter(v => v.user_id === uid); },
+    async setPoll(uid, id, v){ const pv = store.get(K.pv, []).filter(x => !(x.user_id === uid && x.poll_id === id)); if (v) pv.push({ poll_id:id, user_id:uid, value:v }); store.set(K.pv, pv); },
+    async savePoll(q){ crud(K.polls).save({ active:true, ...q }); },
+    async deletePoll(id){ crud(K.polls).del(id); },
+    async listLotteries(){ return store.get(K.lots, []); },
+    async myTickets(uid){
+      const pv = store.get(K.pv, []).filter(v => v.user_id === uid).length;
+      const any = pv || store.get(K.votes, []).some(v => v.user_id === uid && !v.is_test) || latest(e => e.user_id === uid).length;
+      return (any ? 1 : 0) + pv;
+    },
+    async saveLottery(l){ crud(K.lots).save({ active:true, drawn_at:null, winner_label:null, ...l }); },
+    async deleteLottery(id){ crud(K.lots).del(id); },
+    async drawLottery(id){
+      const f = store.get(K.fake, []); const w = f[Math.floor(Math.random() * f.length)];
+      const label = `${w.gender === 'muz' ? 'muž' : 'žena'}, ${w.region} kraj`;
+      crud(K.lots).save({ id, drawn_at:new Date().toISOString(), winner_label:label, active:false });
+      return { email:'vyherca@demo.sk', tickets:2, label };
+    },
+    async sponsorRequest(r){ crud(K.sreq).save(r); },
+    async listSponsorRequests(){ return store.get(K.sreq, []); },
+    async deleteSponsorRequest(id){ crud(K.sreq).del(id); },
+    async listAnnouncements(){ return store.get(K.anns, []).filter(a => a.active || isAdm()); },
+    async saveAnnouncement(a){ crud(K.anns).save({ active:true, ...a }); },
+    async deleteAnnouncement(id){ crud(K.anns).del(id); }
+  };
+}
+
+/* ---------- SUPABASE backend pre nové sekcie ---------- */
+function liveExtra(sb, chk){
+  const upsert = async (table, row, id) => id ? chk(await sb.from(table).update(row).eq('id', id)) : chk(await sb.from(table).insert(row));
+  return {
+    async listTrust(){ return chk(await sb.from('trust_scores').select('*')); },
+    async myTrust(){ return chk(await sb.from('trust_votes').select('item_id,value')); },
+    async myTrustEvents(uid, ids){ return chk(await sb.from('trust_events').select('item_id,value,created_at').in('item_id', ids).order('created_at')); },
+    async setTrust(uid, id, v){ chk(await sb.rpc('set_trust_vote', { p_item:id, p_value:v })); },
+    async trustTimeline(ids, days){ return chk(await sb.rpc('trust_timeline', { p_items:ids, p_days:days })); },
+    async trustBreakdown(id){ return chk(await sb.rpc('trust_breakdown', { p_item:id })); },
+    async saveTrustItem(it){ const { id, ...row } = it; await upsert('trust_items', row, id); },
+    async deleteTrustItem(id){ chk(await sb.from('trust_items').delete().eq('id', id)); },
+    async listPolls(){ return chk(await sb.from('poll_scores').select('*')); },
+    async myPolls(){ return chk(await sb.from('poll_votes').select('poll_id,value')); },
+    async setPoll(uid, id, v){ chk(await sb.rpc('set_poll_vote', { p_poll:id, p_value:v })); },
+    async savePoll(q){ const { id, ...row } = q; await upsert('polls', row, id); },
+    async deletePoll(id){ chk(await sb.from('polls').delete().eq('id', id)); },
+    async listLotteries(){ return chk(await sb.from('lotteries').select('id,title,prize,sponsor,sponsor_url,description,ends_at,active,drawn_at,winner_label,created_at').order('created_at', { ascending:false })); },
+    async myTickets(){ return chk(await sb.rpc('my_tickets')); },
+    async saveLottery(l){ const { id, ...row } = l; await upsert('lotteries', row, id); },
+    async deleteLottery(id){ chk(await sb.from('lotteries').delete().eq('id', id)); },
+    async drawLottery(id){ const r = chk(await sb.rpc('draw_lottery', { p_id:id })); return r && r[0]; },
+    async sponsorRequest(r){ chk(await sb.from('sponsor_requests').insert(r)); },
+    async listSponsorRequests(){ return chk(await sb.from('sponsor_requests').select('*').order('created_at', { ascending:false })); },
+    async deleteSponsorRequest(id){ chk(await sb.from('sponsor_requests').delete().eq('id', id)); },
+    async listAnnouncements(){ return chk(await sb.from('announcements').select('*').order('created_at', { ascending:false }).limit(50)); },
+    async saveAnnouncement(a){ const { id, ...row } = a; await upsert('announcements', row, id); },
+    async deleteAnnouncement(id){ chk(await sb.from('announcements').delete().eq('id', id)); }
+  };
+}
+
+/* ---------- smerovanie (záložky) ---------- */
+function route(){
+  const h = decodeURIComponent(location.hash.replace(/^#/, ''));
+  const tab = (h.startsWith('dovera') || h.startsWith('d-')) ? 'dovera' : h === 'ankety' ? 'ankety' : 'masrad';
+  state.tab = tab;
+  document.querySelectorAll('.nav a[data-tab]').forEach(a => a.classList.toggle('on', a.dataset.tab === tab));
+  ['masrad', 'dovera', 'ankety'].forEach(t => { $('#view-' + t).hidden = t !== tab; });
+  $('#footer').textContent = FOOT[tab];
+  if (tab === 'dovera'){
+    if (h === 'dovera-media') state.tkind = 'media';
+    else if (h === 'dovera-institucie') state.tkind = 'institucia';
+    else if (h === 'dovera') state.tkind = 'politik';
+    state.detailIds = h.startsWith('d-') ? [...new Set(h.slice(2).split('-').map(Number).filter(Boolean))].slice(0, 3) : null;
+    showDovera();
+  } else if (tab === 'ankety') showAnkety();
+}
+
+/* ---------- DÔVERA ---------- */
+async function loadTrust(){
+  state.trust = (await api.listTrust()).map(i => ({ ...i, id: Number(i.id) }));
+  state.trustById = new Map(state.trust.map(i => [i.id, i]));
+}
+async function showDovera(){
+  const el = $('#view-dovera');
+  if (!el.dataset.ready){
+    el.dataset.ready = '1';
+    el.innerHTML = `
+      <section class="hero"><h1>Doverujete?</h1>
+        <p>Dôverujete politikom, médiám a inštitúciám? Hlas môžete kedykoľvek zmeniť alebo zrušiť (kliknite znova na zvolený palec). Kliknutím na názov uvidíte vývoj dôvery v čase a rozdelenie podľa skupín.</p></section>
+      <div id="dvSettle"></div>
+      <div id="dvList">
+        <div class="toolbar"><div class="chips" id="dvChips"></div>
+          <div class="tools-right">
+            <input class="search" id="dvSearch" type="search" placeholder="Hľadať…" aria-label="Hľadať">
+            <select class="sort" id="dvSort" aria-label="Zoradiť">
+              <option value="score">Podľa skóre</option><option value="ratio">Podľa % dôvery</option>
+              <option value="votes">Podľa počtu hlasov</option><option value="name">Podľa názvu</option></select>
+            <span id="dvAdmin"></span>
+          </div></div>
+        <div id="dvCmp"></div>
+        <div class="list" id="dvRows"><div class="empty">Načítavam…</div></div>
+      </div>
+      <div id="dvDetail" hidden></div>`;
+    $('#dvSearch').addEventListener('input', e => { state.tq = e.target.value; renderTrustRows(); });
+    $('#dvSort').addEventListener('change', e => { state.tsort = e.target.value; renderTrustRows(); });
+  }
+  $('#dvSettle').innerHTML = state.profile && !state.profile.settlement
+    ? `<div class="notice demo" style="display:flex">📍 <span>Doplňte prosím v profile, či bývate v meste alebo na vidieku – spresní to štatistiky.</span><span class="spacer"></span><button class="btn" data-act="profile">Doplniť</button></div>` : '';
+  if (!state.trust){
+    try { await loadTrust(); }
+    catch(err){ $('#dvRows').innerHTML = `<div class="empty">Nepodarilo sa načítať dáta: ${esc(err.message)}</div>`; return; }
+  }
+  if (state.tab !== 'dovera') return;
+  if (state.detailIds && state.detailIds.length){ $('#dvList').hidden = true; $('#dvDetail').hidden = false; renderDetail(); }
+  else { $('#dvList').hidden = false; $('#dvDetail').hidden = true; renderTrustList(); }
+}
+function trustSorted(list){
+  const ratio = p => (p.up + p.down) ? p.up / (p.up + p.down) : -1;
+  const by = {
+    score: (a, b) => (b.up - b.down) - (a.up - a.down) || ratio(b) - ratio(a) || (b.up + b.down) - (a.up + a.down),
+    ratio: (a, b) => ratio(b) - ratio(a) || (b.up + b.down) - (a.up + a.down),
+    votes: (a, b) => (b.up + b.down) - (a.up + a.down),
+    name: () => 0
+  }[state.tsort];
+  return [...list].sort((a, b) => by(a, b) || collator.compare(a.name, b.name));
+}
+function trustThumbs(i){
+  const mine = state.myTrust.get(i.id) || 0;
+  const t = (v, cls, lbl) => `<button class="thumb tog ${cls} ${mine === v ? 'chosen' : ''}" data-tvote="${v}" data-id="${i.id}" title="${mine === v ? 'Kliknite znova pre zrušenie hlasu' : lbl}" aria-pressed="${mine === v}" aria-label="${lbl}: ${esc(i.name)}">${ICON_THUMB}<span>${v === 1 ? i.up : i.down}</span></button>`;
+  return t(1, 'up', 'Dôverujem') + t(-1, 'down', 'Nedôverujem');
+}
+function renderTrustList(){
+  const counts = {}; state.trust.filter(i => i.active).forEach(i => counts[i.kind] = (counts[i.kind] || 0) + 1);
+  $('#dvChips').innerHTML = Object.keys(KIND_LABEL).map(k => `<a class="chip ${state.tkind === k ? 'on' : ''}" href="${KIND_HASH[k]}">${KIND_LABEL[k]}<span class="n">${counts[k] || 0}</span></a>`).join('');
+  $('#dvAdmin').innerHTML = isAdmin() ? `<button class="btn" data-act="titems">Spravovať položky</button>` : '';
+  renderTrustRows();
+}
+function renderTrustRows(){
+  const q = (state.tq || '').trim().toLocaleLowerCase('sk');
+  const list = trustSorted(state.trust.filter(i => i.kind === state.tkind && i.active && (!q || `${i.name} ${i.detail || ''}`.toLocaleLowerCase('sk').includes(q))));
+  const head = `<div class="row trow head"><div></div><div>#</div><div>${KIND_LABEL[state.tkind]}</div><div>Doverujete?</div><div>Dôvera</div></div>`;
+  $('#dvRows').innerHTML = head + (list.length ? list.map((i, n) => {
+    const t = i.up + i.down, pct = pctOf(i.up, i.down);
+    return `<div class="row trow">
+      <div class="cmpc"><input type="checkbox" class="cmp" data-cmp="${i.id}" ${state.cmp.has(i.id) ? 'checked' : ''} title="Porovnať v grafe (max. 3)" aria-label="Porovnať ${esc(i.name)}"></div>
+      <div class="rank ${n < 3 && state.tsort === 'score' ? 'top' : ''}">${n + 1}.</div>
+      <div class="namecell" data-open="${i.id}" role="link" tabindex="0"><span class="last">${esc(i.name)}</span>${i.detail ? `<span class="detail">${esc(i.detail)}</span>` : ''}</div>
+      <div class="votes">${trustThumbs(i)}</div>
+      <div class="chart">${bar(i.up, i.down)}<div class="chart-txt">${pct === null ? 'bez hlasov' : `<b>${pct} %</b> dôvera · ${hlasov(t)}`}</div></div>
+    </div>`;
+  }).join('') : `<div class="empty">Nič sa nenašlo.</div>`);
+  renderCmpBar();
+}
+function renderCmpBar(){
+  const el = $('#dvCmp'); if (!el) return;
+  const sel = [...state.cmp].map(id => state.trustById?.get(id)).filter(Boolean);
+  el.innerHTML = sel.length ? `<div class="cmpbar"><span>Porovnať (${sel.length}/3): <b>${sel.map(i => esc(i.name)).join(', ')}</b></span><span style="flex:1"></span>
+    <button class="btn primary" data-act="compare">Zobraziť graf</button><button class="btn ghost" data-act="cmp-clear">Zrušiť výber</button></div>` : '';
+}
+function detailHash(ids){ return '#d-' + ids.join('-'); }
+function renderDetail(){
+  const ids = state.detailIds.filter(id => state.trustById.has(id));
+  if (!ids.length){ location.hash = KIND_HASH[state.tkind] || '#dovera'; return; }
+  state.detailIds = ids; state.cmp = new Set(ids);
+  const items = ids.map(id => state.trustById.get(id));
+  if (!ids.includes(state.bdId)) state.bdId = ids[0];
+  const opts = Object.keys(KIND_LABEL).map(k => `<optgroup label="${KIND_LABEL[k]}">${state.trust.filter(i => i.kind === k && i.active && !ids.includes(i.id)).sort((a, b) => collator.compare(a.name, b.name)).map(i => `<option value="${i.id}">${esc(i.name)}</option>`).join('')}</optgroup>`).join('');
+  const periods = [[30, '30 dní'], [90, '90 dní'], [365, '1 rok'], [3650, 'Všetko']];
+  $('#dvDetail').innerHTML = `
+    <div class="panel">
+      <div class="dhead"><a class="btn ghost" href="${KIND_HASH[items[0].kind]}">← Späť na zoznam</a><span class="spacer"></span>
+        ${ids.length < 3 ? `<select class="sort" id="dvAdd" aria-label="Pridať na porovnanie"><option value="">+ Pridať na porovnanie…</option>${opts}</select>` : '<span class="small">Porovnávate maximum 3 položiek.</span>'}</div>
+      <div class="cards">${items.map((it, k) => {
+        const t = it.up + it.down, pct = pctOf(it.up, it.down);
+        return `<div class="tcard"><div class="tc-top"><span class="sw" style="background:var(--s${k + 1})"></span><b title="${esc(it.name)}">${esc(it.name)}</b>${ids.length > 1 ? `<button class="x2" data-rm="${it.id}" title="Odobrať z porovnania" aria-label="Odobrať ${esc(it.name)}">×</button>` : ''}</div>
+          <div class="small">${esc(KIND_ONE[it.kind])}${it.detail ? ' · ' + esc(it.detail) : ''}</div>
+          <div class="tc-mid"><span class="big">${pct === null ? '–' : pct + ' %'}</span><span class="small">dôvera dnes · ${hlasov(t)}</span></div>
+          ${bar(it.up, it.down)}
+          <div class="votes" style="margin-top:10px">${trustThumbs(it)}</div></div>`;
+      }).join('')}</div>
+      <div class="dtools"><h3>Vývoj dôvery v čase</h3>
+        <div class="seg-sm" role="group" aria-label="Obdobie">${periods.map(([d, l]) => `<button data-days="${d}" class="${state.days === d ? 'on' : ''}">${l}</button>`).join('')}</div></div>
+      <div class="chartbox" id="tl"><div class="empty">Načítavam…</div></div>
+      <div class="chart-legend">${items.map((it, k) => `<span><span class="sw" style="background:var(--s${k + 1})"></span>${esc(it.name)}</span>`).join('')}<span>◆ váš hlas / zmena hlasu</span></div>
+      <div class="mylog" id="mylog"></div>
+    </div>
+    <div class="panel">
+      <div class="dtools"><h3>Dôvera dnes podľa skupín</h3>
+        ${ids.length > 1 ? `<div class="seg-sm" role="group" aria-label="Položka">${items.map((it, k) => `<button data-bd="${it.id}" class="${state.bdId === it.id ? 'on' : ''}"><span class="sw" style="background:var(--s${k + 1});margin-right:5px"></span>${esc(it.name.length > 22 ? it.name.slice(0, 21) + '…' : it.name)}</button>`).join('')}</div>` : ''}</div>
+      <div id="bd"><div class="empty">Načítavam…</div></div>
+      <p class="small" style="margin:12px 0 0">Skupiny s menej ako 3 hlasmi sa z dôvodu ochrany súkromia nezobrazujú. Údaje vychádzajú z profilov hlasujúcich (pohlavie, rok narodenia, kraj, mesto/vidiek).</p>
+    </div>`;
+  loadTimeline(); loadBreakdown(state.bdId);
+}
+async function loadTimeline(){
+  const ids = state.detailIds; const box = $('#tl'); if (!box) return;
+  try {
+    const [rows, evs] = await Promise.all([api.trustTimeline(ids, state.days), state.user ? api.myTrustEvents(state.user.id, ids).catch(() => []) : []]);
+    state.tl = { ids, rows: rows.map(r => ({ ...r, item_id: Number(r.item_id) })), evs: evs.map(e => ({ ...e, item_id: Number(e.item_id) })) };
+    drawTimeline();
+  } catch(err){ box.innerHTML = `<div class="empty">Graf sa nepodarilo načítať: ${esc(err.message)}</div>`; }
+}
+function drawTimeline(){
+  const box = $('#tl'); if (!box || !state.tl) return;
+  const { ids, rows, evs } = state.tl;
+  const days = [...new Set(rows.map(r => r.day))].sort();
+  if (!days.length){ box.innerHTML = '<div class="empty">Zatiaľ bez hlasov.</div>'; return; }
+  const W = Math.max(280, box.clientWidth), H = 250, m = { l:42, r:14, t:12, b:26 };
+  const iw = W - m.l - m.r, ih = H - m.t - m.b, n = days.length;
+  const X = i => m.l + (n === 1 ? iw / 2 : i * iw / (n - 1));
+  const Y = p => m.t + ih - p / 100 * ih;
+  const idx = new Map(days.map((d, i) => [d, i]));
+  const series = ids.map((id, k) => {
+    const pts = new Array(n).fill(null);
+    rows.filter(r => r.item_id === id).forEach(r => { const t = r.up + r.down; if (t) pts[idx.get(r.day)] = { p: r.up / t * 100, up: r.up, down: r.down }; });
+    return { id, k, pts, name: state.trustById.get(id)?.name || '' };
+  });
+  const multiYear = days[0].slice(0, 4) !== days[n - 1].slice(0, 4);
+  let svg = `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="Vývoj dôvery v čase v percentách">`;
+  for (const g of [0, 25, 50, 75, 100]) svg += `<line x1="${m.l}" x2="${W - m.r}" y1="${Y(g)}" y2="${Y(g)}" stroke="var(--line)" stroke-width="1" ${g === 50 ? 'stroke-dasharray="3 4"' : ''}/><text x="${m.l - 7}" y="${Y(g) + 4}" text-anchor="end">${g} %</text>`;
+  const nt = Math.min(n, Math.max(2, Math.floor(iw / 90)));
+  for (let j = 0; j < nt; j++){
+    const i = nt === 1 ? 0 : Math.round(j * (n - 1) / (nt - 1));
+    svg += `<text x="${X(i)}" y="${H - 7}" text-anchor="${n === 1 ? 'middle' : j === 0 ? 'start' : j === nt - 1 ? 'end' : 'middle'}">${fmtDay(days[i], multiYear)}</text>`;
+  }
+  series.forEach(s => {
+    let d = '', pen = false;
+    s.pts.forEach((pt, i) => { if (!pt){ pen = false; return; } d += (pen ? 'L' : 'M') + X(i).toFixed(1) + ' ' + Y(pt.p).toFixed(1) + ' '; pen = true; });
+    if (d) svg += `<path d="${d}" fill="none" stroke="var(--s${s.k + 1})" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>`;
+    s.pts.forEach((pt, i) => { if (pt && !s.pts[i - 1] && !s.pts[i + 1]) svg += `<circle cx="${X(i)}" cy="${Y(pt.p)}" r="4" fill="var(--s${s.k + 1})" stroke="var(--card)" stroke-width="2"/>`; });
+  });
+  evs.forEach(e => {
+    const k = ids.indexOf(e.item_id), i = idx.get(e.created_at.slice(0, 10)); if (k < 0 || i === undefined) return;
+    const pt = series[k].pts[i], x = X(i), y = pt ? Y(pt.p) : Y(50);
+    svg += `<rect x="${x - 5}" y="${y - 5}" width="10" height="10" transform="rotate(45 ${x} ${y})" fill="var(--card)" stroke="var(--s${k + 1})" stroke-width="2.5"/>`;
+  });
+  svg += `<line id="tlx" x1="0" x2="0" y1="${m.t}" y2="${m.t + ih}" stroke="var(--muted)" stroke-width="1" visibility="hidden"/>`;
+  svg += `<g id="tldots"></g><rect id="tlhit" x="${m.l - 6}" y="0" width="${iw + 12}" height="${H}" fill="transparent"/></svg>`;
+  box.innerHTML = svg + '<div class="tip" id="tltip" hidden></div>';
+  const hit = box.querySelector('#tlhit'), vline = box.querySelector('#tlx'), tip = box.querySelector('#tltip'), dots = box.querySelector('#tldots');
+  const ACT = v => v === 1 ? '👍 dôverujem' : v === -1 ? '👎 nedôverujem' : '✕ hlas zrušený';
+  const show = ev => {
+    const r = box.getBoundingClientRect(); const x = ev.clientX - r.left;
+    const i = n === 1 ? 0 : Math.max(0, Math.min(n - 1, Math.round((x - m.l) / iw * (n - 1))));
+    vline.setAttribute('x1', X(i)); vline.setAttribute('x2', X(i)); vline.setAttribute('visibility', 'visible');
+    dots.innerHTML = series.map(s => s.pts[i] ? `<circle cx="${X(i)}" cy="${Y(s.pts[i].p)}" r="4.5" fill="var(--s${s.k + 1})" stroke="var(--card)" stroke-width="2"/>` : '').join('');
+    const mine = evs.filter(e => e.created_at.slice(0, 10) === days[i]);
+    tip.innerHTML = `<div class="h">${fmtDay(days[i], true)}</div>` + series.map(s => `<div class="r"><span class="sw" style="background:var(--s${s.k + 1})"></span><span>${esc(s.name.length > 26 ? s.name.slice(0, 25) + '…' : s.name)}</span><span style="flex:1"></span><b>${s.pts[i] ? Math.round(s.pts[i].p) + ' %' : '–'}</b></div><div class="small" style="padding-left:15px">${s.pts[i] ? `${s.pts[i].up} 👍 · ${s.pts[i].down} 👎` : 'bez hlasov'}</div>`).join('')
+      + (mine.length ? `<div class="me">${mine.map(e => `◆ ${new Date(e.created_at).toLocaleTimeString('sk-SK', { hour:'2-digit', minute:'2-digit' })} ${ACT(e.value)}${ids.length > 1 ? ' · ' + esc(state.trustById.get(e.item_id)?.name || '') : ''}`).join('<br>')}</div>` : '');
+    tip.hidden = false;
+    const tw = tip.offsetWidth; let left = X(i) + 12; if (left + tw > W) left = X(i) - tw - 12; tip.style.left = Math.max(0, left) + 'px';
+  };
+  hit.addEventListener('pointermove', show); hit.addEventListener('pointerdown', show);
+  hit.addEventListener('pointerleave', () => { tip.hidden = true; vline.setAttribute('visibility', 'hidden'); dots.innerHTML = ''; });
+  const log = $('#mylog');
+  if (log){
+    if (!state.user) log.innerHTML = 'Po prihlásení tu uvidíte aj dátumy svojich hlasov a ich zmien (◆ v grafe).';
+    else if (!evs.length) log.innerHTML = 'Zatiaľ ste tu nehlasovali.';
+    else log.innerHTML = `<b>Vaše hlasovanie</b><ul style="margin:4px 0 0;padding-left:18px">${[...evs].reverse().slice(0, 12).map(e => `<li>${fmtDate(e.created_at)} – ${ids.length > 1 ? esc(state.trustById.get(e.item_id)?.name || '') + ': ' : ''}${ACT(e.value)}</li>`).join('')}</ul>`;
+  }
+}
+async function loadBreakdown(id){
+  state.bdId = id;
+  document.querySelectorAll('[data-bd]').forEach(b => b.classList.toggle('on', Number(b.dataset.bd) === id));
+  const el = $('#bd'); if (!el) return;
+  try {
+    const rows = await api.trustBreakdown(id);
+    const DIMS = [['pohlavie', 'Pohlavie', ['Muži', 'Ženy']], ['vek', 'Veková skupina', ['do 17', '18–29', '30–44', '45–59', '60+']], ['sidlo', 'Mesto / vidiek', ['Mesto', 'Vidiek', 'Neuvedené']], ['kraj', 'Kraj', REGIONS]];
+    el.innerHTML = `<div class="bd-grid">${DIMS.map(([k, label, order]) => {
+      const rs = order.map(b => rows.find(r => r.dim === k && r.bucket === b)).filter(Boolean);
+      return `<div class="bd"><h4>${label}</h4>${rs.length ? rs.map(r => { const t = r.up + r.down; return `<div class="bdr" title="${r.up} 👍 · ${r.down} 👎"><span>${esc(r.bucket)}</span>${bar(r.up, r.down)}<span class="v"><b>${pctOf(r.up, r.down)} %</b> · ${t}</span></div>`; }).join('') : '<div class="small">Zatiaľ málo hlasov.</div>'}</div>`;
+    }).join('')}</div>`;
+  } catch(err){ el.innerHTML = `<div class="empty">${esc(err.message)}</div>`; }
+}
+async function onTrustVote(btn){
+  if (!state.user) return openLogin();
+  if (!state.profile) return openProfile();
+  const id = Number(btn.dataset.id), val = Number(btn.dataset.tvote);
+  const cur = state.myTrust.get(id) || 0, next = cur === val ? 0 : val;
+  document.querySelectorAll(`[data-tvote][data-id="${id}"]`).forEach(b => b.disabled = true);
+  try {
+    await api.setTrust(state.user.id, id, next);
+    const it = state.trustById.get(id);
+    if (cur === 1) it.up--; else if (cur === -1) it.down--;
+    if (next === 1) it.up++; else if (next === -1) it.down++;
+    next ? state.myTrust.set(id, next) : state.myTrust.delete(id);
+    toast(next === 1 ? '👍 Dôverujem – uložené' : next === -1 ? '👎 Nedôverujem – uložené' : 'Hlas zrušený');
+    if (state.detailIds && state.detailIds.length) renderDetail(); else renderTrustRows();
+  } catch(err){ toast(err.message, true); document.querySelectorAll(`[data-tvote][data-id="${id}"]`).forEach(b => b.disabled = false); }
+}
+async function openTrustAdmin(){
+  const kind = state.tkind;
+  await loadTrust();
+  const list = state.trust.filter(i => i.kind === kind).sort((a, b) => collator.compare(a.name, b.name));
+  openModal(`<h2>Dôvera – ${KIND_LABEL[kind]}</h2>
+    <p class="sub">${kind === 'politik' ? 'Politici sa sem pridávajú automaticky z kategórie „Politik“ v správe osobností. Tu ich môžete iba skryť.' : 'Pridajte, skryte alebo zmažte položky. Zmazanie odstráni aj všetky hlasy a históriu.'}</p>
+    ${kind !== 'politik' ? `<form class="box" id="tiForm"><h3>Pridať ${KIND_ONE[kind]}</h3><div class="row2">
+      <div class="field"><input type="text" id="tin" required minlength="2" placeholder="Názov"></div>
+      <div class="field"><input type="text" id="tid" placeholder="Popis (napr. denník, súdna moc)"></div></div>
+      <div class="err" id="tiErr"></div><div class="actions"><button class="btn primary">Pridať</button></div></form>` : ''}
+    <table class="atable"><thead><tr><th>Názov</th><th>Hlasy</th><th></th></tr></thead><tbody>
+    ${list.map(i => `<tr class="${i.active ? '' : 'pending'}"><td><b>${esc(i.name)}</b> <span class="small">${esc(i.detail || '')}</span></td><td class="small">${i.up} 👍 · ${i.down} 👎</td>
+      <td><button class="btn" data-tihide="${i.id}">${i.active ? 'Skryť' : 'Zobraziť'}</button>${kind !== 'politik' ? ` <button class="btn danger" data-tidel="${i.id}">Zmazať</button>` : ''}</td></tr>`).join('')}
+    </tbody></table>`, true);
+  const f = $('#tiForm');
+  if (f) f.addEventListener('submit', async e => {
+    e.preventDefault();
+    try { await api.saveTrustItem({ kind, name: $('#tin').value.trim(), detail: $('#tid').value.trim() || null, active: true }); toast('Pridané.'); openTrustAdmin(); refreshTrust(); }
+    catch(err){ $('#tiErr').textContent = err.message; }
+  });
+}
+async function refreshTrust(){ await loadTrust(); if (state.tab === 'dovera') showDovera(); }
+
+/* ---------- ANKETY ---------- */
+async function showAnkety(){
+  const el = $('#view-ankety');
+  if (!state.polls){
+    el.innerHTML = '<div class="empty">Načítavam…</div>';
+    try { state.polls = (await api.listPolls()).map(q => ({ ...q, id: Number(q.id) })); }
+    catch(err){ el.innerHTML = `<div class="empty">Nepodarilo sa načítať ankety: ${esc(err.message)}</div>`; return; }
+  }
+  if (state.tab === 'ankety') renderPolls();
+}
+function renderPolls(){
+  const el = $('#view-ankety');
+  const polls = [...state.polls].sort((a, b) => (b.active - a.active) || (a.created_at < b.created_at ? 1 : -1));
+  el.innerHTML = `<section class="hero"><h1>Ankety</h1>
+      <p>Krátke otázky – palec hore znamená áno, palec dole nie. Odpoveď môžete kedykoľvek zmeniť alebo zrušiť. Každá zodpovedaná anketa vám pridá tiket do prebiehajúcich <a href="#ankety" data-act="sponsor">losovaní</a>.</p></section>
+    ${isAdmin() ? `<form class="panel" id="pollForm"><h3 style="margin-bottom:10px">Nová anketa</h3>
+      <div class="field"><input type="text" id="pq" required minlength="3" maxlength="300" placeholder="Otázka, napr. Mala by sa zaviesť štvordňová pracovná doba?" style="width:100%;border:1px solid var(--line);border-radius:10px;padding:9px 12px;background:var(--field)"></div>
+      <div class="field"><input type="text" id="pd" maxlength="500" placeholder="Doplňujúci popis (nepovinné)" style="width:100%;border:1px solid var(--line);border-radius:10px;padding:9px 12px;background:var(--field)"></div>
+      <div class="err" id="pqErr"></div><div class="actions"><button class="btn primary">Pridať anketu</button></div></form>` : ''}
+    <div class="list">${polls.length ? polls.map(q => {
+      const mine = state.myPolls.get(q.id) || 0, t = q.up + q.down, pct = pctOf(q.up, q.down);
+      const th = (v, cls, lbl) => `<button class="thumb tog ${cls} ${mine === v ? 'chosen' : ''}" data-pvote="${v}" data-id="${q.id}" ${q.active ? '' : 'disabled'} title="${mine === v ? 'Kliknite znova pre zrušenie' : lbl}" aria-pressed="${mine === v}" aria-label="${lbl}">${ICON_THUMB}<span>${v === 1 ? q.up : q.down}</span></button>`;
+      return `<div class="poll ${q.active ? '' : 'closed'}"><div><div class="q">${esc(q.question)}${q.active ? '' : ' <span class="pill">uzavretá</span>'}</div>${q.description ? `<div class="d">${esc(q.description)}</div>` : ''}
+          ${isAdmin() ? `<div class="actions" style="justify-content:flex-start;margin-top:8px"><button class="btn" data-ptoggle="${q.id}">${q.active ? 'Uzavrieť' : 'Znovu otvoriť'}</button><button class="btn danger" data-pdel="${q.id}">Zmazať</button></div>` : ''}</div>
+        <div class="votes">${th(1, 'up', 'Áno')}${th(-1, 'down', 'Nie')}</div>
+        <div class="chart">${bar(q.up, q.down)}<div class="chart-txt">${pct === null ? 'bez hlasov' : `<b>${pct} %</b> áno · ${hlasov(t)}`}</div></div></div>`;
+    }).join('') : '<div class="empty">Zatiaľ tu nie sú žiadne ankety.</div>'}</div>`;
+  const f = $('#pollForm');
+  if (f) f.addEventListener('submit', async e => {
+    e.preventDefault();
+    try { await api.savePoll({ question: $('#pq').value.trim(), description: $('#pd').value.trim() || null, active: true }); state.polls = null; toast('Anketa pridaná.'); showAnkety(); }
+    catch(err){ $('#pqErr').textContent = err.message; }
+  });
+}
+async function onPollVote(btn){
+  if (!state.user) return openLogin();
+  if (!state.profile) return openProfile();
+  const id = Number(btn.dataset.id), val = Number(btn.dataset.pvote);
+  const cur = state.myPolls.get(id) || 0, next = cur === val ? 0 : val;
+  btn.disabled = true;
+  try {
+    await api.setPoll(state.user.id, id, next);
+    const q = state.polls.find(x => x.id === id);
+    if (cur === 1) q.up--; else if (cur === -1) q.down--;
+    if (next === 1) q.up++; else if (next === -1) q.down++;
+    next ? state.myPolls.set(id, next) : state.myPolls.delete(id);
+    toast(next ? 'Odpoveď uložená' : 'Odpoveď zrušená'); renderPolls();
+  } catch(err){ toast(err.message, true); btn.disabled = false; }
+}
+
+/* ---------- SPONZORING ---------- */
+function lotCard(l){
+  const url = safeUrl(l.sponsor_url);
+  return `<div class="lot ${l.drawn_at || !l.active ? 'done' : ''}">
+    <div class="small">${l.drawn_at ? 'Ukončené losovanie' : 'Losovanie'} · vďaka firme <b>${url ? `<a href="${esc(url)}" target="_blank" rel="noopener sponsored">${esc(l.sponsor)}</a>` : esc(l.sponsor)}</b></div>
+    <div class="prize">${esc(l.prize)}</div><div><b>${esc(l.title)}</b></div>
+    ${l.description ? `<div class="small" style="margin-top:4px">${esc(l.description)}</div>` : ''}
+    ${l.ends_at && !l.drawn_at ? `<div class="small" style="margin-top:6px">🗓️ Žrebovanie: ${fmtDate(l.ends_at)}</div>` : ''}
+    ${l.drawn_at ? `<div style="margin-top:6px">🏆 Vylosovaný výherca: <b>${esc(l.winner_label || '')}</b> <span class="small">(${fmtDate(l.drawn_at)})</span></div>` : ''}
+    ${isAdmin() ? `<div class="actions">${l.drawn_at ? '' : `<button class="btn primary" data-draw="${l.id}">Vylosovať výhercu</button>`}<button class="btn danger" data-ldel="${l.id}">Zmazať</button></div>` : ''}
+  </div>`;
+}
+async function openSponsor(){
+  openModal('<h2>Sponzoring a súťaže</h2><div class="empty">Načítavam…</div>', true);
+  let lots = [], tickets = null, reqs = [];
+  try { lots = await api.listLotteries(); } catch {}
+  if (state.user && state.profile) try { tickets = await api.myTickets(state.user.id); } catch {}
+  if (isAdmin()) try { reqs = await api.listSponsorRequests(); } catch {}
+  const running = lots.filter(l => l.active && !l.drawn_at), past = lots.filter(l => l.drawn_at || !l.active);
+  openModal(`<h2>Sponzoring a súťaže</h2>
+    <p class="sub">Firmy môžu podporiť anketu Máš rád...? – a hlasujúci za to môžu vyhrať.</p>
+    ${state.lastDraw ? `<div class="win"><b>🏆 Vylosovaný výherca:</b> ${esc(state.lastDraw.email || '')} · ${esc(state.lastDraw.label || '')} · ${state.lastDraw.tickets} tiket(y)<br><span class="small">Kontaktujte výhercu e-mailom. E-mail vidíte iba vy ako admin.</span></div>` : ''}
+    <h3 class="sec">Prebiehajúce losovania</h3>
+    ${running.length ? running.map(lotCard).join('') : '<p class="small">Momentálne neprebieha žiadne losovanie. Novinky nájdete v oznámeniach 🔔.</p>'}
+    <div class="box rules"><b>Ako získať tikety do losovania</b>
+      <ul><li>Podmienka účasti: hlasovať aspoň v jednej sekcii (Máš rád, Doverujete? alebo Ankety) – získate <b>1 tiket</b>.</li>
+      <li>Každá zodpovedaná anketa = <b>+1 tiket</b> navyše.</li>
+      <li>Výhercu vyberá systém náhodne, šanca rastie s počtom tiketov. Výhercu kontaktujeme e-mailom.</li></ul>
+      ${state.user ? (state.profile ? `Vaše tikety: <b style="font-size:18px">${tickets ?? 0}</b>${tickets ? '' : ' – zahlasujte, aby ste sa zapojili.'}` : '<button class="btn primary" data-act="profile">Dokončiť registráciu</button>') : '<button class="btn primary" data-act="login">Prihlásiť sa a hrať</button>'}
+    </div>
+    ${past.length ? `<h3 class="sec">Ukončené losovania</h3>${past.map(lotCard).join('')}` : ''}
+    <h3 class="sec">Možnosti sponzoringu pre firmy</h3>
+    <div class="ideas">${SPONSOR_IDEAS.map(([t, d]) => `<div class="idea"><b>${t}</b>${d}</div>`).join('')}</div>
+    <p class="small">Sponzorovaný obsah je vždy zreteľne označený. Osobné údaje hlasujúcich partnerom nikdy neposkytujeme – iba súhrnné, anonymné čísla.</p>
+    <form class="box" id="spForm"><h3>Mám záujem o sponzoring</h3>
+      <div class="row2"><div class="field"><input type="text" id="spc" required minlength="2" maxlength="120" placeholder="Názov firmy" style="width:100%;border:1px solid var(--line);border-radius:10px;padding:9px 12px;background:var(--field)"></div>
+      <div class="field"><input type="email" id="spe" required maxlength="160" placeholder="Kontaktný e-mail"></div></div>
+      <div class="field"><select id="spo" aria-label="Forma sponzoringu">${SPONSOR_IDEAS.map(([t]) => `<option>${t}</option>`).join('')}<option>Iné</option></select></div>
+      <div class="field"><textarea id="spm" maxlength="2000" placeholder="Správa (nepovinné) – napr. suma, termín, cieľová skupina"></textarea></div>
+      <div class="err" id="spErr"></div><div class="actions"><button class="btn primary">Odoslať</button></div></form>
+    ${isAdmin() ? `
+    <form class="box" id="lotForm"><h3>Admin: nové losovanie</h3>
+      <div class="row2">
+        <div class="field"><label class="l">Výhra</label><input type="text" id="lp" required placeholder="napr. 300 € alebo iPhone"></div>
+        <div class="field"><label class="l">Sponzor (firma)</label><input type="text" id="ls" required></div>
+        <div class="field"><label class="l">Názov súťaže</label><input type="text" id="lt" required placeholder="napr. Vianočné losovanie"></div>
+        <div class="field"><label class="l">Web sponzora</label><input type="text" id="lu" placeholder="https://…"></div>
+        <div class="field"><label class="l">Dátum žrebovania</label><input type="datetime-local" id="le"></div>
+      </div>
+      <div class="field"><label class="l">Popis / pravidlá</label><textarea id="ld"></textarea></div>
+      <label class="check field"><input type="checkbox" id="ln" checked> Poslať oznámenie všetkým: „Hrá sa o … vďaka firme …“</label>
+      <div class="err" id="lErr"></div><div class="actions"><button class="btn primary">Vytvoriť losovanie</button></div></form>
+    <div class="box"><h3>Admin: žiadosti o sponzoring (${reqs.length})</h3>
+      ${reqs.length ? `<table class="atable"><tbody>${reqs.map(r => `<tr><td><b>${esc(r.company)}</b><br><span class="small">${esc(r.email)} · ${esc(r.option || '')} · ${fmtDate(r.created_at)}</span>${r.message ? `<div class="small" style="white-space:pre-line;margin-top:4px">${esc(r.message)}</div>` : ''}</td><td><button class="btn danger" data-sdel="${r.id}">Zmazať</button></td></tr>`).join('')}</tbody></table>` : '<p class="small">Zatiaľ žiadne.</p>'}</div>` : ''}`, true);
+  $('#spForm').addEventListener('submit', async e => {
+    e.preventDefault();
+    try { await api.sponsorRequest({ company: $('#spc').value.trim(), email: $('#spe').value.trim(), option: $('#spo').value, message: $('#spm').value.trim() || null });
+      $('#spForm').innerHTML = '<h3>Ďakujeme!</h3><p class="small">Ozveme sa vám čo najskôr na uvedený e-mail.</p>'; }
+    catch(err){ $('#spErr').textContent = err.message; }
+  });
+  const lf = $('#lotForm');
+  if (lf) lf.addEventListener('submit', async e => {
+    e.preventDefault();
+    const l = { title: $('#lt').value.trim(), prize: $('#lp').value.trim(), sponsor: $('#ls').value.trim(), sponsor_url: safeUrl($('#lu').value.trim()) || null,
+      description: $('#ld').value.trim() || null, ends_at: $('#le').value ? new Date($('#le').value).toISOString() : null, active: true };
+    try {
+      await api.saveLottery(l);
+      if ($('#ln').checked){
+        await api.saveAnnouncement({ title: `Hrá sa o ${l.prize} vďaka firme ${l.sponsor}!`, kind: 'sutaz', active: true,
+          body: `${l.title}. Stačí hlasovať aspoň v jednej sekcii – každá zodpovedaná anketa je tiket navyše.${l.ends_at ? ' Žrebujeme ' + fmtDate(l.ends_at) + '.' : ''} Podrobnosti nájdete pod tlačidlom Sponzoring.` });
+        await loadAnns();
+      }
+      toast('Losovanie vytvorené.'); state.lastDraw = null; openSponsor();
+    } catch(err){ $('#lErr').textContent = err.message; }
+  });
+}
+
+/* ---------- OZNÁMENIA ---------- */
+const readAnn = () => new Set(store.get('mr_ann_read', []));
+async function loadAnns(){
+  try { state.anns = (await api.listAnnouncements()).map(a => ({ ...a, id: Number(a.id) })); } catch { state.anns = []; }
+  renderUser(); renderBanner();
+}
+function unreadAnns(){ const r = readAnn(); return state.anns.filter(a => a.active && !r.has(a.id)); }
+function markRead(ids){ const r = readAnn(); ids.forEach(id => r.add(id)); store.set('mr_ann_read', [...r].slice(-300)); }
+function renderBanner(){
+  const a = unreadAnns()[0]; const el = $('#annBanner');
+  el.innerHTML = a ? `<div class="ann-banner ${esc(a.kind)}"><div><div class="t">${ANN_ICON[a.kind] || ''} ${esc(a.title)}</div>${a.body ? `<div class="b">${esc(a.body)}</div>` : ''}</div><span class="spacer"></span>
+    ${a.kind === 'sutaz' ? '<button class="btn" data-act="sponsor">Podrobnosti</button>' : ''}<button class="btn ghost" data-ann-close="${a.id}">Zavrieť</button></div>` : '';
+}
+function openAnn(){
+  const r = readAnn();
+  openModal(`<h2>Oznámenia</h2><p class="sub">Novinky, súťaže a dôležité správy pre všetkých hlasujúcich.</p>
+    ${isAdmin() ? `<form class="box" id="annForm"><h3>Admin: poslať oznámenie všetkým</h3>
+      <div class="field"><input type="text" id="at" required maxlength="160" placeholder="Nadpis" style="width:100%;border:1px solid var(--line);border-radius:10px;padding:9px 12px;background:var(--field)"></div>
+      <div class="field"><textarea id="ab" maxlength="2000" placeholder="Text oznámenia"></textarea></div>
+      <div class="field"><select id="ak" aria-label="Typ"><option value="info">ℹ️ Informácia</option><option value="sutaz">🎁 Súťaž / sponzoring</option><option value="dolezite">⚠️ Dôležité</option></select></div>
+      <div class="err" id="annErr"></div><div class="actions"><button class="btn primary">Zverejniť</button></div></form>` : ''}
+    ${state.anns.length ? state.anns.map(a => `<div class="ann ${a.active && !r.has(a.id) ? 'unread' : ''}"><div class="t">${ANN_ICON[a.kind] || ''} ${esc(a.title)}</div>
+      <div class="when">${fmtDate(a.created_at)}${a.active ? '' : ' · skryté'}</div>${a.body ? `<div class="b">${esc(a.body)}</div>` : ''}
+      ${isAdmin() ? `<div class="actions" style="margin-top:6px"><button class="btn" data-atoggle="${a.id}">${a.active ? 'Skryť' : 'Zobraziť'}</button><button class="btn danger" data-adel="${a.id}">Zmazať</button></div>` : ''}</div>`).join('') : '<p class="small">Zatiaľ žiadne oznámenia.</p>'}`);
+  markRead(state.anns.map(a => a.id)); renderUser(); renderBanner();
+  const f = $('#annForm');
+  if (f) f.addEventListener('submit', async e => {
+    e.preventDefault();
+    try { await api.saveAnnouncement({ title: $('#at').value.trim(), body: $('#ab').value.trim() || null, kind: $('#ak').value, active: true }); await loadAnns(); toast('Oznámenie zverejnené.'); openAnn(); }
+    catch(err){ $('#annErr').textContent = err.message; }
+  });
+}
+
+/* ---------- ďalšie udalosti pre nové sekcie ---------- */
+async function onExtraClick(t){
+  const d = t.dataset;
+  if (d.open){ location.hash = detailHash([Number(d.open)]); return true; }
+  if (d.tvote){ onTrustVote(t); return true; }
+  if (d.pvote){ onPollVote(t); return true; }
+  if (d.rm){ const ids = state.detailIds.filter(x => x !== Number(d.rm)); location.hash = detailHash(ids); return true; }
+  if (d.days){ state.days = Number(d.days); document.querySelectorAll('[data-days]').forEach(b => b.classList.toggle('on', b === t)); loadTimeline(); return true; }
+  if (d.bd){ loadBreakdown(Number(d.bd)); return true; }
+  if (d.annClose){ markRead([Number(d.annClose)]); renderUser(); renderBanner(); return true; }
+  const adminAct = async (fn, msg, after) => { try { await fn(); if (msg) toast(msg); await after(); } catch(err){ toast(err.message, true); } };
+  if (d.ptoggle){ const q = state.polls.find(x => x.id === Number(d.ptoggle)); await adminAct(() => api.savePoll({ id: q.id, active: !q.active }), q.active ? 'Anketa uzavretá.' : 'Anketa otvorená.', async () => { state.polls = null; await showAnkety(); }); return true; }
+  if (d.pdel){ if (!confirmClick(t, 'Naozaj?')) return true; await adminAct(() => api.deletePoll(Number(d.pdel)), 'Anketa zmazaná.', async () => { state.polls = null; await showAnkety(); }); return true; }
+  if (d.draw){ if (!confirmClick(t, 'Naozaj vylosovať?')) return true; await adminAct(async () => { state.lastDraw = await api.drawLottery(Number(d.draw)); }, 'Vylosované!', openSponsor); return true; }
+  if (d.ldel){ if (!confirmClick(t, 'Naozaj?')) return true; await adminAct(() => api.deleteLottery(Number(d.ldel)), 'Losovanie zmazané.', openSponsor); return true; }
+  if (d.sdel){ if (!confirmClick(t, 'Naozaj?')) return true; await adminAct(() => api.deleteSponsorRequest(Number(d.sdel)), null, openSponsor); return true; }
+  if (d.atoggle){ const a = state.anns.find(x => x.id === Number(d.atoggle)); await adminAct(() => api.saveAnnouncement({ id: a.id, active: !a.active }), null, async () => { await loadAnns(); openAnn(); }); return true; }
+  if (d.adel){ if (!confirmClick(t, 'Naozaj?')) return true; await adminAct(() => api.deleteAnnouncement(Number(d.adel)), 'Oznámenie zmazané.', async () => { await loadAnns(); openAnn(); }); return true; }
+  if (d.tihide){ const i = state.trustById.get(Number(d.tihide)); await adminAct(() => api.saveTrustItem({ id: i.id, active: !i.active }), null, async () => { await openTrustAdmin(); await refreshTrust(); }); return true; }
+  if (d.tidel){ if (!confirmClick(t, 'Naozaj? Zmaže aj hlasy')) return true; await adminAct(() => api.deleteTrustItem(Number(d.tidel)), 'Zmazané.', async () => { await openTrustAdmin(); await refreshTrust(); }); return true; }
+  switch (d.act){
+    case 'sponsor': closeModal(); openSponsor(); return true;
+    case 'ann': openAnn(); return true;
+    case 'titems': openTrustAdmin(); return true;
+    case 'compare': location.hash = detailHash([...state.cmp]); return true;
+    case 'cmp-clear': state.cmp.clear(); renderTrustRows(); return true;
+  }
+  return false;
+}
+document.addEventListener('change', e => {
+  const t = e.target;
+  if (t.matches('.cmp')){
+    const id = Number(t.dataset.cmp);
+    if (t.checked){ if (state.cmp.size >= 3){ t.checked = false; return toast('Porovnať môžete najviac 3 položky.', true); } state.cmp.add(id); }
+    else state.cmp.delete(id);
+    renderCmpBar();
+  }
+  if (t.id === 'dvAdd' && t.value){ location.hash = detailHash([...state.detailIds, Number(t.value)]); }
+});
+document.addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.dataset?.open) location.hash = detailHash([Number(e.target.dataset.open)]); });
+let resizeT; window.addEventListener('resize', () => { clearTimeout(resizeT); resizeT = setTimeout(drawTimeline, 150); });
+window.addEventListener('hashchange', route);
+
 /* ---------------- udalosti ---------------- */
 document.addEventListener('click', async e => {
-  const t = e.target.closest('button, [data-close]');
+  const t = e.target.closest('button, [data-close], [data-open], [data-act]');
   if (e.target.id === 'modal') return closeModal();
   if (!t) return;
   if (t.hasAttribute('data-close')) return closeModal();
+  if (await onExtraClick(t)) return;
   if (t.dataset.vote) return onVote(t);
   if (t.dataset.cat){ state.cat = t.dataset.cat; renderChips(); renderList(); return; }
   if (t.dataset.login){
@@ -702,7 +1484,7 @@ document.addEventListener('click', async e => {
       const next = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
       document.documentElement.dataset.theme = next;
       try { localStorage.setItem('mr_theme', next); } catch {}
-      return renderUser();
+      renderUser(); if (state.tl) drawTimeline(); return;
     }
   }
 });
@@ -714,9 +1496,9 @@ $('#sort').addEventListener('change', e => { state.sort = e.target.value; render
 try {
   api = DEMO ? makeDemoApi() : await makeSupabaseApi();
   await Promise.all([loadAuth(), loadPersons()]);
-  render();
+  render(); route(); loadAnns();
   if (state.user && !state.profile) openProfile();
-  api.onAuth(async () => { await loadAuth(); render(); if (state.user && !state.profile) openProfile(); });
+  api.onAuth(async () => { await loadAuth(); render(); route(); if (state.user && !state.profile) openProfile(); });
 } catch(err){
   console.error(err);
   $('#list').innerHTML = `<div class="empty">Nepodarilo sa načítať dáta: ${esc(err.message)}</div>`;

@@ -83,14 +83,15 @@
 
   /* list */
   .list{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;margin-bottom:40px}
-  .row{display:grid;grid-template-columns:40px 2.2fr 48px 110px 140px 170px;align-items:center;gap:10px;padding:7px 14px;border-top:1px solid var(--line)}
+  .row{display:grid;grid-template-columns:40px 1.6fr 60px 1.3fr 140px 170px;align-items:center;gap:10px;padding:7px 14px;border-top:1px solid var(--line)}
   .row.head{border-top:0;background:var(--head);font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;padding-top:9px;padding-bottom:9px}
   .row:not(.head):hover{background:var(--hover)}
   .rank{font-weight:800;color:var(--muted);font-variant-numeric:tabular-nums}
   .row:not(.head) .rank.top{color:var(--accent)}
   .last{font-weight:700;font-size:13.5px}
   .nick{font-weight:600;color:var(--accent)}
-  .detail{display:block;font-weight:500;font-size:11.5px;color:var(--muted)}
+  .detail{display:block;font-weight:500;font-size:11.5px;color:var(--muted);margin-top:2px}
+  .gen{font-size:12.5px;color:var(--muted)}
   .age{font-variant-numeric:tabular-nums}
   .tag{display:inline-block;font-size:11px;font-weight:700;padding:2px 8px;border-radius:99px;background:var(--accent-soft);color:var(--accent)}
   .votes{display:flex;gap:6px}
@@ -118,7 +119,7 @@
     .rank{grid-area:rank;align-self:start;padding-top:2px}
     .namecell{grid-area:name}
     .meta{grid-area:meta;display:flex;flex-wrap:wrap;gap:4px 8px;align-items:center;color:var(--muted);font-size:13px}
-    .row .age,.row .cat{display:none}
+    .row .gen,.row .cat{display:none}
     .votes{grid-area:votes}
     .chart{grid-area:chart;align-self:start}
     .search{width:100%}
@@ -206,7 +207,6 @@
         <option value="ratio">Podľa % obľúbenosti</option>
         <option value="votes">Podľa počtu hlasov</option>
         <option value="name">Podľa priezviska</option>
-        <option value="age">Podľa veku</option>
       </select>
     </div>
   </div>
@@ -231,7 +231,7 @@ const CONFIG = {
 };
 const DEMO = !CONFIG.SUPABASE_URL || !CONFIG.SUPABASE_ANON_KEY;
 
-const CATEGORIES = ['Politik','Influencer','YouTuber','Spevák','Herec','Športovec','Moderátor','Komik','Iné'];
+const CATEGORIES = ['Politik','Influencer','TikToker','YouTuber','Spevák','Herec','Športovec','Moderátor','Komik','Iné'];
 const REGIONS = ['Bratislavský','Trnavský','Trenčiansky','Nitriansky','Žilinský','Banskobystrický','Prešovský','Košický','Zahraničie'];
 
 const SEED = [
@@ -284,6 +284,7 @@ function fullName(p){
   const parts = [p.first_name, p.nickname && (p.first_name || p.last_name) ? '„' + p.nickname + '“' : null, p.last_name].filter(Boolean);
   return parts.length ? parts.join(' ') : (p.nickname || '');
 }
+function genderLabel(p){ return p.gender === 'Ž' ? 'žena' : p.gender === 'M' ? 'muž' : '–'; }
 function sortKey(p){ return p.last_name || p.nickname || p.first_name || ''; }
 function nameHTML(p){
   if (!p.first_name && !p.last_name) return `<span class="last">${esc(p.nickname)}</span>`;
@@ -389,7 +390,7 @@ async function makeSupabaseApi(){
     async myVotes(uid){ return chk(await sb.from('votes').select('person_id,value').eq('user_id', uid).eq('is_test', false)); },
     async vote(uid, isAdmin, pid, value){ chk(await sb.rpc('cast_vote', { p_person_id: pid, p_value: value })); },
     async savePerson(p){
-      const row = { last_name:p.last_name, first_name:p.first_name, nickname:p.nickname, birth_year:p.birth_year, birth_date:p.birth_date, category:p.category, detail:p.detail, approved:p.approved };
+      const row = { last_name:p.last_name, first_name:p.first_name, nickname:p.nickname, birth_year:p.birth_year, birth_date:p.birth_date, category:p.category, detail:p.detail, approved:p.approved, gender:p.gender };
       if (p.id) chk(await sb.from('persons').update(row).eq('id', p.id));
       else chk(await sb.from('persons').insert(row));
     },
@@ -462,7 +463,7 @@ function renderList(){
   const list = sorted(state.persons.filter(p =>
     (state.cat === 'all' || p.category === state.cat) &&
     (!q || `${p.last_name || ''} ${p.first_name || ''} ${p.nickname || ''} ${p.detail || ''}`.toLocaleLowerCase('sk').includes(q))));
-  const head = `<div class="row head"><div>#</div><div>Meno a priezvisko</div><div>Vek</div><div>Kategória</div><div>Hlasuj</div><div>Pomer</div></div>`;
+  const head = `<div class="row head"><div>#</div><div>Meno a priezvisko</div><div>Pohlavie</div><div>Kategória</div><div>Hlasuj</div><div>Pomer</div></div>`;
   if (!list.length){ $('#list').innerHTML = head + `<div class="empty">Nenašli sa žiadne osobnosti.</div>`; return; }
   $('#list').innerHTML = head + list.map((p, i) => {
     const mine = state.myVotes.get(p.id);
@@ -472,10 +473,10 @@ function renderList(){
     const age = ageOf(p);
     return `<div class="row">
       <div class="rank ${i < 3 && state.sort === 'score' ? 'top' : ''}">${i + 1}.</div>
-      <div class="namecell">${nameHTML(p)}${p.detail ? `<span class="detail">${esc(p.detail)}</span>` : ''}</div>
-      <div class="age">${age ?? '–'}</div>
-      <div class="cat"><span class="tag">${esc(p.category)}</span></div>
-      <div class="meta">${age != null ? `<span>${age} r.</span>` : ''}<span class="tag">${esc(p.category)}</span></div>
+      <div class="namecell">${nameHTML(p)}</div>
+      <div class="gen">${genderLabel(p)}</div>
+      <div class="cat"><span class="tag">${esc(p.category)}</span>${p.detail ? `<span class="detail">${esc(p.detail)}</span>` : ''}</div>
+      <div class="meta"><span>${genderLabel(p)}</span><span class="tag">${esc(p.category)}</span>${p.detail ? `<span class="detail" style="flex-basis:100%">${esc(p.detail)}</span>` : ''}</div>
       <div class="votes">
         <button class="thumb up ${mine === 1 ? 'chosen' : ''}" data-vote="1" data-id="${p.id}" ${locked ? 'disabled' : ''} title="Páči sa mi" aria-label="Palec hore pre ${esc(fullName(p))}">${ICON_THUMB}<span>${p.up}</span></button>
         <button class="thumb down ${mine === -1 ? 'chosen' : ''}" data-vote="-1" data-id="${p.id}" ${locked ? 'disabled' : ''} title="Nepáči sa mi" aria-label="Palec dole pre ${esc(fullName(p))}">${ICON_THUMB}<span>${p.down}</span></button>
@@ -580,6 +581,7 @@ function personForm(p = {}){
       <div class="field"><label class="l">Rok narodenia</label><input type="number" id="pby" min="1900" max="${new Date().getFullYear()}" value="${p.birth_year || ''}"></div>
       <div class="field"><label class="l">Dátum narodenia (nepovinné)</label><input type="date" id="pbd" value="${p.birth_date || ''}"></div>
       <div class="field"><label class="l">Kategória</label><select id="pcat" required>${CATEGORIES.map(c => `<option ${p.category === c ? 'selected' : ''}>${c}</option>`).join('')}</select></div>
+      <div class="field"><label class="l">Pohlavie</label><select id="pgen"><option value="">neuvedené</option><option value="M" ${p.gender === 'M' ? 'selected' : ''}>muž</option><option value="Ž" ${p.gender === 'Ž' ? 'selected' : ''}>žena</option></select></div>
       <div class="field" style="grid-column:span 2"><label class="l">Strana / šport / platforma</label><input type="text" id="pdet" value="${esc(p.detail || '')}" placeholder="napr. Smer-SD · minister, hokej · NHL, Instagram ≈ 80 tis."></div>
       <div class="field"><label class="l">Stav</label><label class="check" style="margin-top:9px"><input type="checkbox" id="papp" ${p.approved === false ? '' : 'checked'}> Schválená (viditeľná)</label></div>
     </div>
@@ -608,7 +610,7 @@ async function openAdmin(editId){
     <div class="box" style="margin-bottom:0">
       <h3>Osobnosti (${list.length})${pendingCount ? ` · <span class="pill">${pendingCount} čaká na schválenie</span>` : ''}</h3>
       <table class="atable"><thead><tr><th>Meno</th><th>Kategória</th><th>Detail</th><th></th></tr></thead><tbody>
-      ${list.map(p => `<tr class="${p.approved === false ? 'pending' : ''}"><td><b>${esc(fullName(p))}</b>${ageOf(p) != null ? ` <span class="small">${ageOf(p)} r.</span>` : ''}</td><td>${esc(p.category)}</td><td class="small">${esc(p.detail || '')}</td>
+      ${list.map(p => `<tr class="${p.approved === false ? 'pending' : ''}"><td><b>${esc(fullName(p))}</b> <span class="small">${genderLabel(p)}</span></td><td>${esc(p.category)}</td><td class="small">${esc(p.detail || '')}</td>
         <td>${p.approved === false ? `<button class="btn primary" data-approve="${p.id}">Schváliť</button> ` : ''}<button class="btn" data-edit="${p.id}">Upraviť</button> <button class="btn danger" data-del="${p.id}">Zmazať</button></td></tr>`).join('')}
       </tbody></table>
     </div>`, true);
@@ -619,7 +621,7 @@ async function openAdmin(editId){
       last_name: $('#pln').value.trim() || null, first_name: $('#pfn').value.trim() || null,
       nickname: $('#pnick').value.trim() || null, birth_year: Number($('#pby').value) || null,
       birth_date: $('#pbd').value || null, category: $('#pcat').value,
-      detail: $('#pdet').value.trim() || null, approved: $('#papp').checked
+      detail: $('#pdet').value.trim() || null, approved: $('#papp').checked, gender: $('#pgen').value || null
     };
     if (!p.last_name && !p.first_name && !p.nickname){ $('#aErr').textContent = 'Vyplňte meno, priezvisko alebo pseudonym.'; return; }
     if (p.birth_date) p.birth_year = Number(p.birth_date.slice(0, 4));

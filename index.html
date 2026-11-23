@@ -294,7 +294,7 @@
   @media (max-width:640px){.ideas{grid-template-columns:1fr}}
   @media (max-width:640px){
     .user{gap:6px} .user .email{display:none} .user .btn{padding:6px 9px}
-    .sponsor-btn .lbl{display:none}
+    .sponsor-btn .lbl{display:none} .sponsor-btn .sp{display:none}
     .nav .wrap{gap:0;padding:0 10px} .nav a{padding:6px 7px;font-size:13px} .sponsor-btn{padding:5px 9px;font-size:12px}
     .tools-right #dvSearch{flex:1 1 100%}
     .trow .chart-txt{white-space:normal}
@@ -314,11 +314,13 @@
   </div>
 </header>
 <nav class="nav" aria-label="Sekcie"><div class="wrap">
-  <a href="#" data-tab="masrad">Máš rád...?</a>
-  <a href="#dovera" data-tab="dovera">Doverujete?</a>
   <a href="#ankety" data-tab="ankety">Ankety</a>
+  <a href="#dovera" data-tab="politik">Politici</a>
+  <a href="#dovera-media" data-tab="media">Médiá</a>
+  <a href="#dovera-institucie" data-tab="institucia">Inštitúcie</a>
+  <a href="#oblubenost" data-tab="masrad">Obľúbenosť</a>
   <span class="spacer"></span>
-  <button class="sponsor-btn" data-act="sponsor">🎁 Sponzoring<span class="lbl"> a súťaže</span></button>
+  <button class="sponsor-btn" data-act="sponsor">🎁<span class="sp"> Sponzoring</span><span class="lbl"> a súťaže</span></button>
 </div></nav>
 
 <main class="wrap">
@@ -758,6 +760,8 @@ async function openAdmin(editId){
         <button class="btn" data-reset="test">Zmazať testovacie (admin) hlasy</button>
         <button class="btn danger" data-reset="all">Zmazať všetky hlasy</button>
       </div>
+      <p class="small" style="margin:14px 0 8px" id="tuInfo">Testovací používatelia: zisťujem…</p>
+      <button class="btn danger" data-act="del-test-users">Zmazať testovacích používateľov a ich hlasy</button>
     </div>
     <div class="box" style="margin-bottom:0">
       <h3>Osobnosti (${list.length})${pendingCount ? ` · <span class="pill">${pendingCount} čaká na schválenie</span>` : ''}${list.filter(p => p.entity === 'overiť').length ? ` · <span class="pill">${list.filter(p => p.entity === 'overiť').length} na overenie</span>` : ''}</h3>
@@ -780,6 +784,7 @@ async function openAdmin(editId){
     try { await api.savePerson(p); await loadPersons(); render(); openAdmin(); toast(p.id ? 'Zmeny uložené.' : 'Osobnosť pridaná.'); }
     catch(err){ $('#aErr').textContent = err.message; }
   });
+  api.testUsersCount().then(n => { const el = $('#tuInfo'); if (el) el.textContent = `Testovací používatelia (…@test.masrad.sk): ${n}. Ich hlasy sa počítajú do výsledkov ako skutočné.`; }).catch(() => {});
 }
 
 // dvojklikové potvrdenie (alert/confirm v prehliadači nepoužívame)
@@ -950,7 +955,9 @@ function demoExtra(){
     async deleteSponsorRequest(id){ crud(K.sreq).del(id); },
     async listAnnouncements(){ return store.get(K.anns, []).filter(a => a.active || isAdm()); },
     async saveAnnouncement(a){ crud(K.anns).save({ active:true, ...a }); },
-    async deleteAnnouncement(id){ crud(K.anns).del(id); }
+    async deleteAnnouncement(id){ crud(K.anns).del(id); },
+    async testUsersCount(){ return store.get(K.fake, []).length; },
+    async deleteTestUsers(){ return 0; }
   };
 }
 
@@ -981,22 +988,27 @@ function liveExtra(sb, chk){
     async deleteSponsorRequest(id){ chk(await sb.from('sponsor_requests').delete().eq('id', id)); },
     async listAnnouncements(){ return chk(await sb.from('announcements').select('*').order('created_at', { ascending:false }).limit(50)); },
     async saveAnnouncement(a){ const { id, ...row } = a; await upsert('announcements', row, id); },
-    async deleteAnnouncement(id){ chk(await sb.from('announcements').delete().eq('id', id)); }
+    async deleteAnnouncement(id){ chk(await sb.from('announcements').delete().eq('id', id)); },
+    async testUsersCount(){ return chk(await sb.rpc('test_users_count')); },
+    async deleteTestUsers(){ return chk(await sb.rpc('delete_test_users')); }
   };
 }
 
 /* ---------- smerovanie (záložky) ---------- */
+function markNav(key){ document.querySelectorAll('.nav a[data-tab]').forEach(a => a.classList.toggle('on', a.dataset.tab === key)); }
+const KIND_Q = { politik:'Dôverujete politikom?', media:'Dôverujete médiám?', institucia:'Dôverujete inštitúciám?' };
 function route(){
   const h = decodeURIComponent(location.hash.replace(/^#/, ''));
   const tab = (h.startsWith('dovera') || h.startsWith('d-')) ? 'dovera' : h === 'ankety' ? 'ankety' : 'masrad';
   state.tab = tab;
-  document.querySelectorAll('.nav a[data-tab]').forEach(a => a.classList.toggle('on', a.dataset.tab === tab));
+  if (tab !== 'dovera') markNav(tab);
   ['masrad', 'dovera', 'ankety'].forEach(t => { $('#view-' + t).hidden = t !== tab; });
   $('#footer').textContent = FOOT[tab];
   if (tab === 'dovera'){
     if (h === 'dovera-media') state.tkind = 'media';
     else if (h === 'dovera-institucie') state.tkind = 'institucia';
     else if (h === 'dovera') state.tkind = 'politik';
+    markNav(state.tkind);
     state.detailIds = h.startsWith('d-') ? [...new Set(h.slice(2).split('-').map(Number).filter(Boolean))].slice(0, 3) : null;
     showDovera();
   } else if (tab === 'ankety') showAnkety();
@@ -1012,11 +1024,11 @@ async function showDovera(){
   if (!el.dataset.ready){
     el.dataset.ready = '1';
     el.innerHTML = `
-      <section class="hero"><h1>Doverujete?</h1>
-        <p>Dôverujete politikom, médiám a inštitúciám? Hlas môžete kedykoľvek zmeniť alebo zrušiť (kliknite znova na zvolený palec). Kliknutím na názov uvidíte vývoj dôvery v čase a rozdelenie podľa skupín.</p></section>
+      <section class="hero"><h1 id="dvTitle">Dôverujete?</h1>
+        <p>Hlas môžete kedykoľvek zmeniť alebo zrušiť (kliknite znova na zvolený palec). Kliknutím na názov uvidíte vývoj dôvery v čase a rozdelenie podľa skupín.</p></section>
       <div id="dvSettle"></div>
       <div id="dvList">
-        <div class="toolbar"><div class="chips" id="dvChips"></div>
+        <div class="toolbar"><div class="small" id="dvChips"></div>
           <div class="tools-right">
             <input class="search" id="dvSearch" type="search" placeholder="Hľadať…" aria-label="Hľadať">
             <select class="sort" id="dvSort" aria-label="Zoradiť">
@@ -1058,14 +1070,15 @@ function trustThumbs(i){
 }
 function renderTrustList(){
   const counts = {}; state.trust.filter(i => i.active).forEach(i => counts[i.kind] = (counts[i.kind] || 0) + 1);
-  $('#dvChips').innerHTML = Object.keys(KIND_LABEL).map(k => `<a class="chip ${state.tkind === k ? 'on' : ''}" href="${KIND_HASH[k]}">${KIND_LABEL[k]}<span class="n">${counts[k] || 0}</span></a>`).join('');
+  $('#dvChips').textContent = `${counts[state.tkind] || 0} položiek`;
+  $('#dvTitle').textContent = KIND_Q[state.tkind];
   $('#dvAdmin').innerHTML = isAdmin() ? `<button class="btn" data-act="titems">Spravovať položky</button>` : '';
   renderTrustRows();
 }
 function renderTrustRows(){
   const q = (state.tq || '').trim().toLocaleLowerCase('sk');
   const list = trustSorted(state.trust.filter(i => i.kind === state.tkind && i.active && (!q || `${i.name} ${i.detail || ''}`.toLocaleLowerCase('sk').includes(q))));
-  const head = `<div class="row trow head"><div></div><div>#</div><div>${KIND_LABEL[state.tkind]}</div><div>Doverujete?</div><div>Dôvera</div></div>`;
+  const head = `<div class="row trow head"><div></div><div>#</div><div>${KIND_LABEL[state.tkind]}</div><div>Dôverujete?</div><div>Dôvera</div></div>`;
   $('#dvRows').innerHTML = head + (list.length ? list.map((i, n) => {
     const t = i.up + i.down, pct = pctOf(i.up, i.down);
     return `<div class="row trow">
@@ -1090,6 +1103,9 @@ function renderDetail(){
   if (!ids.length){ location.hash = KIND_HASH[state.tkind] || '#dovera'; return; }
   state.detailIds = ids; state.cmp = new Set(ids);
   const items = ids.map(id => state.trustById.get(id));
+  const kinds = new Set(items.map(i => i.kind));
+  if (kinds.size === 1){ state.tkind = items[0].kind; markNav(state.tkind); } else markNav(null);
+  $('#dvTitle').textContent = kinds.size === 1 ? KIND_Q[items[0].kind] : 'Porovnanie dôvery';
   if (!ids.includes(state.bdId)) state.bdId = ids[0];
   const opts = Object.keys(KIND_LABEL).map(k => `<optgroup label="${KIND_LABEL[k]}">${state.trust.filter(i => i.kind === k && i.active && !ids.includes(i.id)).sort((a, b) => collator.compare(a.name, b.name)).map(i => `<option value="${i.id}">${esc(i.name)}</option>`).join('')}</optgroup>`).join('');
   const periods = [[30, '30 dní'], [90, '90 dní'], [365, '1 rok'], [3650, 'Všetko']];
@@ -1313,7 +1329,7 @@ async function openSponsor(){
     <h3 class="sec">Prebiehajúce losovania</h3>
     ${running.length ? running.map(lotCard).join('') : '<p class="small">Momentálne neprebieha žiadne losovanie. Novinky nájdete v oznámeniach 🔔.</p>'}
     <div class="box rules"><b>Ako získať tikety do losovania</b>
-      <ul><li>Podmienka účasti: hlasovať aspoň v jednej sekcii (Máš rád, Doverujete? alebo Ankety) – získate <b>1 tiket</b>.</li>
+      <ul><li>Podmienka účasti: hlasovať aspoň v jednej sekcii (Ankety, Politici, Médiá, Inštitúcie alebo Obľúbenosť) – získate <b>1 tiket</b>.</li>
       <li>Každá zodpovedaná anketa = <b>+1 tiket</b> navyše.</li>
       <li>Výhercu vyberá systém náhodne, šanca rastie s počtom tiketov. Výhercu kontaktujeme e-mailom.</li></ul>
       ${state.user ? (state.profile ? `Vaše tikety: <b style="font-size:18px">${tickets ?? 0}</b>${tickets ? '' : ' – zahlasujte, aby ste sa zapojili.'}` : '<button class="btn primary" data-act="profile">Dokončiť registráciu</button>') : '<button class="btn primary" data-act="login">Prihlásiť sa a hrať</button>'}
@@ -1424,6 +1440,13 @@ async function onExtraClick(t){
     case 'titems': openTrustAdmin(); return true;
     case 'compare': location.hash = detailHash([...state.cmp]); return true;
     case 'cmp-clear': state.cmp.clear(); renderTrustRows(); return true;
+    case 'del-test-users': {
+      if (!confirmClick(t, 'Naozaj? Kliknite znova')) return true;
+      try { const n = await api.deleteTestUsers(); toast(`Zmazaných ${n} testovacích používateľov.`);
+        state.trust = null; state.polls = null; await loadAuth(); await loadPersons(); render(); closeModal(); route(); }
+      catch(err){ toast(err.message, true); }
+      return true;
+    }
   }
   return false;
 }

@@ -307,6 +307,22 @@
   .pd-ctx ul{margin:6px 0 0;padding-left:18px;white-space:normal}
   .pd-ctx ul a{color:var(--accent)}
   .pd-top{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+  .pd-bar{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin:16px 0 0}
+  .pd-bar .backlink{margin:0}
+  .pd-grid{display:grid;grid-template-columns:minmax(0,1fr) 230px;gap:24px;align-items:start}
+  .pd-grid .votes{margin-top:14px}
+  .pd-grid .votes .thumb{padding:8px 14px;font-size:14px}
+  .donut{display:flex;flex-direction:column;align-items:center;gap:8px}
+  .donut svg{width:170px;height:170px;display:block}
+  .donut .c-big{font-size:26px;font-weight:800;fill:var(--ink)}
+  .donut .c-small{font-size:11px;fill:var(--muted);font-weight:600}
+  .dleg{display:flex;flex-direction:column;gap:3px;font-size:12.5px;color:var(--muted);width:100%;max-width:200px}
+  .dleg div{display:flex;align-items:center;gap:7px}
+  .dleg .sw{width:10px;height:10px;border-radius:3px;flex:none}
+  .dleg b{color:var(--ink);margin-left:auto;font-variant-numeric:tabular-nums}
+  .dleg .tot{justify-content:center;margin-top:2px}
+  .donut .hint{font-size:12px;color:var(--muted);text-align:center;max-width:200px}
+  @media (max-width:640px){.pd-grid{grid-template-columns:1fr}.donut{margin-top:4px}}
   .pnav{display:flex;align-items:center;gap:4px;margin-left:auto}
   .pnav a,.pnav span.off{padding:5px 10px;border-radius:8px;font-weight:700;font-size:12.5px;text-decoration:none;color:var(--accent);border:1px solid var(--line)}
   .pnav a:hover{background:var(--hover)}
@@ -1290,7 +1306,7 @@ function renderTrustRows(){
       <div class="rank ${n < 3 && state.tsort === 'score' ? 'top' : ''}">${n + 1}.</div>
       <div class="namecell" data-open="${i.id}" role="link" tabindex="0"><span class="last">${esc(i.name)}</span>${i.detail ? `<span class="detail">${esc(i.detail)}</span>` : ''}</div>
       <div class="votes">${trustThumbs(i)}</div>
-      <div class="chart">${bar(i.up, i.down)}<div class="chart-txt" title="${i.unknown || 0}× nepoznám">${pct === null ? 'bez hlasov' : `<b>${pct} %</b> dôvera · ${hlasov(t)}`}${knownTxt(i)}</div></div>
+      <div class="chart">${bar(i.up, i.down)}<div class="chart-txt">${pct === null ? 'bez hlasov' : `<b>${pct} %</b> dôvera · ${hlasov(t)}`}</div></div>
     </div>`;
   }).join('') : `<div class="empty">Nič sa nenašlo.</div>`);
   renderCmpBar();
@@ -1737,27 +1753,42 @@ function myProposals(){
   return mine.length ? `<div style="margin-bottom:10px">${mine.map(q => `<div class="mrowi"><span>${esc(q.question)}</span><b>${USER_STATUS[q.status]}</b></div>`).join('')}</div>` : '';
 }
 const nickErr = err => /nickname_uq|duplicate key/i.test(err.message) ? 'Táto prezývka je už obsadená, zvoľte inú.' : /nickname_ok/i.test(err.message) ? 'Prezývka musí mať 3–24 znakov a nesmie obsahovať < > @ /.' : err.message;
+function pollDonut(q, shown){
+  const up = shown ? (q.up || 0) : 0, down = shown ? (q.down || 0) : 0, t = up + down, total = q.total ?? 0;
+  const R = 70, C = 2 * Math.PI * R, GAP = t && up && down ? 3 : 0;
+  const pUp = t ? up / t : 0, lenUp = Math.max(0, pUp * C - GAP), lenDn = Math.max(0, (1 - pUp) * C - GAP);
+  const ring = (len, off, col) => `<circle cx="90" cy="90" r="${R}" fill="none" stroke="${col}" stroke-width="22" stroke-dasharray="${len} ${C - len}" stroke-dashoffset="${-off}" transform="rotate(-90 90 90)"/>`;
+  if (!shown || !t){
+    const msg = !shown ? (state.user ? 'Výsledok uvidíte po zahlasovaní.' : 'Prihláste sa a hlasujte – potom uvidíte výsledok.') : 'Zatiaľ bez hlasov.';
+    return `<div class="donut"><svg viewBox="0 0 180 180" role="img" aria-label="${esc(msg)}"><circle cx="90" cy="90" r="${R}" fill="none" stroke="var(--track)" stroke-width="22"/>
+      <text x="90" y="92" text-anchor="middle" class="c-big">?</text><text x="90" y="114" text-anchor="middle" class="c-small">${hlasov(total)}</text></svg><div class="hint">${msg}</div></div>`;
+  }
+  const pct = Math.round(pUp * 100);
+  return `<div class="donut"><svg viewBox="0 0 180 180" role="img" aria-label="${pct} % áno, ${100 - pct} % nie, ${hlasov(t)}">
+      ${up ? ring(lenUp, GAP / 2, 'var(--up)') : ''}${down ? ring(lenDn, pUp * C + GAP / 2, 'var(--down)') : ''}
+      <text x="90" y="96" text-anchor="middle" class="c-big">${pct} %</text><text x="90" y="116" text-anchor="middle" class="c-small">áno</text></svg>
+    <div class="dleg"><div><span class="sw" style="background:var(--up)"></span>Áno<b>${pct} %</b></div><div><span class="sw" style="background:var(--down)"></span>Nie<b>${100 - pct} %</b></div><div class="tot">${hlasov(t)}</div></div></div>`;
+}
 function renderPollDetail(){
   const el = $('#view-ankety'), q = state.polls.find(x => x.id === state.pollId);
   if (!q){ el.innerHTML = `<a class="backlink" href="#ankety">← Všetky ankety</a><div class="panel"><div class="empty">Anketa sa nenašla alebo ešte nie je zverejnená.</div></div>`; return; }
   const shown = pollShown(q), total = q.total ?? 0, pct = shown ? pctOf(q.up, q.down) : null, ended = pollEnded(q);
   const src = (q.sources || []).filter(s => /^https?:\/\//i.test(s.url || ''));
-  const res = shown
-    ? `${bar(q.up, q.down)}<div class="chart-txt">${pct === null ? 'Zatiaľ bez hlasov.' : `<b>${pct} %</b> áno · <b>${100 - pct} %</b> nie · ${hlasov(total)}`}</div>`
-    : `<div class="bar bar-none"></div><div class="chart-txt">${hlasov(total)} · ${state.user ? 'výsledok a štatistiky uvidíte po zahlasovaní' : 'prihláste sa a hlasujte – potom uvidíte výsledok'}</div>`;
   let nav = publicPollList(); if (!nav.some(x => x.id === q.id)){ const keep = state.pcat; state.pcat = 'all'; nav = publicPollList(); state.pcat = keep; }
   const ix = nav.findIndex(x => x.id === q.id), prev = nav[ix - 1], next = nav[ix + 1];
   state.pnav = { prev: prev && prev.id, next: next && next.id };
   const navLbl = state.pcat === 'mine' ? '⭐ ' : state.pcat !== 'all' && nav.some(x => x.id === q.id) && catsOf(q).includes(state.pcat) ? esc(state.pcat) + ' · ' : '';
   const pnav = ix >= 0 && nav.length > 1 ? `<div class="pnav" aria-label="Prechádzanie ankiet">${prev ? `<a href="#anketa-${prev.id}" title="${esc(prev.question)} (←)">‹ Predošlá</a>` : '<span class="off">‹ Predošlá</span>'}
       <span class="pos">${navLbl}${ix + 1} / ${nav.length}</span>${next ? `<a href="#anketa-${next.id}" title="${esc(next.question)} (→)">Ďalšia ›</a>` : '<span class="off">Ďalšia ›</span>'}</div>` : '';
-  el.innerHTML = `<a class="backlink" href="#ankety">← Všetky ankety</a>
-    <div class="panel"><div class="pd-top"><div class="d">${q.hot && q.active ? '<span class="hot">🔥 Horúca téma</span>' : ''}${catTags(q)}${q.active ? '' : ' <span class="pill">ukončená</span>'}</div>${pnav}</div>
+  el.innerHTML = `<div class="pd-bar"><a class="backlink" href="#ankety">← Všetky ankety</a>${pnav}</div>
+    <div class="panel"><div class="pd-grid"><div>
+      <div class="d">${q.hot && q.active ? '<span class="hot">🔥 Horúca téma</span>' : ''}${catTags(q)}${q.active ? '' : ' <span class="pill">ukončená</span>'}</div>
       <h1 class="pd-q">${esc(q.question)}</h1>${q.description ? `<div class="small">${esc(q.description)}</div>` : ''}
       ${q.context || src.length ? `<div class="pd-ctx">${q.context ? esc(q.context) : ''}${src.length ? `<ul>${src.map(s => `<li><a href="${esc(s.url)}" target="_blank" rel="noopener nofollow">${esc(s.title || s.url)}</a></li>`).join('')}</ul>` : ''}</div>` : ''}
       <div style="margin-top:10px">${pollWhen(q)}</div>
-      <div class="pd-vote">${pollThumbs(q)}<div class="pd-res">${res}</div></div>
+      ${pollThumbs(q)}
       ${isAdmin() ? pollMeta(q) : ''}</div>
+      ${pollDonut(q, shown)}</div></div>
     <div class="panel"><h3>Kto ako hlasoval</h3><p class="small" style="margin:2px 0 12px">Percento odpovedí „áno“ v jednotlivých skupinách. Skupiny s menej ako 3 hlasmi nezobrazujeme.</p><div id="pbd">${shown ? '<div class="small">Načítavam…</div>' : `<div class="small">Rozdelenie podľa pohlavia, veku, kraja a mesta/vidieka uvidíte po zahlasovaní.</div>`}</div></div>
     <div class="panel" id="disc"><h3>Diskusia <span class="small">(${komentarov(q.comments || 0)})</span></h3><div id="cform"></div><div id="clist"><div class="small">Načítavam…</div></div></div>`;
   if (shown) loadPollBreakdown(q.id);

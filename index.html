@@ -303,8 +303,18 @@
   .pd-vote .votes .thumb{padding:8px 14px;font-size:14px}
   .pd-res .bar{height:12px}
   .pd-res .chart-txt{font-size:13px;margin-top:6px;white-space:normal}
-  .pd-ctx{margin-top:12px;font-size:13.5px;white-space:pre-line}
+  .pd-ctx{margin-top:10px;font-size:13px;line-height:1.5;color:var(--muted);white-space:pre-line;max-width:820px}
   .pd-ctx ul{margin:6px 0 0;padding-left:18px;white-space:normal}
+  .pd-ctx ul a{color:var(--accent)}
+  .pd-top{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+  .pnav{display:flex;align-items:center;gap:4px;margin-left:auto}
+  .pnav a,.pnav span.off{padding:5px 10px;border-radius:8px;font-weight:700;font-size:12.5px;text-decoration:none;color:var(--accent);border:1px solid var(--line)}
+  .pnav a:hover{background:var(--hover)}
+  .pnav span.off{color:var(--muted);opacity:.45}
+  .pnav .pos{font-size:12px;color:var(--muted);padding:0 6px;white-space:nowrap}
+  .soon{color:var(--down);font-weight:700}
+  .chip.mine{border-style:dashed}
+  .chip.mine.on{border-style:solid}
   @media (max-width:640px){.pd-vote{grid-template-columns:1fr}}
   .cform textarea{width:100%;min-height:76px;border:1px solid var(--line);border-radius:10px;padding:9px 12px;background:var(--field);font:inherit;resize:vertical}
   .cform .actions{align-items:center}
@@ -582,7 +592,7 @@ function makeDemoApi(){
       const sess = store.get(K.session, {});
       return { ...p, is_admin: !!sess.demoAdmin };
     },
-    async saveProfile(uid, p){ const all = store.get(K.profiles, {}); all[uid] = p; store.set(K.profiles, all); },
+    async saveProfile(uid, p){ const all = store.get(K.profiles, {}); all[uid] = { ...(all[uid] || {}), ...p }; store.set(K.profiles, all); },
     async listAllPersons(){ return persons(); },
     async approvePerson(id){ store.set(K.persons, persons().map(p => p.id === id ? { ...p, approved: true } : p)); },
     async listPersons(){
@@ -1495,17 +1505,19 @@ function renderPollBody(){
   }
   const pub = state.polls.filter(q => q.status === 'aktivna');
   const counts = {}; pub.forEach(q => catsOf(q).forEach(c => counts[c] = (counts[c] || 0) + 1));
-  if (state.pcat !== 'all' && !counts[state.pcat]) state.pcat = 'all';
-  const pubT = q => q.published_at || q.created_at;
-  const SORTS = { new: (a, b) => (pubT(a) < pubT(b) ? 1 : -1), votes: (a, b) => b.total - a.total, comments: (a, b) => (b.comments || 0) - (a.comments || 0),
-    ending: (a, b) => (a.ends_at || '9') < (b.ends_at || '9') ? -1 : 1 };
-  const list = pub.filter(q => state.pcat === 'all' || catsOf(q).includes(state.pcat))
-    .sort((a, b) => (b.active - a.active) || SORTS[state.psort](a, b) || (pubT(a) < pubT(b) ? 1 : -1));
+  const ints = myInterests();
+  if (!state.pcatInit){ state.pcatInit = true; if (ints.length && state.pcat === 'all') state.pcat = 'mine'; }
+  if (state.pcat === 'mine' && !ints.length) state.pcat = 'all';
+  if (state.pcat !== 'all' && state.pcat !== 'mine' && !counts[state.pcat]) state.pcat = 'all';
+  const list = publicPollList();
+  const nMine = pub.filter(q => catsOf(q).some(c => ints.includes(c))).length;
   const extra = Object.keys(counts).filter(c => !POLL_CATS.includes(c));
   $('#pollBody').innerHTML = `<div class="toolbar"><div class="chips">${`<button class="chip ${state.pcat === 'all' ? 'on' : ''}" data-pcat="all">Všetky<span class="n">${pub.length}</span></button>` +
-      [...POLL_CATS, ...extra].filter(c => counts[c]).map(c => `<button class="chip ${state.pcat === c ? 'on' : ''}" data-pcat="${esc(c)}">${esc(c)}<span class="n">${counts[c]}</span></button>`).join('')}</div>
+      (ints.length ? `<button class="chip mine ${state.pcat === 'mine' ? 'on' : ''}" data-pcat="mine" title="${esc(ints.join(', '))}">⭐ Moje témy<span class="n">${nMine}</span></button>` : '') +
+      [...POLL_CATS, ...extra].filter(c => counts[c]).map(c => `<button class="chip ${state.pcat === c ? 'on' : ''}" data-pcat="${esc(c)}">${esc(c)}<span class="n">${counts[c]}</span></button>`).join('') +
+      `<button class="chip mine" data-act="interests">${ints.length ? '✎ Upraviť moje témy' : '⭐ Vybrať moje témy'}</button>`}</div>
       <div class="ptool"><select class="sort" id="psort" aria-label="Zoradiť">${[['new', 'Najnovšie'], ['votes', 'Najviac hlasov'], ['comments', 'Najdiskutovanejšie'], ['ending', 'Čoskoro končia']].map(([k, l]) => `<option value="${k}" ${state.psort === k ? 'selected' : ''}>${l}</option>`).join('')}</select></div></div>
-    <div class="list">${list.length ? list.map(pollRow).join('') : '<div class="empty">Zatiaľ tu nie sú žiadne ankety.</div>'}</div>`;
+    <div class="list">${list.length ? list.map(pollRow).join('') : `<div class="empty">${state.pcat === 'mine' ? 'Vo vašich témach zatiaľ nie sú žiadne ankety.' : 'Zatiaľ tu nie sú žiadne ankety.'}</div>`}</div>`;
 }
 function renderPollList(){ renderPollBody(); }
 function pollContext(q){
@@ -1556,10 +1568,10 @@ function pollRow(q){
   const res = shown
     ? `${bar(q.up, q.down)}<div class="chart-txt">${pct === null ? 'bez hlasov' : `<b>${pct} %</b> áno · ${hlasov(total)}`}</div>`
     : `<div class="bar bar-none"></div><div class="chart-txt">${hlasov(total)} · ${state.user ? 'výsledok po hlasovaní' : 'prihláste sa a hlasujte'}</div>`;
-  const dates = `<span class="pdates">${ended ? `Skončila ${fmtD(q.ends_at)}` : `Od ${fmtD(q.published_at || q.created_at)}${q.ends_at ? ` do ${fmtD(q.ends_at)}` : ''}`}</span>`;
+  const dates = pollWhen(q);
   return `<div class="poll ${q.active ? '' : 'closed'}"><div><div class="q">${q.hot && q.active ? '<span class="hot">🔥 Horúca téma</span>' : ''}<a class="qlink" href="#anketa-${q.id}">${esc(q.question)}</a>${q.active ? '' : ' <span class="pill">ukončená</span>'}</div>
       <div class="d">${catTags(q)}${q.description ? ' ' + esc(q.description) : ''}</div>
-      <div class="pfoot">${dates}<a class="ccount" href="#anketa-${q.id}">💬 ${komentarov(q.comments || 0)}</a><a class="ccount" href="#anketa-${q.id}">📊 Štatistiky</a></div>
+      <div class="pfoot">${dates}<a class="ccount" href="#anketa-${q.id}">💬 ${komentarov(q.comments || 0)}</a></div>
       ${isAdmin() ? pollMeta(q) + `<div class="actions" style="justify-content:flex-start;margin-top:8px"><button class="btn" data-pcats="${q.id}">Kategórie</button><button class="btn" data-phot="${q.id}">${q.hot ? 'Zrušiť 🔥' : '🔥 Horúca'}</button>${q.active ? `<button class="btn" data-pend="${q.id}">Ukončiť teraz</button>` : ''}<button class="btn" data-pext="${q.id}">Predĺžiť o 7 dní</button><button class="btn danger" data-pdel="${q.id}">Zmazať</button></div>` : ''}</div>
     ${pollThumbs(q)}
     <div class="chart">${res}</div></div>`;
@@ -1666,6 +1678,59 @@ async function onPollAdmin(t){
   try { await api.savePoll({ id, ...patch }); toast(msg); await loadPolls(); renderPolls(); } catch(err){ toast(err.message, true); }
   return true;
 }
+const plSk = (n, one, few, many) => n === 1 ? one : (n >= 2 && n <= 4 ? few : many);
+function relTime(iso){
+  const d = (Date.parse(iso) - Date.now()) / 1000, a = Math.abs(d), fut = d > 0;
+  const m = a / 60, h = m / 60;
+  const f = (n, o1, o2, o5, p1, p2) => fut ? `o ${n === 1 ? '' : n + ' '}${plSk(n, o1, o2, o5)}`.replace('o  ', 'o ') : `pred ${n === 1 ? '' : n + ' '}${n === 1 ? p1 : p2}`;
+  if (m < 1) return fut ? 'o chvíľu' : 'pred chvíľou';
+  if (h < 1){ const n = Math.max(1, Math.round(m)); return f(n, 'minútu', 'minúty', 'minút', 'minútou', 'minútami'); }
+  if (h < 24){ const n = Math.max(1, Math.round(h)); return f(n, 'hodinu', 'hodiny', 'hodín', 'hodinou', 'hodinami'); }
+  const dd = Math.round(h / 24);
+  if (dd === 1) return fut ? 'zajtra' : 'včera';
+  if (dd < 7) return f(dd, 'deň', 'dni', 'dní', 'dňom', 'dňami');
+  if (dd < 30){ const n = Math.round(dd / 7); return f(n, 'týždeň', 'týždne', 'týždňov', 'týždňom', 'týždňami'); }
+  if (dd < 365){ const n = Math.round(dd / 30); return f(n, 'mesiac', 'mesiace', 'mesiacov', 'mesiacom', 'mesiacmi'); }
+  const n = Math.round(dd / 365); return f(n, 'rok', 'roky', 'rokov', 'rokom', 'rokmi');
+}
+function pollWhen(q){
+  const start = q.published_at || q.created_at, exact = `${fmtD(start)}${q.ends_at ? ' – ' + fmtD(q.ends_at) : ''}`;
+  if (pollEnded(q)) return `<span class="pdates" title="${exact}">Skončila ${relTime(q.ends_at)}</span>`;
+  const soon = q.ends_at && Date.parse(q.ends_at) - Date.now() < 864e5;
+  return `<span class="pdates" title="${exact}">Začala ${relTime(start)}${q.ends_at ? ` · <span class="${soon ? 'soon' : ''}">končí ${relTime(q.ends_at)}</span>` : ''}</span>`;
+}
+function myInterests(){
+  const p = state.profile && Array.isArray(state.profile.interests) ? state.profile.interests : null;
+  return p || store.get('mr_interests', []);
+}
+async function saveInterests(arr){
+  store.set('mr_interests', arr);
+  if (state.user && state.profile){ await api.saveProfile(state.user.id, { interests: arr }); state.profile.interests = arr; }
+}
+function openInterests(){
+  const cur = myInterests();
+  openModal(`<h2>⭐ Moje témy</h2><p class="sub">Vyberte témy, ktoré vás zaujímajú. Filter „Moje témy“ a tlačidlá Predošlá / Ďalšia potom ukazujú iba ankety z nich.${state.user ? '' : ' Výber sa uloží v tomto prehliadači – po prihlásení aj vo vašom profile.'}</p>
+    <form id="intForm"><div class="catpick field">${POLL_CATS.map(c => `<label><input type="checkbox" value="${esc(c)}" ${cur.includes(c) ? 'checked' : ''}>${esc(c)}</label>`).join('')}</div>
+    <div class="err" id="intErr"></div><div class="actions"><button type="button" class="btn ghost" data-close>Zrušiť</button><button class="btn primary">Uložiť</button></div></form>`);
+  $('#intForm').addEventListener('submit', async e => {
+    e.preventDefault();
+    const arr = [...document.querySelectorAll('#intForm input:checked')].map(i => i.value);
+    try { await saveInterests(arr); state.pcat = arr.length ? 'mine' : 'all'; closeModal(); toast(arr.length ? 'Témy uložené.' : 'Témy zrušené.'); if (state.pollId) renderPollDetail(); else renderPollBody(); }
+    catch(err){ $('#intErr').textContent = err.message; }
+  });
+}
+function matchCat(q){
+  if (state.pcat === 'all') return true;
+  if (state.pcat === 'mine'){ const ints = myInterests(); return catsOf(q).some(c => ints.includes(c)); }
+  return catsOf(q).includes(state.pcat);
+}
+function publicPollList(){
+  const pub = state.polls.filter(q => q.status === 'aktivna');
+  const pubT = q => q.published_at || q.created_at;
+  const SORTS = { new: (a, b) => (pubT(a) < pubT(b) ? 1 : -1), votes: (a, b) => b.total - a.total, comments: (a, b) => (b.comments || 0) - (a.comments || 0),
+    ending: (a, b) => (a.ends_at || '9') < (b.ends_at || '9') ? -1 : 1 };
+  return pub.filter(matchCat).sort((a, b) => (b.active - a.active) || SORTS[state.psort](a, b) || (pubT(a) < pubT(b) ? 1 : -1));
+}
 const catsOf = q => (Array.isArray(q.categories) && q.categories.length) ? q.categories : [q.category || 'Iné'];
 function myProposals(){
   const mine = (state.polls || []).filter(q => q.mine && q.status !== 'aktivna');
@@ -1680,12 +1745,18 @@ function renderPollDetail(){
   const res = shown
     ? `${bar(q.up, q.down)}<div class="chart-txt">${pct === null ? 'Zatiaľ bez hlasov.' : `<b>${pct} %</b> áno · <b>${100 - pct} %</b> nie · ${hlasov(total)}`}</div>`
     : `<div class="bar bar-none"></div><div class="chart-txt">${hlasov(total)} · ${state.user ? 'výsledok a štatistiky uvidíte po zahlasovaní' : 'prihláste sa a hlasujte – potom uvidíte výsledok'}</div>`;
+  let nav = publicPollList(); if (!nav.some(x => x.id === q.id)){ const keep = state.pcat; state.pcat = 'all'; nav = publicPollList(); state.pcat = keep; }
+  const ix = nav.findIndex(x => x.id === q.id), prev = nav[ix - 1], next = nav[ix + 1];
+  state.pnav = { prev: prev && prev.id, next: next && next.id };
+  const navLbl = state.pcat === 'mine' ? '⭐ ' : state.pcat !== 'all' && nav.some(x => x.id === q.id) && catsOf(q).includes(state.pcat) ? esc(state.pcat) + ' · ' : '';
+  const pnav = ix >= 0 && nav.length > 1 ? `<div class="pnav" aria-label="Prechádzanie ankiet">${prev ? `<a href="#anketa-${prev.id}" title="${esc(prev.question)} (←)">‹ Predošlá</a>` : '<span class="off">‹ Predošlá</span>'}
+      <span class="pos">${navLbl}${ix + 1} / ${nav.length}</span>${next ? `<a href="#anketa-${next.id}" title="${esc(next.question)} (→)">Ďalšia ›</a>` : '<span class="off">Ďalšia ›</span>'}</div>` : '';
   el.innerHTML = `<a class="backlink" href="#ankety">← Všetky ankety</a>
-    <div class="panel"><div class="d">${q.hot && q.active ? '<span class="hot">🔥 Horúca téma</span>' : ''}${catTags(q)}${q.active ? '' : ' <span class="pill">ukončená</span>'}</div>
+    <div class="panel"><div class="pd-top"><div class="d">${q.hot && q.active ? '<span class="hot">🔥 Horúca téma</span>' : ''}${catTags(q)}${q.active ? '' : ' <span class="pill">ukončená</span>'}</div>${pnav}</div>
       <h1 class="pd-q">${esc(q.question)}</h1>${q.description ? `<div class="small">${esc(q.description)}</div>` : ''}
-      <div class="pdates">${ended ? `Skončila ${fmtD(q.ends_at)}` : `Od ${fmtD(q.published_at || q.created_at)}${q.ends_at ? ` do ${fmtD(q.ends_at)}` : ''}`}</div>
-      <div class="pd-vote">${pollThumbs(q)}<div class="pd-res">${res}</div></div>
       ${q.context || src.length ? `<div class="pd-ctx">${q.context ? esc(q.context) : ''}${src.length ? `<ul>${src.map(s => `<li><a href="${esc(s.url)}" target="_blank" rel="noopener nofollow">${esc(s.title || s.url)}</a></li>`).join('')}</ul>` : ''}</div>` : ''}
+      <div style="margin-top:10px">${pollWhen(q)}</div>
+      <div class="pd-vote">${pollThumbs(q)}<div class="pd-res">${res}</div></div>
       ${isAdmin() ? pollMeta(q) : ''}</div>
     <div class="panel"><h3>Kto ako hlasoval</h3><p class="small" style="margin:2px 0 12px">Percento odpovedí „áno“ v jednotlivých skupinách. Skupiny s menej ako 3 hlasmi nezobrazujeme.</p><div id="pbd">${shown ? '<div class="small">Načítavam…</div>' : `<div class="small">Rozdelenie podľa pohlavia, veku, kraja a mesta/vidieka uvidíte po zahlasovaní.</div>`}</div></div>
     <div class="panel" id="disc"><h3>Diskusia <span class="small">(${komentarov(q.comments || 0)})</span></h3><div id="cform"></div><div id="clist"><div class="small">Načítavam…</div></div></div>`;
@@ -2218,6 +2289,7 @@ async function onExtraClick(t){
     case 'cmp-clear': state.cmp.clear(); renderTrustRows(); return true;
     case 'poll-suggest': closeModal(); openPollSuggest(); return true;
     case 'poll-new': openPollNew(); return true;
+    case 'interests': openInterests(); return true;
     case 'asuser': state.asUser = !state.asUser; store.set('mr_as_user', state.asUser); state.ptab = 'public'; state.miss = null;
       renderUser(); render(); route(); toast(state.asUser ? 'Web teraz vidíte ako bežný používateľ.' : 'Web teraz vidíte ako admin.'); return true;
     case 'del-test-users': {
@@ -2241,6 +2313,12 @@ document.addEventListener('change', e => {
   if (t.dataset.pcatset){ api.savePoll({ id: Number(t.dataset.pcatset), category: t.value }).then(async () => { state.polls = null; await showAnkety(); toast('Kategória zmenená.'); }).catch(err => toast(err.message, true)); }
   if (t.id === 'psort'){ state.psort = t.value; renderPollList(); }
   if (t.id === 'dvAdd' && t.value){ location.hash = detailHash([...state.detailIds, Number(t.value)]); }
+});
+document.addEventListener('keydown', e => {
+  if (state.tab !== 'ankety' || !state.pollId || !state.pnav || !$('#modal').hidden || e.altKey || e.ctrlKey || e.metaKey) return;
+  if (/^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName) || e.target.isContentEditable) return;
+  const to = e.key === 'ArrowLeft' ? state.pnav.prev : e.key === 'ArrowRight' ? state.pnav.next : null;
+  if (to) location.hash = '#anketa-' + to;
 });
 document.addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.dataset?.open) location.hash = detailHash([Number(e.target.dataset.open)]); });
 let resizeT; window.addEventListener('resize', () => { clearTimeout(resizeT); resizeT = setTimeout(drawTimeline, 150); });

@@ -107,7 +107,7 @@
   .thumb:disabled.chosen{cursor:default}
   .chart{display:flex;flex-direction:column;gap:4px;min-width:0}
   .bar{height:8px;border-radius:99px;background:var(--down);overflow:hidden;display:flex}
-  .bar.empty{background:var(--track)}
+  .bar.bar-none{background:var(--track)}
   .bar-up{display:block;height:100%;background:var(--up)}
   .chart-txt{font-size:11.5px;color:var(--muted);line-height:1.2;white-space:nowrap}
   .chart-txt b{color:var(--ink);font-size:12.5px}
@@ -412,7 +412,7 @@ const ICON_FB = '<svg viewBox="0 0 24 24" fill="#fff"><path d="M24 12.07C24 5.4 
 
 function bar(up, down){
   const t = up + down;
-  if (!t) return `<div class="bar empty" role="img" aria-label="bez hlasov"></div>`;
+  if (!t) return `<div class="bar bar-none" role="img" aria-label="bez hlasov"></div>`;
   const share = up / t * 100;
   return `<div class="bar" role="img" aria-label="${Math.round(share)} % palcov hore"><span class="bar-up" style="width:${share.toFixed(1)}%"></span></div>`;
 }

@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="sk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Máš rád...?</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#f5f6f8; --card:#ffffff; --ink:#151a24; --muted:#6a7282; --line:#e4e7ec;
+    --accent:#0b4ea2; --accent-soft:#e7effa;
+    --up:#1f9d55; --up-soft:#e3f5ea; --down:#d63b3b; --down-soft:#fbe7e7; --track:#e9ecf1;
+    --radius:14px; --shadow:0 1px 2px rgba(16,24,40,.05),0 4px 16px rgba(16,24,40,.05);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{font-family:Manrope,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--ink);font-size:15px;line-height:1.45}
+  button,input,select{font:inherit;color:inherit}
+  button{cursor:pointer}
+  .wrap{max-width:1080px;margin:0 auto;padding:0 18px}
+
+  /* header */
+  header{background:var(--card);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:20}
+  header .wrap{display:flex;align-items:center;justify-content:space-between;height:64px;gap:12px}
+  .logo{display:flex;align-items:center;gap:10px;font-weight:800;font-size:20px;letter-spacing:-.02em}
+  .logo-mark{width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,#0b4ea2 0 50%,#d63b3b 50% 100%);display:grid;place-items:center;color:#fff}
+  .logo-mark svg{width:18px;height:18px}
+  .user{display:flex;align-items:center;gap:10px;font-size:14px;color:var(--muted);min-width:0}
+  .user .email{max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .badge{background:#151a24;color:#fff;font-size:11px;font-weight:700;padding:3px 8px;border-radius:99px;letter-spacing:.04em}
+
+  .btn{border:1px solid var(--line);background:var(--card);border-radius:10px;padding:8px 14px;font-weight:600;font-size:14px;transition:background .15s,border-color .15s}
+  .btn:hover{background:#f0f2f5}
+  .btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+  .btn.primary:hover{background:#093f84}
+  .btn.danger{color:var(--down);border-color:#f1c4c4}
+  .btn.danger:hover{background:var(--down-soft)}
+  .btn.ghost{border-color:transparent;background:transparent;color:var(--muted)}
+  .btn.ghost:hover{background:#eef0f3;color:var(--ink)}
+  .btn:disabled{opacity:.55;cursor:not-allowed}
+
+  /* hero */
+  .hero{padding:34px 0 14px}
+  .hero h1{margin:0;font-size:clamp(30px,5vw,46px);font-weight:800;letter-spacing:-.03em}
+  .hero p{margin:6px 0 0;color:var(--muted);max-width:620px}
+
+  .notice{margin:14px 0 0;padding:10px 14px;border-radius:10px;font-size:13.5px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  .notice.demo{display:block;background:#fff7e0;border:1px solid #f3df9e;color:#6b5000}
+  .notice.admin{background:#151a24;color:#e9ecf1}
+  .notice.admin .btn{background:transparent;color:#fff;border-color:#3a4252;padding:5px 10px;font-size:13px}
+  .notice.admin .btn:hover{background:#262d3b}
+  .notice .spacer{flex:1}
+
+  /* toolbar */
+  .toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;margin:22px 0 12px}
+  .chips{display:flex;flex-wrap:wrap;gap:6px}
+  .chip{border:1px solid var(--line);background:var(--card);border-radius:99px;padding:6px 12px;font-size:13.5px;font-weight:600;color:var(--muted)}
+  .chip .n{opacity:.6;font-weight:500;margin-left:4px}
+  .chip:hover{color:var(--ink)}
+  .chip.on{background:var(--ink);border-color:var(--ink);color:#fff}
+  .tools-right{display:flex;gap:8px;flex-wrap:wrap}
+  .search,.sort{border:1px solid var(--line);background:var(--card);border-radius:10px;padding:8px 12px;font-size:14px}
+  .search{width:200px}
+
+  /* list */
+  .list{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;margin-bottom:40px}
+  .row{display:grid;grid-template-columns:48px 1.3fr 1fr 56px 120px 168px 150px;align-items:center;gap:10px;padding:10px 16px;border-top:1px solid var(--line)}
+  .row.head{border-top:0;background:#fafbfc;font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;padding-top:12px;padding-bottom:12px}
+  .row:not(.head):hover{background:#fbfcfd}
+  .rank{font-weight:800;color:var(--muted);font-variant-numeric:tabular-nums}
+  .row:not(.head) .rank.top{color:var(--accent)}
+  .last{font-weight:700}
+  .nick{display:block;font-weight:500;font-size:12.5px;color:var(--muted)}
+  .age{font-variant-numeric:tabular-nums}
+  .tag{display:inline-block;font-size:12px;font-weight:700;padding:3px 9px;border-radius:99px;background:var(--accent-soft);color:var(--accent)}
+  .votes{display:flex;gap:8px}
+  .thumb{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--card);border-radius:10px;padding:6px 10px;font-weight:700;font-size:13.5px;font-variant-numeric:tabular-nums;min-width:72px;justify-content:center;transition:transform .08s,background .15s,border-color .15s}
+  .thumb svg{width:17px;height:17px;flex:none}
+  .thumb.down svg{transform:rotate(180deg) scaleX(-1)}
+  .thumb.up:hover:not(:disabled){background:var(--up-soft);border-color:#a8dcbc;color:var(--up)}
+  .thumb.down:hover:not(:disabled){background:var(--down-soft);border-color:#efb1b1;color:var(--down)}
+  .thumb:active:not(:disabled){transform:scale(.94)}
+  .thumb.chosen.up{background:var(--up);border-color:var(--up);color:#fff}
+  .thumb.chosen.down{background:var(--down);border-color:var(--down);color:#fff}
+  .thumb:disabled:not(.chosen){opacity:.45;cursor:default}
+  .thumb:disabled.chosen{cursor:default}
+  .chart{display:flex;align-items:center;gap:10px}
+  .donut{width:40px;height:40px;flex:none}
+  .chart-txt{font-size:12.5px;color:var(--muted);line-height:1.3}
+  .chart-txt b{display:block;color:var(--ink);font-size:14px}
+  .empty{padding:40px;text-align:center;color:var(--muted)}
+
+  @media (max-width:860px){
+    .row.head{display:none}
+    .row{grid-template-columns:36px 1fr auto;grid-template-areas:"rank name chart" "rank meta chart" "rank votes votes";row-gap:6px;padding:14px}
+    .rank{grid-area:rank;align-self:start;padding-top:2px}
+    .namecell{grid-area:name}
+    .first{display:none}
+    .meta{grid-area:meta;display:flex;flex-wrap:wrap;gap:4px 8px;align-items:center;color:var(--muted);font-size:13px}
+    .row .age,.row .cat{display:none}
+    .votes{grid-area:votes}
+    .chart{grid-area:chart;align-self:start}
+    .search{width:100%}
+    .tools-right{width:100%}
+    .tools-right .search{flex:1}
+  }
+  @media (min-width:861px){ .meta{display:none} }
+
+  /* modal */
+  .modal{position:fixed;inset:0;background:rgba(15,20,30,.45);display:grid;place-items:center;padding:16px;z-index:50}
+  .modal[hidden]{display:none}
+  .dialog{background:var(--card);border-radius:18px;width:100%;max-width:440px;max-height:calc(100vh - 32px);overflow:auto;padding:26px;box-shadow:0 20px 60px rgba(0,0,0,.25);position:relative}
+  .dialog.wide{max-width:760px}
+  .dialog h2{margin:0 0 4px;font-size:22px;letter-spacing:-.02em}
+  .dialog .sub{margin:0 0 18px;color:var(--muted);font-size:14px}
+  .x{position:absolute;top:14px;right:14px;border:0;background:transparent;font-size:22px;line-height:1;color:var(--muted);padding:6px;border-radius:8px}
+  .x:hover{background:#f0f2f5}
+  .oauth{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:11px;border-radius:11px;border:1px solid var(--line);background:#fff;font-weight:700;margin-bottom:10px}
+  .oauth:hover{background:#f7f8fa}
+  .oauth.fb{background:#1877f2;border-color:#1877f2;color:#fff}
+  .oauth.fb:hover{background:#1468d8}
+  .oauth svg{width:20px;height:20px}
+  .or{display:flex;align-items:center;gap:10px;color:var(--muted);font-size:12.5px;margin:14px 0}
+  .or::before,.or::after{content:"";flex:1;height:1px;background:var(--line)}
+  .field{margin-bottom:14px}
+  .field label.l{display:block;font-weight:700;font-size:13.5px;margin-bottom:6px}
+  .field input[type=text],.field input[type=email],.field input[type=number],.field input[type=date],.field select{width:100%;border:1px solid var(--line);border-radius:10px;padding:9px 12px;background:#fff}
+  .field input:focus,.field select:focus,.search:focus,.sort:focus{outline:2px solid #b9cff0;border-color:var(--accent)}
+  .seg{display:flex;gap:8px}
+  .seg label{flex:1;border:1px solid var(--line);border-radius:10px;padding:9px;text-align:center;font-weight:600;cursor:pointer}
+  .seg input{position:absolute;opacity:0;pointer-events:none}
+  .seg label:has(input:checked){border-color:var(--accent);background:var(--accent-soft);color:var(--accent)}
+  .check{display:flex;gap:10px;align-items:flex-start;font-size:13px;color:var(--muted)}
+  .check input{margin-top:3px}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .err{color:var(--down);font-size:13px;min-height:18px;margin:4px 0 8px}
+  .actions{display:flex;gap:8px;justify-content:flex-end;margin-top:6px}
+  .small{font-size:12.5px;color:var(--muted)}
+
+  /* admin table */
+  .atable{width:100%;border-collapse:collapse;font-size:13.5px;margin-top:10px}
+  .atable th,.atable td{text-align:left;padding:7px 8px;border-top:1px solid var(--line)}
+  .atable th{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;border-top:0}
+  .atable td:last-child{text-align:right;white-space:nowrap}
+  .atable .btn{padding:4px 9px;font-size:12.5px}
+  .admin-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+  .admin-grid .field{margin-bottom:10px}
+  .box{border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:16px}
+  .box h3{margin:0 0 10px;font-size:15px}
+  @media (max-width:640px){.admin-grid,.row2{grid-template-columns:1fr}}
+
+  #toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(20px);background:#151a24;color:#fff;padding:11px 18px;border-radius:12px;font-weight:600;font-size:14px;opacity:0;pointer-events:none;transition:all .25s;z-index:60;max-width:calc(100% - 32px)}
+  #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  #toast.err{background:var(--down)}
+  footer{color:var(--muted);font-size:12.5px;text-align:center;padding:0 0 30px}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <div class="logo">
+      <div class="logo-mark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M7 10v12"/><path d="M15 5.88 14 10h5.83a2 2 0 0 1 1.92 2.56l-2.33 8A2 2 0 0 1 17.5 22H4a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h2.76a2 2 0 0 0 1.79-1.11L12 2a3.13 3.13 0 0 1 3 3.88Z"/></svg></div>
+      Máš rád...?
+    </div>
+    <div class="user" id="userArea"></div>
+  </div>
+</header>
+
+<main class="wrap">
+  <section class="hero">
+    <h1>Máš rád...?</h1>
+    <p>Anketa obľúbenosti slovenských osobností. Daj palec hore alebo dole. Každý zaregistrovaný hlasujúci môže za každú osobnosť hlasovať iba raz.</p>
+    <div id="notices"></div>
+  </section>
+
+  <div class="toolbar">
+    <div class="chips" id="chips"></div>
+    <div class="tools-right">
+      <input class="search" id="search" type="search" placeholder="Hľadať meno…" aria-label="Hľadať">
+      <select class="sort" id="sort" aria-label="Zoradiť">
+        <option value="score">Podľa skóre</option>
+        <option value="ratio">Podľa % obľúbenosti</option>
+        <option value="votes">Podľa počtu hlasov</option>
+        <option value="name">Podľa priezviska</option>
+        <option value="age">Podľa veku</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="list" id="list"><div class="empty">Načítavam…</div></div>
+</main>
+
+<footer class="wrap">Skóre = počet 👍 mínus počet 👎. Výsledky sú orientačné a nepredstavujú reprezentatívny prieskum.</footer>
+
+<div class="modal" id="modal" hidden><div class="dialog" id="dialog" role="dialog" aria-modal="true"></div></div>
+<div id="toast" role="status"></div>
+
+<script type="module">
+/* =====================================================================
+   KONFIGURÁCIA – doplňte údaje zo Supabase (Project Settings → API).
+   Kým sú prázdne, web beží v DEMO režime (dáta len v tomto prehliadači).
+   ===================================================================== */
+const CONFIG = {
+  SUPABASE_URL: 'https://svcukiznfrfmwahyvavf.supabase.co',
+  SUPABASE_ANON_KEY: 'sb_publishable_ZKT0Y3MsVpCPhDfDZdPk0w_xta_AiWn', // verejný (publishable) kľúč
+  ENABLE_EMAIL_LOGIN: true // prihlásenie cez odkaz v e-maile ako záloha ku Google/Facebook
+};
+const DEMO = !CONFIG.SUPABASE_URL || !CONFIG.SUPABASE_ANON_KEY;
+
+const CATEGORIES = ['Politik','Influencer','YouTuber','Spevák','Herec','Športovec','Moderátor','Iné'];
+const REGIONS = ['Bratislavský','Trnavský','Trenčiansky','Nitriansky','Žilinský','Banskobystrický','Prešovský','Košický','Zahraničie'];
+
+const SEED = [
+ ['Fico','Robert',null,1964,'1964-09-15','Politik'],['Pellegrini','Peter',null,1975,'1975-10-06','Politik'],
+ ['Čaputová','Zuzana',null,1973,'1973-06-21','Politik'],['Šimečka','Michal',null,1984,'1984-10-15','Politik'],
+ ['Matovič','Igor',null,1973,'1973-05-11','Politik'],['Sulík','Richard',null,1968,'1968-01-12','Politik'],
+ ['Danko','Andrej',null,1974,'1974-12-13','Politik'],['Kiska','Andrej',null,1963,'1963-02-02','Politik'],
+ ['Dzurinda','Mikuláš',null,1955,'1955-02-04','Politik'],['Kaliňák','Robert',null,1971,'1971-05-11','Politik'],
+ ['Blaha','Ľuboš',null,1979,null,'Politik'],['Uhrík','Milan',null,1976,null,'Politik'],
+ ['Sagan','Peter',null,1990,'1990-01-26','Športovec'],['Hamšík','Marek',null,1987,'1987-07-27','Športovec'],
+ ['Vlhová','Petra',null,1995,'1995-06-13','Športovec'],['Chára','Zdeno',null,1977,'1977-03-18','Športovec'],
+ ['Hossa','Marián',null,1979,'1979-01-12','Športovec'],['Slafkovský','Juraj',null,2004,'2004-03-30','Športovec'],
+ ['Škriniar','Milan',null,1995,'1995-02-11','Športovec'],['Cibulková','Dominika',null,1989,'1989-05-06','Športovec'],
+ ['Hantuchová','Daniela',null,1983,'1983-04-23','Športovec'],['Tóth','Matej',null,1983,'1983-02-10','Športovec'],
+ ['Kuzmina','Anastasiya',null,1984,'1984-08-28','Športovec'],['Barteková','Danka',null,1984,'1984-10-19','Športovec'],
+ ['Lobotka','Stanislav',null,1994,'1994-11-25','Športovec'],['Bondra','Peter',null,1968,'1968-02-07','Športovec'],
+ ['Müller','Richard',null,1961,'1961-12-05','Spevák'],['Gombitová','Marika',null,1956,'1956-08-12','Spevák'],
+ ['Kirschner','Jana',null,1978,'1978-12-29','Spevák'],['Nagy','Peter',null,1959,null,'Spevák'],
+ ['Buckingham','Celeste',null,1995,'1995-06-03','Spevák'],['Vrbovský','Patrik','Rytmus',1977,'1977-03-22','Spevák'],
+ ['Dušička','Michal','Majk Spirit',1984,null,'Spevák'],['Peláková','Kristína','Kristína',1987,null,'Spevák'],
+ ['Vášáryová','Emília',null,1942,'1942-05-18','Herec'],['Huba','Martin',null,1943,null,'Herec'],
+ ['Pauhofová','Táňa',null,1983,null,'Herec'],['Latinák','Lukáš',null,1977,null,'Herec'],
+ ['Kukura','Juraj',null,1947,null,'Herec'],['Magálová','Kamila',null,1950,null,'Herec'],
+ ['Štrauch','Daniel','GoGo',1995,null,'YouTuber'],
+];
+
+/* ---------------- pomocné ---------------- */
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const collator = new Intl.Collator('sk');
+const store = (() => {
+  const mem = {};
+  return {
+    get(k, d){ try{ const v = localStorage.getItem(k); if (v != null) return JSON.parse(v); }catch{} return k in mem ? mem[k] : d; },
+    set(k, v){ mem[k] = v; try{ localStorage.setItem(k, JSON.stringify(v)); }catch{} },
+    del(k){ delete mem[k]; try{ localStorage.removeItem(k); }catch{} }
+  };
+})();
+function ageOf(p){
+  const now = new Date();
+  if (p.birth_date){
+    const b = new Date(p.birth_date + 'T00:00:00');
+    let a = now.getFullYear() - b.getFullYear();
+    if (now.getMonth() < b.getMonth() || (now.getMonth() === b.getMonth() && now.getDate() < b.getDate())) a--;
+    return a;
+  }
+  return now.getFullYear() - p.birth_year;
+}
+let toastTimer;
+function toast(msg, isErr){
+  const t = $('#toast'); t.textContent = msg; t.className = 'show' + (isErr ? ' err' : '');
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => t.className = '', 2800);
+}
+
+/* =====================================================================
+   BACKEND: DEMO (localStorage)
+   ===================================================================== */
+function makeDemoApi(){
+  const K = { persons:'mr_persons', votes:'mr_votes', session:'mr_session', profiles:'mr_profiles' };
+  if (!store.get(K.persons)){
+    let s = 7;
+    const rnd = () => (s = (s * 9301 + 49297) % 233280) / 233280;
+    store.set(K.persons, SEED.map((r, i) => ({
+      id: i + 1, last_name:r[0], first_name:r[1], nickname:r[2], birth_year:r[3], birth_date:r[4], category:r[5],
+      seed_up: Math.round(rnd() * 140 + 10), seed_down: Math.round(rnd() * 110 + 5)
+    })));
+  }
+  const persons = () => store.get(K.persons, []);
+  const votes = () => store.get(K.votes, []);
+  return {
+    mode: 'demo',
+    async getUser(){ return store.get(K.session, null); },
+    onAuth(){},
+    async signIn(provider, asAdmin){
+      const id = asAdmin ? 'demo-admin' : 'demo-user';
+      store.set(K.session, { id, email: (asAdmin ? 'admin' : 'hlasujuci') + '@demo.' + provider, demoAdmin: !!asAdmin });
+      location.reload();
+    },
+    async signInEmail(email){ store.set(K.session, { id:'demo-' + email, email }); location.reload(); },
+    async signOut(){ store.del(K.session); location.reload(); },
+    async getProfile(uid){
+      const p = store.get(K.profiles, {})[uid]; if (!p) return null;
+      const sess = store.get(K.session, {});
+      return { ...p, is_admin: !!sess.demoAdmin };
+    },
+    async saveProfile(uid, p){ const all = store.get(K.profiles, {}); all[uid] = p; store.set(K.profiles, all); },
+    async listPersons(){
+      const v = votes();
+      return persons().map(p => ({
+        ...p,
+        up: p.seed_up + v.filter(x => x.person_id === p.id && x.value === 1).length,
+        down: p.seed_down + v.filter(x => x.person_id === p.id && x.value === -1).length
+      }));
+    },
+    async myVotes(uid){ return votes().filter(x => x.user_id === uid && !x.is_test); },
+    async vote(uid, isAdmin, pid, value){
+      const v = votes();
+      if (!isAdmin && v.some(x => x.user_id === uid && x.person_id === pid && !x.is_test))
+        throw new Error('Za túto osobnosť ste už hlasovali.');
+      v.push({ person_id: pid, user_id: uid, value, is_test: !!isAdmin });
+      store.set(K.votes, v);
+    },
+    async savePerson(p){
+      const list = persons();
+      if (p.id){ const i = list.findIndex(x => x.id === p.id); list[i] = { ...list[i], ...p }; }
+      else { p.id = Math.max(0, ...list.map(x => x.id)) + 1; list.push({ ...p, seed_up:0, seed_down:0 }); }
+      store.set(K.persons, list);
+    },
+    async deletePerson(id){
+      store.set(K.persons, persons().filter(x => x.id !== id));
+      store.set(K.votes, votes().filter(x => x.person_id !== id));
+    },
+    async resetVotes(onlyTest){
+      store.set(K.votes, onlyTest ? votes().filter(x => !x.is_test) : []);
+      if (!onlyTest) store.set(K.persons, persons().map(p => ({ ...p, seed_up:0, seed_down:0 })));
+    }
+  };
+}
+
+/* =====================================================================
+   BACKEND: SUPABASE (ostrá prevádzka)
+   ===================================================================== */
+async function makeSupabaseApi(){
+  const { createClient } = await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm');
+  const sb = createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
+  const redirectTo = location.origin + location.pathname;
+  const chk = ({ data, error }) => { if (error) throw new Error(error.message); return data; };
+  return {
+    mode: 'live',
+    async getUser(){ const { data } = await sb.auth.getSession(); const u = data.session?.user; return u ? { id:u.id, email:u.email } : null; },
+    onAuth(cb){ sb.auth.onAuthStateChange((evt) => { if (evt === 'SIGNED_IN' || evt === 'SIGNED_OUT') setTimeout(cb, 0); }); },
+    async signIn(provider){ chk(await sb.auth.signInWithOAuth({ provider, options:{ redirectTo } })); },
+    async signInEmail(email){ chk(await sb.auth.signInWithOtp({ email, options:{ emailRedirectTo: redirectTo } })); },
+    async signOut(){ await sb.auth.signOut(); location.reload(); },
+    async getProfile(uid){ return chk(await sb.from('profiles').select('*').eq('id', uid).maybeSingle()); },
+    async saveProfile(uid, p){
+      const exists = chk(await sb.from('profiles').select('id').eq('id', uid).maybeSingle());
+      if (exists) chk(await sb.from('profiles').update(p).eq('id', uid));
+      else chk(await sb.from('profiles').insert({ id: uid, ...p }));
+    },
+    async listPersons(){ return chk(await sb.from('person_scores').select('*')); },
+    async myVotes(uid){ return chk(await sb.from('votes').select('person_id,value').eq('user_id', uid).eq('is_test', false)); },
+    async vote(uid, isAdmin, pid, value){ chk(await sb.rpc('cast_vote', { p_person_id: pid, p_value: value })); },
+    async savePerson(p){
+      const row = { last_name:p.last_name, first_name:p.first_name, nickname:p.nickname, birth_year:p.birth_year, birth_date:p.birth_date, category:p.category };
+      if (p.id) chk(await sb.from('persons').update(row).eq('id', p.id));
+      else chk(await sb.from('persons').insert(row));
+    },
+    async deletePerson(id){ chk(await sb.from('persons').delete().eq('id', id)); },
+    async resetVotes(onlyTest){ chk(await sb.rpc('reset_votes', { p_only_test: onlyTest })); }
+  };
+}
+
+/* =====================================================================
+   STAV A VYKRESĽOVANIE
+   ===================================================================== */
+const state = { user:null, profile:null, persons:[], myVotes:new Map(), cat:'all', q:'', sort:'score' };
+let api;
+const isAdmin = () => !!state.profile?.is_admin;
+
+const ICON_THUMB = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 10v12"/><path d="M15 5.88 14 10h5.83a2 2 0 0 1 1.92 2.56l-2.33 8A2 2 0 0 1 17.5 22H4a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h2.76a2 2 0 0 0 1.79-1.11L12 2a3.13 3.13 0 0 1 3 3.88Z"/></svg>';
+const ICON_G = '<svg viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="m6.3 14.7 6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg>';
+const ICON_FB = '<svg viewBox="0 0 24 24" fill="#fff"><path d="M24 12.07C24 5.4 18.63 0 12 0S0 5.4 0 12.07C0 18.1 4.39 23.1 10.13 24v-8.44H7.08v-3.49h3.04V9.41c0-3.02 1.8-4.7 4.54-4.7 1.31 0 2.68.24 2.68.24v2.97h-1.5c-1.5 0-1.96.93-1.96 1.89v2.26h3.33l-.53 3.49h-2.8V24C19.62 23.1 24 18.1 24 12.07z"/></svg>';
+
+function donut(up, down){
+  const t = up + down, r = 15.9155;
+  const share = t ? up / t * 100 : 0;
+  return `<svg class="donut" viewBox="0 0 36 36" role="img" aria-label="${t ? Math.round(share) + ' % palcov hore' : 'bez hlasov'}">
+    <circle cx="18" cy="18" r="${r}" fill="none" stroke="${t ? 'var(--down)' : 'var(--track)'}" stroke-width="4.2"/>
+    ${t ? `<circle cx="18" cy="18" r="${r}" fill="none" stroke="var(--up)" stroke-width="4.2" stroke-dasharray="${share.toFixed(2)} 100" transform="rotate(-90 18 18)"/>` : ''}
+  </svg>`;
+}
+
+function sorted(list){
+  const ratio = p => (p.up + p.down) ? p.up / (p.up + p.down) : -1;
+  const by = {
+    score: (a, b) => (b.up - b.down) - (a.up - a.down) || ratio(b) - ratio(a) || (b.up + b.down) - (a.up + a.down),
+    ratio: (a, b) => ratio(b) - ratio(a) || (b.up + b.down) - (a.up + a.down),
+    votes: (a, b) => (b.up + b.down) - (a.up + a.down),
+    name:  () => 0,
+    age:   (a, b) => ageOf(b) - ageOf(a),
+  }[state.sort];
+  return [...list].sort((a, b) => by(a, b) || collator.compare(a.last_name, b.last_name) || collator.compare(a.first_name, b.first_name));
+}
+
+function renderUser(){
+  const el = $('#userArea');
+  if (!state.user){
+    el.innerHTML = `<button class="btn primary" data-act="login">Prihlásiť sa</button>`;
+  } else {
+    el.innerHTML = `${isAdmin() ? '<span class="badge">ADMIN</span>' : ''}
+      <span class="email" title="${esc(state.user.email)}">${esc(state.user.email || '')}</span>
+      <button class="btn ghost" data-act="profile">Profil</button>
+      <button class="btn" data-act="logout">Odhlásiť</button>`;
+  }
+  let n = '';
+  if (api.mode === 'demo') n += `<div class="notice demo">⚠️ <span><b>Demo režim</b> – hlasy a registrácie sa ukladajú iba v tomto prehliadači. Pre ostrú prevádzku doplňte Supabase kľúče (pozri README).</span></div>`;
+  if (isAdmin()) n += `<div class="notice admin"><span><b>Admin:</b> neobmedzené hlasovanie je zapnuté. Vaše hlasy sú označené ako testovacie.</span><span class="spacer"></span><button class="btn" data-act="admin">Správa osobností a hlasov</button></div>`;
+  $('#notices').innerHTML = n;
+}
+
+function renderChips(){
+  const counts = {}; state.persons.forEach(p => counts[p.category] = (counts[p.category] || 0) + 1);
+  const cats = CATEGORIES.filter(c => counts[c]);
+  $('#chips').innerHTML = `<button class="chip ${state.cat === 'all' ? 'on' : ''}" data-cat="all">Všetci<span class="n">${state.persons.length}</span></button>` +
+    cats.map(c => `<button class="chip ${state.cat === c ? 'on' : ''}" data-cat="${esc(c)}">${esc(c)}<span class="n">${counts[c]}</span></button>`).join('');
+}
+
+function renderList(){
+  const q = state.q.trim().toLocaleLowerCase('sk');
+  const list = sorted(state.persons.filter(p =>
+    (state.cat === 'all' || p.category === state.cat) &&
+    (!q || `${p.last_name} ${p.first_name} ${p.nickname || ''}`.toLocaleLowerCase('sk').includes(q))));
+  const head = `<div class="row head"><div>#</div><div>Priezvisko</div><div>Meno</div><div>Vek</div><div>Kategória</div><div>Hlasuj</div><div>Pomer</div></div>`;
+  if (!list.length){ $('#list').innerHTML = head + `<div class="empty">Nenašli sa žiadne osobnosti.</div>`; return; }
+  $('#list').innerHTML = head + list.map((p, i) => {
+    const mine = state.myVotes.get(p.id);
+    const locked = !isAdmin() && mine !== undefined;
+    const t = p.up + p.down;
+    const pct = t ? Math.round(p.up / t * 100) : null;
+    const age = ageOf(p);
+    return `<div class="row">
+      <div class="rank ${i < 3 && state.sort === 'score' ? 'top' : ''}">${i + 1}.</div>
+      <div class="namecell"><span class="last">${esc(p.last_name)}</span>${p.nickname ? `<span class="nick">„${esc(p.nickname)}“</span>` : ''}</div>
+      <div class="first">${esc(p.first_name)}</div>
+      <div class="age">${age}</div>
+      <div class="cat"><span class="tag">${esc(p.category)}</span></div>
+      <div class="meta"><span>${esc(p.first_name)} · ${age} r.</span><span class="tag">${esc(p.category)}</span></div>
+      <div class="votes">
+        <button class="thumb up ${mine === 1 ? 'chosen' : ''}" data-vote="1" data-id="${p.id}" ${locked ? 'disabled' : ''} title="Páči sa mi" aria-label="Palec hore pre ${esc(p.first_name)} ${esc(p.last_name)}">${ICON_THUMB}<span>${p.up}</span></button>
+        <button class="thumb down ${mine === -1 ? 'chosen' : ''}" data-vote="-1" data-id="${p.id}" ${locked ? 'disabled' : ''} title="Nepáči sa mi" aria-label="Palec dole pre ${esc(p.first_name)} ${esc(p.last_name)}">${ICON_THUMB}<span>${p.down}</span></button>
+      </div>
+      <div class="chart">${donut(p.up, p.down)}<div class="chart-txt">${pct === null ? '<b>–</b>bez hlasov' : `<b>${pct} %</b>${t} ${t === 1 ? 'hlas' : (t < 5 ? 'hlasy' : 'hlasov')}`}</div></div>
+    </div>`;
+  }).join('');
+}
+
+function render(){ renderUser(); renderChips(); renderList(); }
+
+/* ---------------- dáta ---------------- */
+async function loadPersons(){ state.persons = (await api.listPersons()).map(p => ({ ...p, id: Number(p.id) })); }
+async function loadAuth(){
+  state.user = await api.getUser();
+  state.profile = state.user ? await api.getProfile(state.user.id) : null;
+  state.myVotes = new Map();
+  if (state.user && state.profile){
+    (await api.myVotes(state.user.id)).forEach(v => state.myVotes.set(Number(v.person_id), v.value));
+  }
+}
+
+/* ---------------- modálne okná ---------------- */
+function openModal(html, wide){
+  const d = $('#dialog'); d.className = 'dialog' + (wide ? ' wide' : '');
+  d.innerHTML = `<button class="x" data-close aria-label="Zavrieť">×</button>` + html;
+  $('#modal').hidden = false;
+}
+function closeModal(){ $('#modal').hidden = true; }
+
+function openLogin(){
+  const demo = api.mode === 'demo';
+  openModal(`
+    <h2>Prihlásenie</h2>
+    <p class="sub">Na hlasovanie sa treba zaregistrovať. Po prihlásení vyplníte krátky profil.</p>
+    <button class="oauth" data-login="google">${ICON_G} Pokračovať cez Google</button>
+    <button class="oauth fb" data-login="facebook">${ICON_FB} Pokračovať cez Facebook</button>
+    ${CONFIG.ENABLE_EMAIL_LOGIN ? `
+      <div class="or">alebo e-mailom</div>
+      <form id="emailForm">
+        <div class="field"><input type="email" id="email" required placeholder="vas@email.sk" aria-label="E-mail"></div>
+        <button class="btn" style="width:100%" type="submit">Poslať prihlasovací odkaz</button>
+      </form>` : ''}
+    ${demo ? `<div class="or">demo</div><button class="btn" style="width:100%" data-login="google" data-admin="1">Prihlásiť ako ADMIN (test)</button>
+      <p class="small" style="margin-top:10px">V demo režime sa Google/Facebook iba simuluje.</p>` : ''}
+    <div class="err" id="loginErr"></div>`);
+  const f = $('#emailForm');
+  if (f) f.addEventListener('submit', async e => {
+    e.preventDefault();
+    try { await api.signInEmail($('#email').value.trim()); if (api.mode === 'live'){ $('#loginErr').style.color = 'var(--up)'; $('#loginErr').textContent = 'Odkaz na prihlásenie sme poslali na váš e-mail.'; } }
+    catch(err){ $('#loginErr').textContent = err.message; }
+  });
+}
+
+function openProfile(){
+  const p = state.profile || {};
+  const y = new Date().getFullYear();
+  const years = []; for (let i = y - 10; i >= 1920; i--) years.push(i);
+  openModal(`
+    <h2>${state.profile ? 'Váš profil' : 'Dokončenie registrácie'}</h2>
+    <p class="sub">Tieto údaje slúžia iba na štatistické vyhodnotenie ankety a nezobrazujú sa verejne.</p>
+    <form id="profileForm">
+      <div class="field"><label class="l">Pohlavie</label>
+        <div class="seg">
+          <label><input type="radio" name="gender" value="muz" ${p.gender === 'muz' ? 'checked' : ''} required>Muž</label>
+          <label><input type="radio" name="gender" value="zena" ${p.gender === 'zena' ? 'checked' : ''}>Žena</label>
+        </div></div>
+      <div class="row2">
+        <div class="field"><label class="l" for="by">Rok narodenia</label>
+          <select id="by" required><option value="">Vyberte…</option>${years.map(v => `<option ${p.birth_year === v ? 'selected' : ''}>${v}</option>`).join('')}</select></div>
+        <div class="field"><label class="l" for="rg">Kraj</label>
+          <select id="rg" required><option value="">Vyberte…</option>${REGIONS.map(r => `<option ${p.region === r ? 'selected' : ''}>${r}</option>`).join('')}</select></div>
+      </div>
+      <div class="field"><label class="l" for="mu">Obec / mesto</label>
+        <input type="text" id="mu" required minlength="2" maxlength="80" value="${esc(p.municipality || '')}" placeholder="napr. Žilina"></div>
+      ${state.profile ? '' : `<label class="check field"><input type="checkbox" required> Súhlasím so spracovaním uvedených údajov na účely vyhodnotenia ankety.</label>`}
+      <div class="err" id="pErr"></div>
+      <div class="actions"><button type="button" class="btn ghost" data-close>Zrušiť</button><button class="btn primary" type="submit">Uložiť</button></div>
+    </form>`);
+  $('#profileForm').addEventListener('submit', async e => {
+    e.preventDefault();
+    const data = {
+      gender: document.querySelector('input[name=gender]:checked')?.value,
+      birth_year: Number($('#by').value), region: $('#rg').value, municipality: $('#mu').value.trim()
+    };
+    try {
+      await api.saveProfile(state.user.id, data);
+      await loadAuth(); closeModal(); render();
+      toast('Profil uložený. Môžete hlasovať!');
+    } catch(err){ $('#pErr').textContent = err.message; }
+  });
+}
+
+function personForm(p = {}){
+  return `<form id="personForm" class="box">
+    <h3>${p.id ? 'Upraviť osobnosť' : 'Pridať osobnosť'}</h3>
+    <input type="hidden" id="pid" value="${p.id || ''}">
+    <div class="admin-grid">
+      <div class="field"><label class="l">Priezvisko</label><input type="text" id="pln" required value="${esc(p.last_name || '')}"></div>
+      <div class="field"><label class="l">Meno</label><input type="text" id="pfn" required value="${esc(p.first_name || '')}"></div>
+      <div class="field"><label class="l">Prezývka (nepovinné)</label><input type="text" id="pnick" value="${esc(p.nickname || '')}"></div>
+      <div class="field"><label class="l">Rok narodenia</label><input type="number" id="pby" required min="1900" max="${new Date().getFullYear()}" value="${p.birth_year || ''}"></div>
+      <div class="field"><label class="l">Dátum narodenia (nepovinné)</label><input type="date" id="pbd" value="${p.birth_date || ''}"></div>
+      <div class="field"><label class="l">Kategória</label><select id="pcat" required>${CATEGORIES.map(c => `<option ${p.category === c ? 'selected' : ''}>${c}</option>`).join('')}</select></div>
+    </div>
+    <div class="err" id="aErr"></div>
+    <div class="actions">${p.id ? '<button type="button" class="btn ghost" data-act="admin">Zrušiť úpravu</button>' : ''}<button class="btn primary" type="submit">${p.id ? 'Uložiť zmeny' : 'Pridať'}</button></div>
+  </form>`;
+}
+
+function openAdmin(editId){
+  const editing = editId ? state.persons.find(p => p.id === editId) : null;
+  const list = [...state.persons].sort((a, b) => collator.compare(a.last_name, b.last_name));
+  openModal(`
+    <h2>Správa osobností a hlasov</h2>
+    <p class="sub">Viditeľné iba pre administrátora.</p>
+    ${personForm(editing || {})}
+    <div class="box">
+      <h3>Hlasy</h3>
+      <p class="small" style="margin:0 0 10px">Pred spustením do prevádzky zmažte testovacie hlasy. „Všetky hlasy“ vynuluje celú anketu.</p>
+      <div class="actions" style="justify-content:flex-start">
+        <button class="btn" data-reset="test">Zmazať testovacie (admin) hlasy</button>
+        <button class="btn danger" data-reset="all">Zmazať všetky hlasy</button>
+      </div>
+    </div>
+    <div class="box" style="margin-bottom:0">
+      <h3>Osobnosti (${list.length})</h3>
+      <table class="atable"><thead><tr><th>Priezvisko</th><th>Meno</th><th>Vek</th><th>Kategória</th><th></th></tr></thead><tbody>
+      ${list.map(p => `<tr><td><b>${esc(p.last_name)}</b>${p.nickname ? ` <span class="small">(${esc(p.nickname)})</span>` : ''}</td><td>${esc(p.first_name)}</td><td>${ageOf(p)}</td><td>${esc(p.category)}</td>
+        <td><button class="btn" data-edit="${p.id}">Upraviť</button> <button class="btn danger" data-del="${p.id}">Zmazať</button></td></tr>`).join('')}
+      </tbody></table>
+    </div>`, true);
+  $('#personForm').addEventListener('submit', async e => {
+    e.preventDefault();
+    const p = {
+      id: Number($('#pid').value) || undefined,
+      last_name: $('#pln').value.trim(), first_name: $('#pfn').value.trim(),
+      nickname: $('#pnick').value.trim() || null, birth_year: Number($('#pby').value),
+      birth_date: $('#pbd').value || null, category: $('#pcat').value
+    };
+    if (p.birth_date) p.birth_year = Number(p.birth_date.slice(0, 4));
+    try { await api.savePerson(p); await loadPersons(); render(); openAdmin(); toast(p.id ? 'Zmeny uložené.' : 'Osobnosť pridaná.'); }
+    catch(err){ $('#aErr').textContent = err.message; }
+  });
+}
+
+// dvojklikové potvrdenie (alert/confirm v prehliadači nepoužívame)
+function confirmClick(btn, label){
+  if (btn.dataset.armed){ return true; }
+  btn.dataset.armed = '1'; const old = btn.textContent; btn.textContent = label || 'Naozaj? Kliknite znova';
+  setTimeout(() => { if (btn.isConnected){ delete btn.dataset.armed; btn.textContent = old; } }, 3500);
+  return false;
+}
+
+/* ---------------- hlasovanie ---------------- */
+async function onVote(btn){
+  const pid = Number(btn.dataset.id), value = Number(btn.dataset.vote);
+  if (!state.user) return openLogin();
+  if (!state.profile) return openProfile();
+  if (!isAdmin() && state.myVotes.has(pid)) return toast('Za túto osobnosť ste už hlasovali.', true);
+  btn.disabled = true;
+  try {
+    await api.vote(state.user.id, isAdmin(), pid, value);
+    const p = state.persons.find(x => x.id === pid);
+    value === 1 ? p.up++ : p.down++;
+    if (!isAdmin()) state.myVotes.set(pid, value);
+    renderList();
+    toast(value === 1 ? '👍 Hlas zaznamenaný' : '👎 Hlas zaznamenaný');
+  } catch(err){
+    toast(err.message, true); btn.disabled = false;
+  }
+}
+
+/* ---------------- udalosti ---------------- */
+document.addEventListener('click', async e => {
+  const t = e.target.closest('button, [data-close]');
+  if (e.target.id === 'modal') return closeModal();
+  if (!t) return;
+  if (t.hasAttribute('data-close')) return closeModal();
+  if (t.dataset.vote) return onVote(t);
+  if (t.dataset.cat){ state.cat = t.dataset.cat; renderChips(); renderList(); return; }
+  if (t.dataset.login){
+    try { await api.signIn(t.dataset.login, !!t.dataset.admin); }
+    catch(err){ const el = $('#loginErr'); if (el) el.textContent = err.message.includes('not enabled') ? 'Tento spôsob prihlásenia ešte nie je zapnutý v Supabase.' : err.message; }
+    return;
+  }
+  if (t.dataset.edit) return openAdmin(Number(t.dataset.edit));
+  if (t.dataset.del){
+    if (!confirmClick(t, 'Naozaj?')) return;
+    try { await api.deletePerson(Number(t.dataset.del)); await loadPersons(); render(); openAdmin(); toast('Osobnosť zmazaná.'); } catch(err){ toast(err.message, true); }
+    return;
+  }
+  if (t.dataset.reset){
+    if (!confirmClick(t)) return;
+    try { await api.resetVotes(t.dataset.reset === 'test'); await loadAuth(); await loadPersons(); render(); openAdmin(); toast('Hlasy zmazané.'); } catch(err){ toast(err.message, true); }
+    return;
+  }
+  switch (t.dataset.act){
+    case 'login': return openLogin();
+    case 'logout': return api.signOut();
+    case 'profile': return openProfile();
+    case 'admin': return openAdmin();
+  }
+});
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('#modal').hidden) closeModal(); });
+$('#search').addEventListener('input', e => { state.q = e.target.value; renderList(); });
+$('#sort').addEventListener('change', e => { state.sort = e.target.value; renderList(); });
+
+/* ---------------- štart ---------------- */
+try {
+  api = DEMO ? makeDemoApi() : await makeSupabaseApi();
+  await Promise.all([loadAuth(), loadPersons()]);
+  render();
+  if (state.user && !state.profile) openProfile();
+  api.onAuth(async () => { await loadAuth(); render(); if (state.user && !state.profile) openProfile(); });
+} catch(err){
+  console.error(err);
+  $('#list').innerHTML = `<div class="empty">Nepodarilo sa načítať dáta: ${esc(err.message)}</div>`;
+}
+</script>
+</body>
+</html>

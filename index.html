@@ -1443,8 +1443,9 @@ function renderDetail(){
         const t = it.up + it.down, pct = pctOf(it.up, it.down);
         return `<div class="tcard"><div class="tc-top"><span class="sw" style="background:var(--s${k + 1})"></span><b title="${esc(it.name)}">${esc(it.name)}</b>${ids.length > 1 ? `<button class="x2" data-rm="${it.id}" title="Odobrať z porovnania" aria-label="Odobrať ${esc(it.name)}">×</button>` : ''}</div>
           <div class="small">${esc(KIND_ONE[it.kind])}${it.detail ? ' · ' + esc(it.detail) : ''}</div>
-          ${donutSVG({ up: it.up, down: it.down, unknown: it.unknown || 0, labels: [TERM(it.kind).up, TERM(it.kind).down], sub: TERM(it.kind).pct, size: 150 })}
-          <div class="votes" style="margin-top:10px;justify-content:center">${trustThumbs(it)}</div></div>`;
+          <div class="tc-mid"><span class="big">${pct === null ? '–' : pct + ' %'}</span><span class="small">${TERM(it.kind).today} · ${hlasov(t)}${knownTxt(it)}</span></div>
+          ${bar(it.up, it.down)}
+          <div class="votes" style="margin-top:10px">${trustThumbs(it)}</div></div>`;
       }).join('')}</div>
       <div class="dtools"><h3>${TERM(items[0].kind).trend}</h3>
         <div class="seg-sm" role="group" aria-label="Obdobie">${periods.map(([d, l]) => `<button data-days="${d}" class="${state.days === d ? 'on' : ''}">${l}</button>`).join('')}</div></div>
@@ -2058,7 +2059,7 @@ async function renderArticle(){
     if (!state.trust){ try { await loadTrust(); } catch {} }
     const its = a.item_ids.map(id => state.trustById?.get(id)).filter(Boolean);
     if (its.length) box.insertAdjacentHTML('beforeend', `<div class="panel"><h3>${esc(TERM(its[0].kind).col)} dnes</h3><div class="cards">${its.map(it => `<div class="tcard"><div class="tc-top"><b>${esc(it.name)}</b></div><div class="small">${esc(KIND_ONE[it.kind])}${it.detail ? ' · ' + esc(it.detail) : ''}</div>
-      ${donutSVG({ up: it.up, down: it.down, unknown: it.unknown || 0, labels: [TERM(it.kind).up, TERM(it.kind).down], sub: TERM(it.kind).pct, size: 130 })}
+      ${(() => { const t = it.up + it.down, pct = t ? Math.round(it.up / t * 100) : null; return `<div class="tc-mid"><span class="big">${pct === null ? '–' : pct + ' %'}</span><span class="small">${TERM(it.kind).today} · ${hlasov(t)}${knownTxt(it)}</span></div>${bar(it.up, it.down)}`; })()}
       <div class="actions" style="justify-content:center"><a class="btn" href="#d-${it.id}">Vývoj v čase a hlasovanie</a></div></div>`).join('')}</div></div>`);
   }
 }

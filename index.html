@@ -345,6 +345,12 @@
   .cmt-b{margin-top:3px;white-space:pre-line;overflow-wrap:anywhere;font-size:13.5px}
   .staff{font-size:10.5px;font-weight:800;padding:1px 6px;border-radius:99px;background:var(--ink);color:var(--onink)}
   .catpick{display:flex;flex-wrap:wrap;gap:6px}
+  .mv{display:block;font-size:10.5px;font-weight:800;line-height:1.1;margin-top:1px}
+  .mv.up{color:var(--up)} .mv.dn{color:var(--down)}
+  .plat{display:inline-block;font-size:10.5px;font-weight:700;padding:1px 6px;border-radius:6px;border:1px solid var(--line);color:var(--muted);margin-left:4px}
+  .leader{margin-top:12px;display:inline-flex;align-items:center;gap:10px;padding:8px 14px;border-radius:12px;background:var(--demo-bg);border:1px solid var(--demo-line);color:var(--demo-ink);font-size:13.5px}
+  .leader b{color:var(--ink)}
+  .cmt-h .who{color:var(--muted);font-size:12px}
   /* články */
   .agrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px;margin:16px 0 30px}
   .acard{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow);display:flex;flex-direction:column;text-decoration:none;color:inherit}
@@ -479,7 +485,8 @@
   <a href="#dovera-novinari" data-tab="novinar" hidden>Novinári</a>
   <a href="#dovera-media" data-tab="media">Médiá</a>
   <a href="#dovera-institucie" data-tab="institucia">Inštitúcie</a>
-  <a href="#oblubenost" data-tab="masrad">Obľúbenosť</a>
+  <a href="#osobnosti" data-tab="masrad">Osobnosti</a>
+  <a href="#influenceri" data-tab="influ">Influenceri</a>
   <a href="#miss" data-tab="miss" class="miss-tab">👑 MISS 2026</a>
   <span class="spacer"></span>
   <button class="sponsor-btn" data-act="sponsor">🎁<span class="sp"> Sponzoring</span><span class="lbl"> a súťaže</span></button>
@@ -490,8 +497,9 @@
   <div id="annBanner"></div>
   <div id="view-masrad">
   <section class="hero">
-    <h1>Máš rád...?</h1>
-    <p>Anketa obľúbenosti slovenských osobností. Daj palec hore alebo dole. Každý zaregistrovaný hlasujúci môže za každú osobnosť hlasovať iba raz.</p>
+    <h1 id="psTitle">Osobnosť roka 2026</h1>
+    <p id="psIntro"></p>
+    <div id="psLeader"></div>
   </section>
 
   <div class="toolbar">
@@ -502,7 +510,7 @@
         <option value="score">Podľa skóre</option>
         <option value="ratio">Podľa % obľúbenosti</option>
         <option value="votes">Podľa počtu hlasov</option>
-        <option value="name">Podľa priezviska</option>
+        <option value="name">Podľa mena</option>
       </select>
     </div>
   </div>
@@ -532,7 +540,16 @@ const CONFIG = {
 };
 const DEMO = !CONFIG.SUPABASE_URL || !CONFIG.SUPABASE_ANON_KEY;
 
-const CATEGORIES = ['Politik','Influencer','TikToker','YouTuber','Spevák','Herec','Športovec','Moderátor','Komik','Iné'];
+const OS_CATS = ['Politik','Herec','Spevák','Športovec','Spisovateľ','Novinár','Moderátor','Komik','Iné'];
+const INF_CATS = ['Cestovanie','Beauty a móda','Live streaming','Gaming','Fitness a zdravie','Humor a zábava','Jedlo a varenie','Rodina a lifestyle','Vzdelávanie a veda','Technológie','Hudba','Podnikanie a financie','Vzťahy a psychológia','Iné'];
+const PLATFORMS = ['YouTube','TikTok','Instagram','Facebook','Twitch','X','Podcast'];
+const CATEGORIES = [...OS_CATS, ...INF_CATS.filter(c => c !== 'Iné')];
+const SEC = { osobnost:{ title:'Osobnosť roka 2026', one:'osobnosť', many:'osobností', hash:'#osobnosti', nav:'masrad', cats:OS_CATS,
+    intro:'Kto je osobnosť roka? Hlasujte palcom hore alebo dole za politikov, hercov, spevákov, športovcov, spisovateľov, novinárov a moderátorov. Vyhráva najvyššie skóre (👍 mínus 👎) – celkovo aj v každej kategórii.' },
+  influencer:{ title:'Influencer roka 2026', one:'influencer', many:'influencerov', hash:'#influenceri', nav:'influ', cats:INF_CATS,
+    intro:'Tvorcovia zo sociálnych sietí – YouTube, TikTok, Instagram, Facebook, Twitch. Hlasujte palcom hore alebo dole. Vyhráva najvyššie skóre (👍 mínus 👎) – celkovo aj v každej kategórii.' } };
+const secOf = p => p.section || (['Influencer','TikToker','YouTuber'].includes(p.category) ? 'influencer' : 'osobnost');
+const PARTY_NAMES = ['Progresívne Slovensko','SMER – sociálna demokracia','Republika','HLAS – sociálna demokracia','Hnutie Slovensko','Sloboda a Solidarita','Kresťanskodemokratické hnutie','Slovenská národná strana','Demokrati','Maďarská aliancia','Sme rodina','Právo na pravdu'];
 const REGIONS = ['Bratislavský','Trnavský','Trenčiansky','Nitriansky','Žilinský','Banskobystrický','Prešovský','Košický','Zahraničie'];
 
 const SEED = [
@@ -631,6 +648,7 @@ function makeDemoApi(){
     async saveProfile(uid, p){ const all = store.get(K.profiles, {}); all[uid] = { ...(all[uid] || {}), ...p }; store.set(K.profiles, all); },
     async listAllPersons(){ return persons(); },
     async approvePerson(id){ store.set(K.persons, persons().map(p => p.id === id ? { ...p, approved: true } : p)); },
+    async personPrev(){ return []; },
     async listPersons(){
       const v = votes();
       return persons().filter(p => p.approved !== false).map(p => ({
@@ -686,6 +704,8 @@ async function makeSupabaseApi(){
       else chk(await sb.from('profiles').insert({ id: uid, ...p }));
     },
     async listPersons(){ return chk(await sb.from('person_scores').select('*')); },
+    async personPrev(){ return chk(await sb.rpc('person_prev', { p_days:7 })); },
+    async trustPrev(){ return chk(await sb.rpc('trust_prev', { p_days:7 })); },
     async listAllPersons(){ return chk(await sb.from('persons').select('*').order('last_name')); },
     async approvePerson(id){ chk(await sb.from('persons').update({ approved: true }).eq('id', id)); },
     async myVotes(uid){ return chk(await sb.from('votes').select('person_id,value').eq('user_id', uid).eq('is_test', false)); },
@@ -705,7 +725,7 @@ async function makeSupabaseApi(){
    ===================================================================== */
 const state = { user:null, profile:null, persons:[], myVotes:new Map(), cat:'all', q:'', sort:'score',
   tab:'masrad', trust:null, trustById:new Map(), tkind:'politik', tq:'', tsort:'ratio', myTrust:new Map(), cmp:new Set(), detailIds:null, days:90, bdId:null, tl:null,
-  polls:null, myPolls:new Map(), pcat:'all', psort:'new', pollId:null, ptab:'public', asUser:false, miss:null, missPage:1, anns:[], lastDraw:null };
+  polls:null, myPolls:new Map(), psec:'osobnost', personPrev:new Map(), trustPrev:new Map(), pcat:'all', psort:'new', pollId:null, ptab:'public', asUser:false, miss:null, missPage:1, anns:[], lastDraw:null };
 let api;
 const realAdmin = () => !!state.profile?.is_admin;
 const isAdmin = () => realAdmin() && !state.asUser;
@@ -722,6 +742,20 @@ function bar(up, down){
   return `<div class="bar" role="img" aria-label="${Math.round(share)} % palcov hore"><span class="bar-up" style="width:${share.toFixed(1)}%"></span></div>`;
 }
 
+function moveArrow(delta){
+  if (!delta) return '';
+  return delta > 0 ? `<span class="mv up" title="Posun za 7 dní">↑${delta}</span>` : `<span class="mv dn" title="Posun za 7 dní">↓${-delta}</span>`;
+}
+// porovná aktuálne poradie s poradím spred 7 dní (rovnaký filter a triedenie); vráti Map id -> posun
+function rankMoves(list, prevMap, sorter){
+  const cur = new Map(list.map((x, i) => [x.id, i]));
+  const withPrev = list.filter(x => { const pv = prevMap.get(x.id); return pv && (pv.up + pv.down) > 0; });
+  if (withPrev.length < 2) return new Map();
+  const prevOrder = sorter(withPrev.map(x => ({ ...x, up: prevMap.get(x.id).up, down: prevMap.get(x.id).down })));
+  const curOrder = sorter(withPrev);
+  const pi = new Map(prevOrder.map((x, i) => [x.id, i])), ci = new Map(curOrder.map((x, i) => [x.id, i]));
+  return new Map(withPrev.map(x => [x.id, pi.get(x.id) - ci.get(x.id)]));
+}
 function sorted(list){
   const ratio = p => (p.up + p.down) ? p.up / (p.up + p.down) : -1;
   const by = {
@@ -759,20 +793,29 @@ function renderUser(){
   $('#notices').innerHTML = n;
 }
 
+const secPersons = () => state.persons.filter(p => secOf(p) === state.psec);
 function renderChips(){
-  const counts = {}; state.persons.forEach(p => counts[p.category] = (counts[p.category] || 0) + 1);
-  const cats = CATEGORIES.filter(c => counts[c]);
-  $('#chips').innerHTML = `<button class="chip ${state.cat === 'all' ? 'on' : ''}" data-cat="all">Všetci<span class="n">${state.persons.length}</span></button>` +
+  const S = SEC[state.psec], all = secPersons();
+  $('#psTitle').textContent = S.title; $('#psIntro').textContent = S.intro;
+  const counts = {}; all.forEach(p => counts[p.category] = (counts[p.category] || 0) + 1);
+  if (state.cat !== 'all' && !counts[state.cat]) state.cat = 'all';
+  const cats = [...S.cats, ...Object.keys(counts).filter(c => !S.cats.includes(c))].filter(c => counts[c]);
+  const lead = (lst) => { const by = [...lst].sort((a, b) => (b.up - b.down) - (a.up - a.down) || (b.up + b.down) - (a.up + a.down)); return by[0] && (by[0].up + by[0].down) ? by[0] : null; };
+  const L = lead(all), LC = state.cat !== 'all' ? lead(all.filter(p => p.category === state.cat)) : null;
+  $('#psLeader').innerHTML = L ? `<div class="leader">🏆 <span>Priebežne vedie: <b>${esc(fullName(L))}</b> (skóre ${L.up - L.down > 0 ? '+' : ''}${L.up - L.down})${LC ? ` · v kategórii ${esc(state.cat)}: <b>${esc(fullName(LC))}</b>` : ''}</span></div>` : '';
+  $('#chips').innerHTML = `<button class="chip ${state.cat === 'all' ? 'on' : ''}" data-cat="all">Všetci<span class="n">${all.length}</span></button>` +
     cats.map(c => `<button class="chip ${state.cat === c ? 'on' : ''}" data-cat="${esc(c)}">${esc(c)}<span class="n">${counts[c]}</span></button>`).join('');
 }
 
 function renderList(){
   const q = state.q.trim().toLocaleLowerCase('sk');
-  const list = sorted(state.persons.filter(p =>
+  const list = sorted(secPersons().filter(p =>
     (state.cat === 'all' || p.category === state.cat) &&
     (!q || `${p.last_name || ''} ${p.first_name || ''} ${p.nickname || ''} ${p.detail || ''}`.toLocaleLowerCase('sk').includes(q))));
-  const head = `<div class="row head"><div>#</div><div>Prezývka · Priezvisko Meno</div><div>Pohlavie</div><div>Kategória</div><div>Hlasuj</div><div>Pomer</div></div>`;
-  if (!list.length){ $('#list').innerHTML = head + `<div class="empty">Nenašli sa žiadne osobnosti.</div>`; return; }
+  const head = `<div class="row head"><div>#</div><div>Prezývka · Priezvisko Meno</div><div>Pohlavie</div><div>${state.psec === 'influencer' ? 'Kategória · siete' : 'Kategória'}</div><div>Hlasuj</div><div>Pomer</div></div>`;
+  if (!list.length){ $('#list').innerHTML = head + `<div class="empty">Nenašli sa žiadne ${SEC[state.psec].many}.</div>`; return; }
+  const moves = state.sort === 'name' ? new Map() : rankMoves(list, state.personPrev, sorted);
+  const plat = p => (p.platforms || []).map(x => `<span class="plat">${esc(x)}</span>`).join('');
   $('#list').innerHTML = head + list.map((p, i) => {
     const mine = state.myVotes.get(p.id);
     const locked = !isAdmin() && mine !== undefined;
@@ -780,11 +823,11 @@ function renderList(){
     const pct = t ? Math.round(p.up / t * 100) : null;
     const age = ageOf(p);
     return `<div class="row">
-      <div class="rank ${i < 3 && state.sort === 'score' ? 'top' : ''}">${i + 1}.</div>
+      <div class="rank ${i < 3 && state.sort === 'score' ? 'top' : ''}">${i + 1}.${moveArrow(moves.get(p.id))}</div>
       <div class="namecell">${nameHTML(p)}</div>
       <div class="gen">${genderLabel(p)}</div>
-      <div class="cat"><span class="tag">${esc(p.category)}</span>${p.detail ? `<span class="detail">${esc(p.detail)}</span>` : ''}</div>
-      <div class="meta"><span>${genderLabel(p)}</span><span class="tag">${esc(p.category)}</span>${p.detail ? `<span class="detail">${esc(p.detail)}</span>` : ''}</div>
+      <div class="cat"><span class="tag">${esc(p.category)}</span>${plat(p)}${p.detail && state.psec !== 'influencer' ? `<span class="detail">${esc(p.detail)}</span>` : ''}</div>
+      <div class="meta"><span>${genderLabel(p)}</span><span class="tag">${esc(p.category)}</span>${plat(p)}${p.detail && state.psec !== 'influencer' ? `<span class="detail">${esc(p.detail)}</span>` : ''}</div>
       <div class="votes">
         <button class="thumb up ${mine === 1 ? 'chosen' : ''}" data-vote="1" data-id="${p.id}" ${locked ? 'disabled' : ''} title="Páči sa mi" aria-label="Palec hore pre ${esc(fullName(p))}">${ICON_THUMB}<span>${p.up}</span></button>
         <button class="thumb down ${mine === -1 ? 'chosen' : ''}" data-vote="-1" data-id="${p.id}" ${locked ? 'disabled' : ''} title="Nepáči sa mi" aria-label="Palec dole pre ${esc(fullName(p))}">${ICON_THUMB}<span>${p.down}</span></button>
@@ -797,7 +840,10 @@ function renderList(){
 function render(){ renderUser(); renderChips(); renderList(); }
 
 /* ---------------- dáta ---------------- */
-async function loadPersons(){ state.persons = (await api.listPersons()).map(p => ({ ...p, id: Number(p.id) })); }
+async function loadPersons(){
+  state.persons = (await api.listPersons()).map(p => ({ ...p, id: Number(p.id), section: secOf(p), platforms: p.platforms || [] }));
+  api.personPrev().then(r => { state.personPrev = new Map(r.map(x => [Number(x.person_id), x])); if (state.tab === 'masrad') renderList(); }).catch(() => {});
+}
 async function loadAuth(){
   state.user = await api.getUser();
   state.profile = state.user ? await api.getProfile(state.user.id) : null;
@@ -851,7 +897,7 @@ function openProfile(){
   const years = []; for (let i = y - 10; i >= 1920; i--) years.push(i);
   openModal(`
     <h2>${state.profile ? 'Váš profil' : 'Dokončenie registrácie'}</h2>
-    <p class="sub">Tieto údaje slúžia iba na štatistické vyhodnotenie ankety a nezobrazujú sa verejne.</p>
+    <p class="sub">Údaje slúžia na štatistiky. Pri vašich komentároch v diskusii sa zobrazí iba prezývka, pohlavie a vek. Kraj, obec a strana sa nikde verejne nezobrazujú.</p>
     <form id="profileForm">
       <div class="field"><label class="l">Pohlavie</label>
         <div class="seg">
@@ -871,6 +917,9 @@ function openProfile(){
       </div>
       <div class="field"><label class="l" for="mu">Obec / mesto</label>
         <input type="text" id="mu" required minlength="2" maxlength="80" value="${esc(p.municipality || '')}" placeholder="napr. Žilina"></div>
+      <div class="field"><label class="l" for="party">Ktorú stranu by ste volili? <span class="small">(nepovinné)</span></label>
+        <select id="party"><option value="">– nechcem uviesť –</option>${PARTY_NAMES.map(n => `<option ${p.party === n ? 'selected' : ''}>${esc(n)}</option>`).join('')}<option value="nevolim" ${p.party === 'nevolim' ? 'selected' : ''}>Nevolím / nechodím voliť</option><option value="neviem" ${p.party === 'neviem' ? 'selected' : ''}>Neviem / nerozhodnutý</option></select>
+        <div class="small" style="margin-top:4px">🔒 Tento údaj vidíte iba vy. Používa sa len v súhrnných štatistikách „Voliči strán“, a to až od 5 ľudí v skupine.</div></div>
       <div class="field"><label class="l" for="nick">Prezývka v diskusii <span class="small">(verejná, nepovinné)</span></label>
         <input type="text" id="nick" minlength="3" maxlength="24" value="${esc(p.nickname || '')}" placeholder="napr. Jano_BA"></div>
       ${state.profile ? '' : `<label class="check field"><input type="checkbox" required> Súhlasím so spracovaním uvedených údajov na účely vyhodnotenia ankety.</label>`}
@@ -887,7 +936,7 @@ function openProfile(){
       gender: document.querySelector('input[name=gender]:checked')?.value,
       settlement: document.querySelector('input[name=settle]:checked')?.value,
       birth_year: Number($('#by').value), region: $('#rg').value, municipality: $('#mu').value.trim(),
-      nickname: $('#nick').value.trim() || null
+      nickname: $('#nick').value.trim() || null, party: $('#party').value || null
     };
     try {
       await api.saveProfile(state.user.id, data);
@@ -907,7 +956,9 @@ function personForm(p = {}){
       <div class="field"><label class="l">Pseudonym / prezývka</label><input type="text" id="pnick" value="${esc(p.nickname || '')}"></div>
       <div class="field"><label class="l">Rok narodenia</label><input type="number" id="pby" min="1900" max="${new Date().getFullYear()}" value="${p.birth_year || ''}"></div>
       <div class="field"><label class="l">Dátum narodenia (nepovinné)</label><input type="date" id="pbd" value="${p.birth_date || ''}"></div>
-      <div class="field"><label class="l">Kategória</label><select id="pcat" required>${CATEGORIES.map(c => `<option ${p.category === c ? 'selected' : ''}>${c}</option>`).join('')}</select></div>
+      <div class="field"><label class="l">Sekcia</label><select id="psec">${[['osobnost', 'Osobnosť roka'], ['influencer', 'Influencer roka']].map(([v, l]) => `<option value="${v}" ${(p.id ? secOf(p) : state.psec) === v ? 'selected' : ''}>${l}</option>`).join('')}</select></div>
+      <div class="field"><label class="l">Kategória</label><select id="pcat" required><optgroup label="Osobnosti">${OS_CATS.map(c => `<option ${p.category === c ? 'selected' : ''}>${c}</option>`).join('')}</optgroup><optgroup label="Influenceri">${INF_CATS.filter(c => c !== 'Iné').map(c => `<option ${p.category === c ? 'selected' : ''}>${c}</option>`).join('')}</optgroup></select></div>
+      <div class="field" style="grid-column:1/-1"><label class="l">Sociálne siete (influenceri)</label><div class="catpick" id="pplat">${PLATFORMS.map(x => `<label><input type="checkbox" value="${x}" ${(p.platforms || []).includes(x) ? 'checked' : ''}>${x}</label>`).join('')}</div></div>
       <div class="field"><label class="l">Pohlavie</label><select id="pgen"><option value="">neuvedené</option><option value="M" ${p.gender === 'M' ? 'selected' : ''}>muž</option><option value="Ž" ${p.gender === 'Ž' ? 'selected' : ''}>žena</option></select></div>
       <div class="field"><label class="l">Typ</label><select id="pent"><option value="osoba" ${(p.entity || 'osoba') === 'osoba' ? 'selected' : ''}>jeden človek</option><option value="skupina" ${p.entity === 'skupina' ? 'selected' : ''}>skupina / značka</option><option value="overiť" ${p.entity === 'overiť' ? 'selected' : ''}>na overenie</option></select></div>
       <div class="field" style="grid-column:span 2"><label class="l">Strana / šport / platforma</label><input type="text" id="pdet" value="${esc(p.detail || '')}" placeholder="napr. Smer-SD · minister, hokej · NHL, Instagram ≈ 80 tis."></div>
@@ -951,7 +1002,8 @@ async function openAdmin(editId){
       last_name: $('#pln').value.trim() || null, first_name: $('#pfn').value.trim() || null,
       nickname: $('#pnick').value.trim() || null, birth_year: Number($('#pby').value) || null,
       birth_date: $('#pbd').value || null, category: $('#pcat').value,
-      detail: $('#pdet').value.trim() || null, approved: $('#papp').checked, gender: $('#pgen').value || null, entity: $('#pent').value
+      detail: $('#pdet').value.trim() || null, approved: $('#papp').checked, gender: $('#pgen').value || null, entity: $('#pent').value,
+      section: $('#psec').value, platforms: [...document.querySelectorAll('#pplat input:checked')].map(i => i.value)
     };
     if (!p.last_name && !p.first_name && !p.nickname){ $('#aErr').textContent = 'Vyplňte meno, priezvisko alebo pseudonym.'; return; }
     if (p.birth_date) p.birth_year = Number(p.birth_date.slice(0, 4));
@@ -1002,7 +1054,7 @@ const ANN_ICON = { info:'ℹ️', sutaz:'🎁', dolezite:'⚠️' };
 const ICON_BELL = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>';
 const FOOT = {
   miss: 'Súťaž je určená iba pre plnoleté ženy. Profily schvaľuje administrátor. Hlasy za kredity sú nevratné.',
-  masrad: 'Skóre = počet 👍 mínus počet 👎. Výsledky sú orientačné a nepredstavujú reprezentatívny prieskum.',
+  masrad: 'Skóre = počet 👍 mínus počet 👎. Šípky ukazujú posun v poradí za posledných 7 dní. Výsledky sú orientačné a nepredstavujú reprezentatívny prieskum.',
   dovera: 'Dôvera = podiel 👍 zo všetkých aktuálnych hlasov. „Nepoznám“ sa do dôvery nezapočítava, ukazuje iba, koľko ľudí položku pozná. Hlas môžete kedykoľvek zmeniť alebo zrušiť. Graf v čase ukazuje stav hlasov na konci každého dňa (UTC).',
   ankety: 'Výsledky ankiet sú orientačné a nepredstavujú reprezentatívny prieskum.',
   clanky: 'Články vychádzajú z hlasovaní na tomto webe. Výsledky sú orientačné a nepredstavujú reprezentatívny prieskum.'
@@ -1075,8 +1127,8 @@ function demoExtra(){
     ];
     const pv = []; polls.forEach(q => { const p = .3 + rnd() * .5; fake.forEach(u => { if (rnd() < .6) pv.push({ poll_id:q.id, user_id:u.id, value: rnd() < p ? 1 : -1 }); }); });
     store.set(K.polls, polls); store.set(K.pv, pv);
-    store.set('mr_pc', [{ id:1, poll_id:1, user_id:'fake-1', author:'Peter_KE', seedLikes:2, body:'Znie to dobre, ale v zdravotníctve si to neviem predstaviť.', created_at:new Date(now - 2 * 864e5).toISOString() },
-      { id:2, poll_id:1, user_id:'fake-2', author:'Zuzka', seedLikes:7, body:'V našej firme to skúšali pol roka a produktivita nepadla.', created_at:new Date(now - 864e5).toISOString() }]);
+    store.set('mr_pc', [{ id:1, poll_id:1, user_id:'fake-1', author:'Peter_KE', gender:'muž', age:41, seedLikes:2, body:'Znie to dobre, ale v zdravotníctve si to neviem predstaviť.', created_at:new Date(now - 2 * 864e5).toISOString() },
+      { id:2, poll_id:1, user_id:'fake-2', author:'Zuzka', gender:'žena', age:29, seedLikes:7, body:'V našej firme to skúšali pol roka a produktivita nepadla.', created_at:new Date(now - 864e5).toISOString() }]);
     store.set(K.lots, [{ id:1, title:'Vianočné losovanie', prize:'300 €', sponsor:'Ukážková firma s.r.o.', sponsor_url:'https://example.com', description:'Hrá sa medzi všetkými, ktorí hlasujú.', ends_at:new Date(now + 20 * 864e5).toISOString(), active:true, drawn_at:null, winner_label:null, created_at:new Date().toISOString() }]);
     store.set(K.anns, [{ id:1, title:'Hrá sa o 300 € vďaka firme Ukážková firma s.r.o.!', body:'Stačí hlasovať aspoň v jednej sekcii. Každá zodpovedaná anketa = tiket navyše.', kind:'sutaz', active:true, created_at:new Date().toISOString() }]);
   }
@@ -1094,6 +1146,10 @@ function demoExtra(){
       const cur = latest(() => true);
       return items().filter(i => i.active || isAdm()).map(i => ({ ...i, up: cur.filter(e => e.item_id === i.id && e.value === 1).length, down: cur.filter(e => e.item_id === i.id && e.value === -1).length, unknown: cur.filter(e => e.item_id === i.id && e.value === 2).length }));
     },
+    async trustPrev(){ const cut = new Date(Date.now() - 7 * 864e5).toISOString(); const m = new Map();
+      evs().filter(e => e.created_at < cut).sort((a, b) => a.created_at < b.created_at ? -1 : 1).forEach(e => m.set(e.item_id + '|' + e.user_id, e));
+      const agg = {}; m.forEach(e => { if (e.value !== 1 && e.value !== -1) return; const a = agg[e.item_id] || (agg[e.item_id] = { item_id: e.item_id, up: 0, down: 0 }); e.value === 1 ? a.up++ : a.down++; });
+      return Object.values(agg); },
     async myTrust(uid){ return latest(e => e.user_id === uid).map(e => ({ item_id: e.item_id, value: e.value })); },
     async myTrustEvents(uid, ids){ return evs().filter(e => e.user_id === uid && ids.includes(e.item_id)); },
     async setTrust(uid, id, v){
@@ -1152,7 +1208,8 @@ function demoExtra(){
       const me = store.get('mr_session', {})?.id, profs = store.get(K.profiles, {});
       return store.get('mr_pc', []).filter(c => c.poll_id === id).sort((a, b) => a.created_at < b.created_at ? 1 : -1)
         .map(c => { const lk = store.get('mr_pcl', []).filter(l => l.comment_id === c.id);
-          return { ...c, author: c.author || profs[c.user_id]?.nickname || (c.user_id === me && isAdm() ? 'Redakcia' : 'Anonym'), staff: !!c.staff, mine: c.user_id === me, likes: lk.length + (c.seedLikes || 0), liked: lk.some(l => l.user_id === me) }; });
+          const pr = profs[c.user_id]; const gen = c.gender || (pr ? (pr.gender === 'muz' ? 'muž' : 'žena') : null); const age = c.age || (pr && pr.birth_year ? new Date().getFullYear() - pr.birth_year : null);
+          return { ...c, gender: gen, age, author: c.author || profs[c.user_id]?.nickname || (c.user_id === me && isAdm() ? 'Redakcia' : 'Anonym'), staff: !!c.staff, mine: c.user_id === me, likes: lk.length + (c.seedLikes || 0), liked: lk.some(l => l.user_id === me) }; });
     },
     async toggleLike(id){
       const me = store.get('mr_session', {})?.id; if (!me) throw new Error('Najprv sa prihláste.');
@@ -1254,7 +1311,8 @@ function route(){
   const h = decodeURIComponent(location.hash.replace(/^#/, ''));
   const tab = (h.startsWith('dovera') || h.startsWith('d-')) ? 'dovera' : (h === 'ankety' || h.startsWith('anketa-')) ? 'ankety' : (h === 'clanky' || h.startsWith('clanok-')) ? 'clanky' : (h === 'miss' || h.startsWith('miss-')) ? 'miss' : 'masrad';
   state.tab = tab;
-  if (tab !== 'dovera') markNav(tab);
+  if (tab === 'masrad'){ const sec = h === 'influenceri' ? 'influencer' : 'osobnost'; if (sec !== state.psec){ state.psec = sec; state.cat = 'all'; } markNav(SEC[sec].nav); renderChips(); renderList(); }
+  else if (tab !== 'dovera') markNav(tab);
   ['masrad', 'dovera', 'ankety', 'miss', 'clanky'].forEach(t => { $('#view-' + t).hidden = t !== tab; });
   $('#footer').textContent = FOOT[tab];
   if (tab === 'dovera'){
@@ -1276,6 +1334,7 @@ function navNov(){ const a = document.querySelector('.nav a[data-tab=novinar]');
 async function loadTrust(){
   state.trust = (await api.listTrust()).map(i => ({ ...i, id: Number(i.id) }));
   state.trustById = new Map(state.trust.map(i => [i.id, i]));
+  api.trustPrev().then(r => { state.trustPrev = new Map(r.map(x => [Number(x.item_id), x])); if (state.tab === 'dovera' && !(state.detailIds && state.detailIds.length)) renderTrustRows(); }).catch(() => {});
   navNov();
 }
 async function showDovera(){
@@ -1344,12 +1403,13 @@ function renderTrustRows(){
   const q = (state.tq || '').trim().toLocaleLowerCase('sk');
   const list = trustSorted(state.trust.filter(i => i.kind === state.tkind && i.active && (!q || `${i.name} ${i.detail || ''}`.toLocaleLowerCase('sk').includes(q))));
   const TT = TERM(state.tkind);
+  const moves = state.tsort === 'name' ? new Map() : rankMoves(list, state.trustPrev, trustSorted);
   const head = `<div class="row trow head"><div></div><div>#</div><div>${KIND_LABEL[state.tkind]}</div><div>${TT.head}</div><div>${TT.col}</div></div>`;
   $('#dvRows').innerHTML = head + (list.length ? list.map((i, n) => {
     const t = i.up + i.down, pct = pctOf(i.up, i.down);
     return `<div class="row trow">
       <div class="cmpc"><input type="checkbox" class="cmp" data-cmp="${i.id}" ${state.cmp.has(i.id) ? 'checked' : ''} title="Porovnať v grafe (max. 3)" aria-label="Porovnať ${esc(i.name)}"></div>
-      <div class="rank ${n < 3 && state.tsort === 'ratio' && t >= TRUST_MIN ? 'top' : ''}">${n + 1}.</div>
+      <div class="rank ${n < 3 && state.tsort === 'ratio' && t >= TRUST_MIN ? 'top' : ''}">${n + 1}.${moveArrow(moves.get(i.id))}</div>
       <div class="namecell" data-open="${i.id}" role="link" tabindex="0"><span class="last">${esc(i.name)}</span>${i.detail ? `<span class="detail">${esc(i.detail)}</span>` : ''}</div>
       <div class="votes">${trustThumbs(i)}</div>
       <div class="chart">${bar(i.up, i.down)}<div class="chart-txt">${pct === null ? 'bez hlasov' : `<b>${pct} %</b> ${TT.pct} · ${hlasov(t)}`}</div></div>
@@ -1467,13 +1527,14 @@ function drawTimeline(){
     else log.innerHTML = `<b>Vaše hlasovanie</b><ul style="margin:4px 0 0;padding-left:18px">${[...evs].reverse().slice(0, 12).map(e => `<li>${fmtDate(e.created_at)} – ${ids.length > 1 ? esc(state.trustById.get(e.item_id)?.name || '') + ': ' : ''}${ACT(e.value)}</li>`).join('')}</ul>`;
   }
 }
+const partyOrder = rows => rows.filter(r => r.dim === 'strana').sort((a, b) => (b.up + b.down) - (a.up + a.down)).map(r => r.bucket);
 async function loadBreakdown(id){
   state.bdId = id;
   document.querySelectorAll('[data-bd]').forEach(b => b.classList.toggle('on', Number(b.dataset.bd) === id));
   const el = $('#bd'); if (!el) return;
   try {
     const rows = await api.trustBreakdown(id);
-    const DIMS = [['pohlavie', 'Pohlavie', ['Muži', 'Ženy']], ['vek', 'Veková skupina', ['do 17', '18–29', '30–44', '45–59', '60+']], ['sidlo', 'Mesto / vidiek', ['Mesto', 'Vidiek', 'Neuvedené']], ['kraj', 'Kraj', REGIONS]];
+    const DIMS = [['pohlavie', 'Pohlavie', ['Muži', 'Ženy']], ['vek', 'Veková skupina', ['do 17', '18–29', '30–44', '45–59', '60+']], ['sidlo', 'Mesto / vidiek', ['Mesto', 'Vidiek', 'Neuvedené']], ['kraj', 'Kraj', REGIONS], ['strana', 'Voliči strán', partyOrder(rows)]];
     el.innerHTML = `<div class="bd-grid">${DIMS.map(([k, label, order]) => {
       const rs = order.map(b => rows.find(r => r.dim === k && r.bucket === b)).filter(Boolean);
       return `<div class="bd"><h4>${label}</h4>${rs.length ? rs.map(r => { const t = r.up + r.down; return `<div class="bdr" title="${r.up} 👍 · ${r.down} 👎"><span>${esc(r.bucket)}</span>${bar(r.up, r.down)}<span class="v"><b>${pctOf(r.up, r.down)} %</b> · ${t}</span></div>`; }).join('') : '<div class="small">Zatiaľ málo hlasov.</div>'}</div>`;
@@ -1860,7 +1921,7 @@ async function loadPollBreakdown(id){
   try {
     const rows = await api.pollBreakdown(id);
     if (!rows.length){ el.innerHTML = '<div class="small">Zatiaľ málo hlasov na rozdelenie.</div>'; return; }
-    const DIMS = [['pohlavie', 'Pohlavie', ['Muži', 'Ženy']], ['vek', 'Veková skupina', ['do 17', '18–29', '30–44', '45–59', '60+']], ['sidlo', 'Mesto / vidiek', ['Mesto', 'Vidiek', 'Neuvedené']], ['kraj', 'Kraj', REGIONS]];
+    const DIMS = [['pohlavie', 'Pohlavie', ['Muži', 'Ženy']], ['vek', 'Veková skupina', ['do 17', '18–29', '30–44', '45–59', '60+']], ['sidlo', 'Mesto / vidiek', ['Mesto', 'Vidiek', 'Neuvedené']], ['kraj', 'Kraj', REGIONS], ['strana', 'Voliči strán', partyOrder(rows)]];
     el.innerHTML = `<div class="bd-grid">${DIMS.map(([k, label, order]) => {
       const rs = order.map(b => rows.find(r => r.dim === k && r.bucket === b)).filter(Boolean);
       return `<div class="bd"><h4>${label}</h4>${rs.length ? rs.map(r => { const t = r.up + r.down; return `<div class="bdr" title="${r.up} áno · ${r.down} nie"><span>${esc(r.bucket)}</span>${bar(r.up, r.down)}<span class="v"><b>${pctOf(r.up, r.down)} %</b> · ${t}</span></div>`; }).join('') : '<div class="small">Zatiaľ málo hlasov.</div>'}</div>`;
@@ -1899,7 +1960,7 @@ async function loadComments(id){
   const el = $('#clist'); if (!el) return;
   try {
     const list = (await api.listComments(id)).sort((a, b) => (b.likes || 0) - (a.likes || 0) || (a.created_at < b.created_at ? 1 : -1));
-    el.innerHTML = list.length ? `<p class="small" style="margin:10px 0 0">Zoradené podľa 👍, potom od najnovších.</p>` + list.map(c => `<div class="cmt"><div class="cmt-h"><b>${esc(c.author)}</b>${c.staff ? '<span class="staff">redakcia</span>' : ''}<span class="when">${fmtDate(c.created_at)}</span><span class="spacer"></span>
+    el.innerHTML = list.length ? `<p class="small" style="margin:10px 0 0">Zoradené podľa 👍, potom od najnovších.</p>` + list.map(c => `<div class="cmt"><div class="cmt-h"><b>${esc(c.author)}</b>${c.staff ? '<span class="staff">redakcia</span>' : ''}${c.gender || c.age ? `<span class="who">${[c.gender, c.age].filter(Boolean).join(', ')}</span>` : ''}<span class="when">${fmtDate(c.created_at)}</span><span class="spacer"></span>
         ${c.mine || isAdmin() ? `<button class="btn ghost" data-cdel="${c.id}">Zmazať</button>` : ''}
         <button class="clike ${c.liked ? 'on' : ''}" data-clike="${c.id}" ${c.mine ? 'disabled title="Vlastný komentár"' : `title="${c.liked ? 'Zrušiť 👍' : 'Súhlasím'}"`} aria-pressed="${!!c.liked}">👍 ${c.likes || 0}</button></div><div class="cmt-b">${esc(c.body)}</div></div>`).join('')
       : '<p class="small">Zatiaľ žiadne komentáre. Buďte prvý.</p>';

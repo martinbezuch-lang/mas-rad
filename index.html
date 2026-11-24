@@ -1332,7 +1332,7 @@ function route(){
 }
 
 /* ---------- DÔVERA ---------- */
-function navNov(){ const a = document.querySelector('.nav a[data-tab=novinar]'); if (a) a.hidden = !(realAdmin() || (state.trust || []).some(i => i.kind === 'novinar' && i.active)); }
+function navNov(){ const a = document.querySelector('.nav a[data-tab=novinar]'); if (a) a.hidden = !(isAdmin() || (state.trust || []).some(i => i.kind === 'novinar' && i.active)); }
 async function loadTrust(){
   state.trust = (await api.listTrust()).map(i => ({ ...i, id: Number(i.id) }));
   state.trustById = new Map(state.trust.map(i => [i.id, i]));

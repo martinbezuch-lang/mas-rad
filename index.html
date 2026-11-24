@@ -292,6 +292,11 @@
   a.qlink:hover{text-decoration:underline}
   .poll .d .tag{margin-right:4px}
   .pfoot{display:flex;flex-wrap:wrap;gap:4px 14px;align-items:center;font-size:12px;color:var(--muted);margin-top:4px}
+  .pline{margin-top:6px;gap:6px 12px}
+  .pline .ptags .tag{margin-right:4px}
+  .pline .ptags .tag:last-child{margin-right:0}
+  .pline .pdesc{font-size:12.5px}
+  .pline{gap:6px 16px}
   .pfoot .pdates{margin:0}
   a.ccount{color:var(--muted);text-decoration:none;font-weight:700}
   a.ccount:hover{color:var(--accent)}
@@ -1696,8 +1701,7 @@ function pollRow(q){
     : `<div class="bar bar-none"></div><div class="chart-txt">${hlasov(total)} · ${state.user ? 'výsledok po hlasovaní' : 'prihláste sa a hlasujte'}</div>`;
   const dates = pollWhen(q);
   return `<div class="poll ${q.active ? '' : 'closed'}"><div><div class="q">${q.hot && q.active ? '<span class="hot">🔥 Horúca téma</span>' : ''}<a class="qlink" href="#anketa-${q.id}">${esc(q.question)}</a>${q.active ? '' : ' <span class="pill">ukončená</span>'}</div>
-      <div class="d">${catTags(q)}${q.description ? ' ' + esc(q.description) : ''}</div>
-      <div class="pfoot">${dates}<a class="ccount" href="#anketa-${q.id}">💬 ${komentarov(q.comments || 0)}</a></div>
+      <div class="pfoot pline"><span class="ptags">${catTags(q)}</span>${q.description ? `<span class="pdesc">${esc(q.description)}</span>` : ''}${dates}<a class="ccount" href="#anketa-${q.id}">💬 ${komentarov(q.comments || 0)}</a></div>
       ${isAdmin() ? pollMeta(q) + `<div class="actions" style="justify-content:flex-start;margin-top:8px"><button class="btn" data-pcats="${q.id}">Kategórie</button><button class="btn" data-phot="${q.id}">${q.hot ? 'Zrušiť 🔥' : '🔥 Horúca'}</button>${q.active ? `<button class="btn" data-pend="${q.id}">Ukončiť teraz</button>` : ''}<button class="btn" data-pext="${q.id}">Predĺžiť o 7 dní</button><button class="btn danger" data-pdel="${q.id}">Zmazať</button></div>` : ''}</div>
     ${pollThumbs(q)}
     <div class="chart">${res}</div></div>`;

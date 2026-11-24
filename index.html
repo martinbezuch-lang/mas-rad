@@ -84,7 +84,7 @@
 
   /* list */
   .list{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;margin-bottom:40px}
-  .row{display:grid;grid-template-columns:40px 1.6fr 60px 1.3fr 140px 170px;align-items:center;gap:10px;padding:7px 14px;border-top:1px solid var(--line)}
+  .row{display:grid;grid-template-columns:62px 1.6fr 60px 1.3fr 140px 180px;align-items:center;gap:10px;padding:7px 14px;border-top:1px solid var(--line)}
   .row.head{border-top:0;background:var(--head);font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;padding-top:9px;padding-bottom:9px}
   .row:not(.head):hover{background:var(--hover)}
   .rank{font-weight:800;color:var(--muted);font-variant-numeric:tabular-nums}
@@ -215,7 +215,7 @@
   .ann .btn{padding:3px 9px;font-size:12px}
 
   /* dôvera – zoznam */
-  .row.trow{grid-template-columns:24px 34px 1fr 222px 170px}
+  .row.trow{grid-template-columns:24px 58px 1fr 222px 180px}
   .trow .chart-txt{white-space:normal}
   .thumb.unk{min-width:0;padding:4px 9px;font-weight:800}
   .thumb.unk .qm{font-size:13px;line-height:1}
@@ -345,7 +345,9 @@
   .cmt-b{margin-top:3px;white-space:pre-line;overflow-wrap:anywhere;font-size:13.5px}
   .staff{font-size:10.5px;font-weight:800;padding:1px 6px;border-radius:99px;background:var(--ink);color:var(--onink)}
   .catpick{display:flex;flex-wrap:wrap;gap:6px}
-  .mv{display:block;font-size:10.5px;font-weight:800;line-height:1.1;margin-top:1px}
+  .mv{display:inline-block;font-size:12px;font-weight:400;margin-left:6px;font-variant-numeric:tabular-nums}
+  .rank{white-space:nowrap}
+  .list .chart-txt b{font-size:16px;font-weight:800}
   .mv.up{color:var(--up)} .mv.dn{color:var(--down)}
   .plat{display:inline-block;font-size:10.5px;font-weight:700;padding:1px 6px;border-radius:6px;border:1px solid var(--line);color:var(--muted);margin-left:4px}
   .leader{margin-top:12px;display:inline-flex;align-items:center;gap:10px;padding:8px 14px;border-radius:12px;background:var(--demo-bg);border:1px solid var(--demo-line);color:var(--demo-ink);font-size:13.5px}

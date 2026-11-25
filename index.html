@@ -457,9 +457,14 @@
   .mcut{grid-column:1/-1;height:0}
   .mshare{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
   .mshare-txt{font-size:13px;background:var(--bg,#f6f7f9);border:1px solid var(--line);border-radius:10px;padding:8px 10px;margin-top:8px;white-space:pre-line}
-  .mfav{display:grid;grid-template-columns:64px 1fr auto;gap:12px;align-items:center;padding:10px 0;border-top:1px solid var(--line)}
-  .mfav:first-child{border-top:0}
-  .mfav .mphoto{width:64px}
+  .mfavs{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:12px;margin-top:10px}
+  .mfav{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:12px;display:flex;flex-direction:column}
+  .mfav-top{display:grid;grid-template-columns:52px 1fr;gap:10px;align-items:center}
+  .mfav .mphoto{width:52px}
+  .mfav-info{min-width:0;font-size:14px}
+  .mfav-st{font-size:12.5px;margin-top:2px}
+  .mfav .mmini{margin:10px 0;flex:1}
+  .mfav-act{display:grid;grid-template-columns:1fr auto;gap:6px}
   .mst-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:10px 0}
   .mst-tile{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
   .mst-tile b{display:block;font-size:22px}
@@ -2394,13 +2399,14 @@ function missFavView(){
     .sort((a, b) => (a.advancing - b.advancing) || (b.need - a.need));
   if (!list.length) return `<div class="list"><div class="empty">Zatiaľ nemáte favoritky. Po hlasovaní sa súťažiaca pridá sem automaticky, alebo kliknite na ☆ pri fotke.</div></div>`;
   const cd = g => state.user ? missCooldown(g) : null;
-  return `<section class="mgroup">${list.map(p => { const c = p.c, ph = missPhoto(c.photo_path), w = cd(c.group_no);
-    return `<div class="mfav"><button class="mphoto" data-mopen="${c.id}">${ph ? `<img src="${esc(ph)}" alt="" loading="lazy">` : `<span>${esc(c.first_name[0] || '?')}</span>`}</button>
-      <div><b>${esc(c.first_name)}</b> <span class="small">${flagOf(c.country)} · pätica ${c.group_no} · ${c.votes} ${hlasy(c.votes)}</span><br>${missPosLine(p)}</div>
-      <div class="actions" style="flex-direction:column;align-items:stretch;gap:6px">
-        <button class="btn primary" data-mvote="${c.id}" ${w || !missVoteOpen() ? 'disabled' : ''}>${w ? 'o ' + fmtLeft(w.left) : 'Hlasovať'}</button>
-        <button class="btn" data-mopen="${c.id}">Zdieľať</button></div></div>`; }).join('')}
-    <p class="small" style="margin:8px 0 0">Favoritky sú uložené v tomto prehliadači. Odobrať: ★ pri fotke v päticiach.</p></section>`;
+  return `<div class="mfavs">${list.map(p => { const c = p.c, ph = missPhoto(c.photo_path), w = cd(c.group_no);
+    return `<div class="mfav">
+      <div class="mfav-top"><button class="mphoto" data-mopen="${c.id}">${ph ? `<img src="${esc(ph)}" alt="" loading="lazy">` : `<span>${esc(c.first_name[0] || '?')}</span>`}</button>
+        <div class="mfav-info"><b>${esc(c.first_name)}</b> ${flagOf(c.country)} <span class="small">· ${c.votes} ${hlasy(c.votes)}</span><div class="mfav-st">${missPosLine(p)}</div></div></div>
+      ${missMiniTable(c, true)}
+      <div class="mfav-act"><button class="btn primary" data-mvote="${c.id}" ${w || !missVoteOpen() ? 'disabled' : ''}>${w ? 'Ďalší hlas o ' + fmtLeft(w.left) : missEnded() ? 'Kolo skončilo' : 'Hlasovať'}</button>
+        <button class="btn" data-mopen="${c.id}">Zdieľať</button></div></div>`; }).join('')}</div>
+    <p class="small" style="margin:8px 0 0">Favoritky sú uložené v tomto prehliadači. Odobrať: ★ pri fotke v päticiach.</p>`;
 }
 function missCountTxt(){
   const left = missEndsLeft();
@@ -2414,9 +2420,9 @@ function missCountBox(){
     ${missEnded() ? '' : `<b data-mcount>${missCountTxt()}</b><span class="small">koniec ${end.toLocaleDateString('sk-SK')} o ${end.toLocaleTimeString('sk-SK', { hour:'2-digit', minute:'2-digit' })}</span>`}</div>`;
 }
 setInterval(() => document.querySelectorAll('[data-mcount]').forEach(el => { el.textContent = missCountTxt(); }), 30000);
-function missMiniTable(c){
+function missMiniTable(c, noHead){
   const list = missSorted(c.group_no), adv = missAdvOf(list.length);
-  return `<div class="mmini"><div class="mmini-h">Pätica ${c.group_no} – priebežné poradie</div>${list.map((x, i) => `${i === adv ? '<div class="mmini-cut">vypadávajú</div>' : ''}<button class="mmini-r ${x.id === c.id ? 'me' : ''}" data-mopen="${x.id}"><span class="mmini-n ${i < adv ? 'adv' : ''}">${i + 1}.</span><span class="mmini-name">${esc(x.first_name)} ${flagOf(x.country)}</span><b>${x.votes}</b></button>`).join('')}</div>`;
+  return `<div class="mmini">${noHead ? '' : `<div class="mmini-h">Pätica ${c.group_no} – priebežné poradie</div>`}${list.map((x, i) => `${i === adv ? '<div class="mmini-cut">vypadávajú</div>' : ''}<button class="mmini-r ${x.id === c.id ? 'me' : ''}" data-mopen="${x.id}"><span class="mmini-n ${i < adv ? 'adv' : ''}">${i + 1}.</span><span class="mmini-name">${esc(x.first_name)} ${flagOf(x.country)}</span><b>${x.votes}</b></button>`).join('')}</div>`;
 }
 function missStatsView(){
   const m = state.miss, b = m.board; if (!b.length) return '<div class="list"><div class="empty">Zatiaľ bez súťažiacich.</div></div>';

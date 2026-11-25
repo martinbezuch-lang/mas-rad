@@ -431,6 +431,19 @@
   .mstar.on{color:#ffc83d}
   .mcard.dim{opacity:.28;filter:grayscale(.8)}
   .mcard.hl .mphoto{outline:3px solid var(--accent,#2b6cb0);outline-offset:2px}
+  .mcount{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;background:var(--accent-soft);color:var(--ink);border:1px solid var(--line);border-radius:12px;padding:10px 14px;margin:12px 0}
+  .mcount b{font-size:22px;color:var(--accent)}
+  .mcount.over{background:var(--down-soft)}
+  .mmini{border:1px solid var(--line);border-radius:12px;padding:6px 10px;margin:10px 0;font-size:13px}
+  .mmini-h{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;padding:4px 0}
+  .mmini-r{display:grid;grid-template-columns:28px 1fr auto;gap:6px;width:100%;border:0;background:none;padding:4px 2px;text-align:left;border-radius:6px;font:inherit}
+  .mmini-r:hover{background:var(--hover)}
+  .mmini-r.me{background:var(--accent-soft);font-weight:700}
+  .mmini-n{color:var(--muted);font-weight:700}.mmini-n.adv{color:var(--up)}
+  .mmini-cut{border-top:1px dashed var(--down);color:var(--down);font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;padding-top:2px;margin-top:2px}
+  .mpots{display:grid;grid-template-columns:repeat(auto-fill,minmax(175px,1fr));gap:6px}
+  .mpot span{white-space:nowrap}
+  .mpot{display:flex;align-items:center;justify-content:space-between;gap:6px;border:1px solid var(--line);border-radius:9px;padding:4px 4px 4px 10px;font-size:13px}
   .mflagbtn{border:0;background:none;padding:0;font:inherit;cursor:pointer}
   .mflags{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0}
   .mflags .chip{font-size:13px}
@@ -2157,7 +2170,7 @@ function demoMiss(){
   const K = { set:'mr_miss_set', c:'mr_miss_c', v:'mr_miss_v', w:'mr_miss_w' };
   const sess = () => store.get('mr_session', {});
   if (!store.get(K.set)){
-    store.set(K.set, { id:1, title:'MISS 2026', registration_until:'2027-06-30T21:59:59Z', current_round:1, voting_open:true, group_size:5, vote_hours:12, advance_count:3, round_ends_at:new Date(Date.now() + 9 * 864e5).toISOString() });
+    store.set(K.set, { id:1, title:'MISS 2026', registration_until:'2027-06-30T21:59:59Z', current_round:1, voting_open:true, group_size:5, vote_hours:12, eliminate_count:2, round_ends_at:new Date(Date.now() + 9 * 864e5).toISOString() });
     const names = ['Lucia','Natália','Simona','Kristína','Veronika','Michaela','Barbora','Petra','Dominika','Nikola','Laura','Ema','Sofia','Zuzana','Tereza','Klára','Anna','Monika','Lenka','Viktória','Alexandra','Diana','Ivana','Martina','Karolína','Paulína','Sára','Adriána','Bianka','Denisa','Eva','Jana'];
     const cc = ['SK','SK','SK','CZ','SK','PL','HU','SK','UA','CZ','AT','SK'];
     store.set(K.c, names.map((n, i) => ({ id:i + 1, user_id:'fake-' + i, first_name:n, country:cc[i % cc.length], birth_date:`${1990 + (i * 7) % 16}-0${1 + i % 9}-1${i % 9}`,
@@ -2198,7 +2211,18 @@ function demoMiss(){
         let g = Math.max(1, ...act.map(x => x.group_no)); if (act.filter(x => x.group_no === g).length >= st.group_size) g++; c.group_no = g; }
       store.set(K.c, l);
     },
-    async missCloseRound(){ throw new Error('V demo režime nie je k dispozícii.'); },
+    async missNewRound(elim, size, pots, ends){
+      const st = store.get(K.set), l = store.get(K.c, []), act = l.filter(c => c.status === 'approved' && !c.eliminated_round && c.round === st.current_round && c.group_no);
+      const by = {}; act.forEach(c => (by[c.group_no] ||= []).push(c));
+      const adv = []; let out = 0;
+      for (const g of Object.values(by)){ g.sort((a, b) => votesOf(b) - votesOf(a) || a.id - b.id); const keep = Math.max(g.length - elim, 1);
+        g.forEach((c, i) => { if (i < keep) adv.push({ c, rn: i + 1, pot: pots[i] || 1 }); else { c.eliminated_round = st.current_round; out++; } }); }
+      const potIds = [...new Set(adv.map(a => a.pot))].sort((a, b) => a - b); let off = 0, groups = 0;
+      for (const pt of potIds){ const inPot = adv.filter(a => a.pot === pt).map(a => ({ ...a, r: Math.random() })).sort((a, b) => a.rn - b.rn || a.r - b.r);
+        const ng = Math.max(1, Math.ceil(inPot.length / size)); inPot.forEach((a, k) => { a.c.round = st.current_round + 1; a.c.group_no = off + (k % ng) + 1; }); off += ng; groups += ng; }
+      store.set(K.c, l); store.set(K.set, { ...st, current_round: st.current_round + 1, group_size: size, eliminate_count: elim, round_ends_at: ends });
+      return { round: st.current_round + 1, advanced: adv.length, eliminated: out, groups };
+    },
     async missTips(){ return [{ id:1, title:'Prechod „pred / po“ na beat', body:'Natoč 2 zábery – bežný a vyladený – a strihni ich presne na úder hudby. Prvé 2 sekundy rozhodujú, tak začni hneď pohybom.', format:'transition', created_at:new Date().toISOString() },
       { id:2, title:'Deň v mojom živote za 15 sekúnd', body:'Krátke rýchle zábery z bežného dňa, text na obrazovke a na konci výzva: „Hlasuj za mňa v MISS – odkaz v bio“.', format:'vlog', created_at:new Date().toISOString() }]; },
     async missGrant(email, amount){ const w = store.get(K.w, {}), uid = sess().id; w[uid] = (w[uid] || 0) + amount; store.set(K.w, w); return w[uid]; }
@@ -2228,7 +2252,7 @@ function liveMiss(sb, chk){
     async missWallet(){ const r = chk(await sb.from('miss_wallets').select('credits').maybeSingle()); return r ? r.credits : 0; },
     async missPending(){ return chk(await sb.from('miss_contestants').select('*').eq('status', 'pending').order('created_at')); },
     async missSetStatus(id, status){ chk(await sb.from('miss_contestants').update({ status }).eq('id', id)); },
-    async missCloseRound(n){ return chk(await sb.rpc('miss_close_round', { p_advance:n })); },
+    async missNewRound(elim, size, pots, ends){ return chk(await sb.rpc('miss_new_round', { p_eliminate:elim, p_group_size:size, p_pots:pots, p_round_ends:ends })); },
     async missGrant(email, amount){ return chk(await sb.rpc('miss_grant_credits', { p_email:email, p_amount:amount })); },
     async missTips(){ return chk(await sb.from('miss_tips').select('id,title,body,format,created_at').eq('active', true).order('created_at', { ascending:false }).limit(6)); }
   };
@@ -2268,11 +2292,14 @@ function missToggleFav(id){
   if (f.includes(id)){ store.set('mr_miss_fav', f.filter(x => x !== id)); store.set('mr_miss_unfav', [...new Set([...u, id])]); return false; }
   store.set('mr_miss_fav', [...f, id]); store.set('mr_miss_unfav', u.filter(x => x !== id)); return true;
 }
-const missAdv = () => Math.max(1, Number(state.miss?.st.advance_count) || 3);
+const missElim = () => { const e = Number(state.miss?.st.eliminate_count); return Number.isFinite(e) ? e : 2; };
+const missAdvOf = n => Math.max(1, n - missElim());
+const missEnded = () => { const e = Date.parse(state.miss?.st.round_ends_at || ''); return !!e && e <= Date.now(); };
+const missVoteOpen = () => !!state.miss?.st.voting_open && !missEnded();
 function missSorted(g){ return state.miss.board.filter(c => c.group_no === g).sort((a, b) => b.votes - a.votes || a.id - b.id); }
 function missPos(id){
   const c = state.miss?.board.find(x => x.id === id); if (!c) return null;
-  const list = missSorted(c.group_no), rank = list.findIndex(x => x.id === id) + 1, adv = missAdv();
+  const list = missSorted(c.group_no), rank = list.findIndex(x => x.id === id) + 1, adv = missAdvOf(list.length);
   const need = rank > adv ? list[adv - 1].votes - c.votes + 1 : 0;
   const lead = rank > adv ? 0 : (list[adv] ? c.votes - list[adv].votes : null);
   return { c, rank, size: list.length, adv, advancing: rank <= adv, need, lead };
@@ -2349,9 +2376,25 @@ function missFavView(){
     return `<div class="mfav"><button class="mphoto" data-mopen="${c.id}">${ph ? `<img src="${esc(ph)}" alt="" loading="lazy">` : `<span>${esc(c.first_name[0] || '?')}</span>`}</button>
       <div><b>${esc(c.first_name)}</b> <span class="small">${flagOf(c.country)} · pätica ${c.group_no} · ${c.votes} ${hlasy(c.votes)}</span><br>${missPosLine(p)}</div>
       <div class="actions" style="flex-direction:column;align-items:stretch;gap:6px">
-        <button class="btn primary" data-mvote="${c.id}" ${w || !state.miss.st.voting_open ? 'disabled' : ''}>${w ? 'o ' + fmtLeft(w.left) : 'Hlasovať'}</button>
+        <button class="btn primary" data-mvote="${c.id}" ${w || !missVoteOpen() ? 'disabled' : ''}>${w ? 'o ' + fmtLeft(w.left) : 'Hlasovať'}</button>
         <button class="btn" data-mopen="${c.id}">Zdieľať</button></div></div>`; }).join('')}
     <p class="small" style="margin:8px 0 0">Favoritky sú uložené v tomto prehliadači. Odobrať: ★ pri fotke v päticiach.</p></section>`;
+}
+function missCountTxt(){
+  const left = missEndsLeft();
+  if (left) return fmtDur(left);
+  return missEnded() ? 'kolo skončilo' : '';
+}
+function missCountBox(){
+  const st = state.miss.st; if (!st.round_ends_at) return '';
+  const end = new Date(st.round_ends_at);
+  return `<div class="mcount ${missEnded() ? 'over' : ''}"><span>⏳ ${missEnded() ? `${st.current_round}. kolo skončilo – čaká sa na vyhodnotenie a žreb ďalšieho kola` : `Do konca ${st.current_round}. kola zostáva`}</span>
+    ${missEnded() ? '' : `<b data-mcount>${missCountTxt()}</b><span class="small">koniec ${end.toLocaleDateString('sk-SK')} o ${end.toLocaleTimeString('sk-SK', { hour:'2-digit', minute:'2-digit' })}</span>`}</div>`;
+}
+setInterval(() => document.querySelectorAll('[data-mcount]').forEach(el => { el.textContent = missCountTxt(); }), 30000);
+function missMiniTable(c){
+  const list = missSorted(c.group_no), adv = missAdvOf(list.length);
+  return `<div class="mmini"><div class="mmini-h">Pätica ${c.group_no} – priebežné poradie</div>${list.map((x, i) => `${i === adv ? '<div class="mmini-cut">vypadávajú</div>' : ''}<button class="mmini-r ${x.id === c.id ? 'me' : ''}" data-mopen="${x.id}"><span class="mmini-n ${i < adv ? 'adv' : ''}">${i + 1}.</span><span class="mmini-name">${esc(x.first_name)} ${flagOf(x.country)}</span><b>${x.votes}</b></button>`).join('')}</div>`;
 }
 function missStatsView(){
   const m = state.miss, b = m.board; if (!b.length) return '<div class="list"><div class="empty">Zatiaľ bez súťažiacich.</div></div>';
@@ -2396,12 +2439,13 @@ function renderMiss(){
   const pager = pages > 1 ? `<div class="pager">${Array.from({ length: pages }, (_, i) => `<button class="chip ${state.missPage === i + 1 ? 'on' : ''}" data-mpage="${i + 1}">${i + 1}</button>`).join('')}</div>` : '';
   el.innerHTML = `
     <section class="hero miss-hero"><h1>👑 ${esc(st.title)}</h1>
-      <p>Súťaž o dievča roka. Hlasuje sa celý rok v kolách – z každej pätice postupujú ${missAdv() === 1 ? 'víťazky' : `prvé ${missAdv()}`} do ďalšieho kola. V každej pätici máte <b>1 hlas každých ${st.vote_hours} hodín</b> (nekumuluje sa) a ďalšie hlasy môžete pridať za kredity.
+      <p>Súťaž o dievča roka. Hlasuje sa celý rok v kolách – z každej pätice ${missElim() === 1 ? 'vypadne najslabšia' : `vypadnú ${missElim()} najslabšie`}, ostatné postupujú do ďalšieho kola. V každej pätici máte <b>1 hlas každých ${st.vote_hours} hodín</b> (nekumuluje sa) a ďalšie hlasy môžete pridať za kredity.
       ${regOpen ? `Prihlásiť sa môžu ženy staršie ako 18 rokov do <b>${new Date(st.registration_until).toLocaleDateString('sk-SK')}</b>.` : 'Registrácia je uzavretá.'}</p>
-      <div class="miss-bar"><span class="pill">${st.current_round}. kolo</span>${missEndsLeft() ? `<span class="pill">⏳ do konca kola ${fmtDur(missEndsLeft())}</span>` : ''}${st.voting_open ? '' : '<span class="pill">hlasovanie pozastavené</span>'}
+      <div class="miss-bar"><span class="pill">${st.current_round}. kolo</span>${st.voting_open ? '' : '<span class="pill">hlasovanie pozastavené</span>'}
         <span class="small">${m.board.length} súťažiacich · ${groups.length} pätíc</span><span class="spacer"></span>
         ${state.user ? `<span class="small">Kredity: <b>${m.credits}</b></span> <button class="btn" data-act="miss-credits">Kúpiť kredity</button>` : ''} ${cta}</div>
     </section>
+    ${missCountBox()}
     ${isAdmin() ? '<div id="missAdmin"></div>' : ''}
     ${missMeBox()}
     <div class="mtabs">${[['all', 'Všetky pätice'], ['fav', `⭐ Moje favoritky (${missFavs().filter(id => m.board.some(c => c.id === id)).length})`], ['stats', '📊 Štatistiky']].map(([k, l]) => `<button class="chip ${view === k ? 'on' : ''}" data-mview="${k}">${l}</button>`).join('')}</div>
@@ -2410,9 +2454,10 @@ function renderMiss(){
     ${pager}`}`;
   if (isAdmin()) renderMissAdmin();
   renderMissTips();
+  if (isAdmin() && missEnded() && state.missNrShown !== st.current_round && !$('#modal:not([hidden])')){ state.missNrShown = st.current_round; openMissNewRound(); }
 }
 function missGroup(g){
-  const list = missSorted(g), adv = missAdv(), fav = missFavs(), f = state.missFlag;
+  const list = missSorted(g), adv = missAdvOf(list.length), fav = missFavs(), f = state.missFlag;
   const cd = state.user ? missCooldown(g) : null;
   return `<section class="mgroup"><div class="mgroup-h"><b>Pätica ${g}</b>${cd ? `<span class="small">Ďalší hlas v tejto pätici o ${fmtLeft(cd.left)}</span>` : `<span class="small">postupujú ${adv === 1 ? '1.' : `1.–${adv}.`}</span>`}</div>
     <div class="mrow">${list.map((c, i) => {
@@ -2422,7 +2467,7 @@ function missGroup(g){
         <button class="mstar ${isFav ? 'on' : ''}" data-mfav="${c.id}" aria-label="${isFav ? 'Odobrať z favoritiek' : 'Pridať medzi favoritky'}">${isFav ? '★' : '☆'}</button></div>
         <div class="mname">${esc(c.first_name)}</div>
         <div class="mmeta"><button class="mflagbtn" data-mflag="${esc(c.country)}" title="Zvýrazniť krajinu">${flagOf(c.country)}</button> ${esc(COUNTRY[c.country] || c.country)} · ${c.age} r.</div>
-        <button class="btn ${mineHere ? '' : 'primary'} mvote" data-mvote="${c.id}" ${cd || !state.miss.st.voting_open ? 'disabled' : ''}>${mineHere ? '✓ Váš hlas' : 'Hlasovať'}</button>
+        <button class="btn ${mineHere ? '' : 'primary'} mvote" data-mvote="${c.id}" ${cd || !missVoteOpen() ? 'disabled' : ''}>${mineHere ? '✓ Váš hlas' : missEnded() ? 'Kolo skončilo' : 'Hlasovať'}</button>
         <div class="mvotes"><b>${c.votes}</b> ${hlasy(c.votes)}</div>
       </div>`; }).join('')}</div></section>`;
 }
@@ -2448,15 +2493,15 @@ async function openMissProfile(id){
     <div class="mprof-photo">${ph ? `<img src="${esc(ph)}" alt="${esc(c.first_name)}">` : `<span>${esc(c.first_name[0] || '?')}</span>`}</div>
     <div class="mprof-body"><h2>${esc(c.first_name)}</h2>
       <p class="sub">${flagOf(c.country)} ${esc(COUNTRY[c.country] || c.country)} · ${c.age} rokov${c.city ? ' · ' + esc(c.city) : ''}</p>
-      ${inRound ? `<div class="mstat"><b>${c.votes}</b> ${hlasy(c.votes)} v ${c.round}. kole · pätica ${c.group_no}${missPos(c.id) ? '<br>' + missPosLine(missPos(c.id)) : ''}${missEndsLeft() ? `<br><span class="small">⏳ do konca kola ${fmtDur(missEndsLeft())}</span>` : ''}</div>` : c.eliminated_round ? `<div class="mstat">Súťaž ukončila v ${c.eliminated_round}. kole</div>` : ''}
+      ${inRound ? `<div class="mstat"><b>${c.votes}</b> ${hlasy(c.votes)} v ${c.round}. kole · pätica ${c.group_no}${missPos(c.id) ? '<br>' + missPosLine(missPos(c.id)) : ''}${state.miss?.st.round_ends_at ? `<br><span class="small">⏳ ${missEnded() ? 'kolo skončilo' : `do konca kola <b data-mcount>${missCountTxt()}</b>`}</span>` : ''}</div>${state.miss?.board.some(x => x.id === c.id) ? missMiniTable(state.miss.board.find(x => x.id === c.id)) : ''}` : c.eliminated_round ? `<div class="mstat">Súťaž ukončila v ${c.eliminated_round}. kole</div>` : ''}
       ${row('Obľúbené jedlo', c.favorite_food)}${row('Obľúbené mesto', c.favorite_city)}${row('Voľný čas', c.hobbies)}
       ${c.about ? `<p style="white-space:pre-line;margin:10px 0">${esc(c.about)}</p>` : ''}
       <div class="mlinks">${LINK_DEFS.filter(([k]) => links[k]).map(([k, l]) => `<a class="chip" href="${esc(normLink(k, links[k]))}" target="_blank" rel="nofollow noopener ugc">${l}</a>`).join('')}</div>
       ${inRound ? `<div class="box" style="margin-top:14px"><b>Podporte ${esc(c.first_name)}</b>
         <div class="actions" style="justify-content:flex-start;flex-wrap:wrap;margin-top:8px">
-          <button class="btn primary" data-mvote="${c.id}" data-close-after="1">Hlasovať (1 bezplatný hlas)</button>
+          <button class="btn primary" data-mvote="${c.id}" data-close-after="1" ${missVoteOpen() ? '' : 'disabled'}>${missEnded() ? 'Kolo skončilo' : 'Hlasovať (1 bezplatný hlas)'}</button>
           <input type="number" id="mcred" min="1" max="100000" value="10" class="search" style="width:90px" aria-label="Počet kreditov">
-          <button class="btn" data-mvotecred="${c.id}">Pridať hlasy za kredity</button></div>
+          <button class="btn" data-mvotecred="${c.id}" ${missVoteOpen() ? '' : 'disabled'}>Pridať hlasy za kredity</button></div>
         <p class="small" style="margin:6px 0 0">1 kredit = 1 hlas. ${state.user ? `Máte ${state.miss?.credits ?? 0} kreditov.` : ''}</p></div>${missPos(c.id) ? missShareBox(c.id, state.miss?.me && Number(state.miss.me.id) === c.id) : ''}` : ''}
       <p class="small" style="margin-top:10px">Odkaz na profil: <a href="#miss-${c.id}">${esc(location.origin + location.pathname)}#miss-${c.id}</a></p>
     </div></div>`, true);
@@ -2534,22 +2579,67 @@ async function renderMissAdmin(){
       <div class="field"><label class="l">Názov súťaže</label><input type="text" id="mst_t" value="${esc(st.title)}"></div>
       <div class="field"><label class="l">Koniec registrácie</label><input type="datetime-local" id="mst_r" value="${local}"></div>
       <div class="field"><label class="l">Koniec aktuálneho kola</label><input type="datetime-local" id="mst_e" value="${st.round_ends_at ? new Date(Date.parse(st.round_ends_at) - new Date().getTimezoneOffset() * 6e4).toISOString().slice(0, 16) : ''}"></div>
-      <div class="field"><label class="l">Postupuje z pätice</label><select id="mst_a" class="sort">${[1, 2, 3, 4].map(n => `<option value="${n}" ${missAdv() === n ? 'selected' : ''}>${n}</option>`).join('')}</select></div>
       <label class="check field"><input type="checkbox" id="mst_o" ${st.voting_open ? 'checked' : ''}> Hlasovanie otvorené</label>
       <div class="actions"><button class="btn">Uložiť nastavenia</button></div></form>
     <div class="actions" style="justify-content:flex-start;flex-wrap:wrap;margin-top:6px">
       <input type="email" id="mg_e" class="search" placeholder="e-mail používateľa"><input type="number" id="mg_a" class="search" style="width:90px" value="100">
       <button class="btn" data-act="miss-grant">Pripísať kredity</button>
       <span class="spacer" style="flex:1"></span>
-      <select id="mcl_n" class="sort">${[1, 2, 3, 4].map(n => `<option value="${n}" ${missAdv() === n ? 'selected' : ''}>${n === 1 ? 'postupuje 1' : `postupujú ${n}`} z pätice</option>`).join('')}</select>
-      <button class="btn danger" data-act="miss-close">Ukončiť ${st.current_round}. kolo</button></div>
-    <p class="small">Ukončenie kola je nevratné: z každej pätice postúpia najlepšie, ostatné vypadnú a postupujúce sa náhodne rozdelia do nových pätíc. Dá sa spustiť až po skončení registrácie.</p></div>`;
+      <button class="btn danger" data-act="miss-newround">Ukončiť ${st.current_round}. kolo a vyžrebovať ďalšie…</button></div>
+    <p class="small">Otvorí sa okno, kde nastavíte veľkosť skupín, počet vypadávajúcich, koše pre žreb a termín ďalšieho kola. Po skončení kola sa okno otvorí samo.</p></div>`;
   $('#missSet').addEventListener('submit', async e => {
     e.preventDefault();
     try { await api.missSaveSettings({ title: $('#mst_t').value.trim() || 'MISS', registration_until: new Date($('#mst_r').value).toISOString(), voting_open: $('#mst_o').checked,
-        ...('advance_count' in st ? { advance_count: Number($('#mst_a').value), round_ends_at: $('#mst_e').value ? new Date($('#mst_e').value).toISOString() : null } : {}) });
+        ...('round_ends_at' in st ? { round_ends_at: $('#mst_e').value ? new Date($('#mst_e').value).toISOString() : null } : {}) });
       toast('Nastavenia uložené.'); await loadMiss(); renderMiss(); } catch(err){ toast(err.message, true); }
   });
+}
+const POT_L = ['', 'A', 'B', 'C', 'D', 'E'];
+function openMissNewRound(){
+  const m = state.miss, st = m.st, maxG = Math.max(1, ...[...new Set(m.board.map(c => c.group_no))].map(g => m.board.filter(c => c.group_no === g).length));
+  const defEnd = new Date(Date.now() + 7 * 864e5 - new Date().getTimezoneOffset() * 6e4).toISOString().slice(0, 11) + '20:00';
+  const places = Array.from({ length: maxG }, (_, i) => i + 1);
+  openModal(`<h2>Ukončiť ${st.current_round}. kolo a vyžrebovať ${st.current_round + 1}. kolo</h2>
+    <p class="sub">Aktuálne: ${m.board.length} súťažiacich v ${new Set(m.board.map(c => c.group_no)).size} skupinách. Poradie sa berie podľa hlasov, pri rovnosti rozhoduje skoršia prihláška.</p>
+    <div class="row2">
+      <div class="field"><label class="l">Veľkosť nových skupín</label><input type="number" id="nr_size" min="2" max="20" value="${st.group_size || 5}" class="search" style="width:100%"></div>
+      <div class="field"><label class="l">Koľko najslabších z každej skupiny vypadne</label><input type="number" id="nr_elim" min="0" max="10" value="${missElim()}" class="search" style="width:100%"></div>
+    </div>
+    <div class="field"><label class="l">Koniec ${st.current_round + 1}. kola</label><input type="datetime-local" id="nr_end" value="${defEnd}" class="search" style="width:100%"></div>
+    <div class="field"><label class="l">Koše pre žreb – miesta v rovnakom koši hrajú spolu</label>
+      <div class="actions" style="justify-content:flex-start;flex-wrap:wrap;margin:4px 0 8px">
+        <button type="button" class="chip" data-act="miss-preset-13">1. s 3., 2. s 2.</button>
+        <button type="button" class="chip" data-act="miss-preset-each">každé miesto zvlášť</button>
+        <button type="button" class="chip" data-act="miss-preset-rand">všetky náhodne</button></div>
+      <div class="mpots">${places.map(i => `<label class="mpot" data-mpot-row="${i}"><span>${i}. miesto</span><select class="sort" data-mpot="${i}">${[1, 2, 3, 4, 5].map(k => `<option value="${k}" ${(i === 2 ? 2 : 1) === k ? 'selected' : ''}>kôš ${POT_L[k]}</option>`).join('')}</select></label>`).join('')}</div></div>
+    <div id="nr_prev" class="box"></div>
+    <div class="actions"><button type="button" class="btn" data-close>Zrušiť</button><button type="button" class="btn danger" data-act="miss-nr-go">Ukončiť kolo a vyžrebovať</button></div>`, true);
+  ['#nr_size', '#nr_elim'].forEach(q => $(q).addEventListener('input', missNrPreview));
+  document.querySelectorAll('[data-mpot]').forEach(el => el.addEventListener('change', missNrPreview));
+  missNrPreview();
+}
+function missNrRead(){
+  const size = Math.floor(Number($('#nr_size').value)), elim = Math.floor(Number($('#nr_elim').value)), endV = $('#nr_end').value;
+  if (!(size >= 2 && size <= 20)){ toast('Veľkosť skupiny musí byť 2 až 20.', true); return null; }
+  if (!(elim >= 0 && elim <= 10)){ toast('Počet vypadávajúcich musí byť 0 až 10.', true); return null; }
+  if (!endV || Date.parse(endV) <= Date.now()){ toast('Zadajte budúci termín konca kola.', true); return null; }
+  const pots = [...document.querySelectorAll('[data-mpot]')].map(el => Number(el.value));
+  return { size, elim, pots, ends: new Date(endV).toISOString() };
+}
+function missNrPreview(){
+  const el = $('#nr_prev'); if (!el) return;
+  const m = state.miss, size = Math.max(2, Math.floor(Number($('#nr_size').value)) || 5), elim = Math.max(0, Math.floor(Number($('#nr_elim').value)) || 0);
+  const pots = [...document.querySelectorAll('[data-mpot]')].map(x => Number(x.value));
+  const byPlace = {}; let out = 0;
+  for (const g of new Set(m.board.map(c => c.group_no))){ const n = m.board.filter(c => c.group_no === g).length, keep = Math.max(n - elim, 1);
+    for (let i = 1; i <= keep; i++) byPlace[i] = (byPlace[i] || 0) + 1; out += n - keep; }
+  document.querySelectorAll('[data-mpot-row]').forEach(r => { r.style.opacity = byPlace[r.dataset.mpotRow] ? 1 : .35; });
+  const byPot = {}; Object.entries(byPlace).forEach(([pl, n]) => { const k = pots[pl - 1] || 1; (byPot[k] ||= { n:0, pl:[] }).n += n; byPot[k].pl.push(pl + '.'); });
+  const adv = Object.values(byPlace).reduce((a, b) => a + b, 0);
+  const lines = Object.keys(byPot).sort().map(k => { const o = byPot[k], ng = Math.max(1, Math.ceil(o.n / size)), lo = Math.floor(o.n / ng), hi = Math.ceil(o.n / ng);
+    return `<li>Kôš ${POT_L[k]} (${o.pl.join(' + ')} miesta): ${o.n} súťažiacich → ${ng} ${ng === 1 ? 'skupina' : ng < 5 ? 'skupiny' : 'skupín'} po ${lo === hi ? lo : lo + '–' + hi}</li>`; });
+  el.innerHTML = `<b>Náhľad:</b> postúpi ${adv}, vypadne ${out}.<ul style="margin:6px 0 0;padding-left:18px">${lines.join('')}</ul>
+    <p class="small" style="margin:6px 0 0">V koši sa najprv náhodne rozdelia 1. miesta, potom ďalšie, takže každá skupina dostane rovnomernú zmes. Žreb je náhodný a nevratný.</p>`;
 }
 async function onMissClick(t){
   const d = t.dataset;
@@ -2567,10 +2657,16 @@ async function onMissClick(t){
     case 'miss-signup': openMissSignup(); return true;
     case 'miss-credits': openMissCredits(); return true;
     case 'miss-grant': try { const b = await api.missGrant($('#mg_e').value.trim(), Number($('#mg_a').value)); toast(`Pripísané. Zostatok: ${b} kreditov.`); await loadMiss(); renderMiss(); } catch(err){ toast(err.message, true); } return true;
-    case 'miss-close': {
-      if (!confirmClick(t, 'Naozaj? Kliknite znova')) return true;
-      try { const r = await api.missCloseRound(Number($('#mcl_n').value)); toast(`Začalo ${r.round}. kolo: postúpilo ${r.advanced}, vypadlo ${r.eliminated}.`); state.missPage = 1; await loadMiss(); renderMiss(); }
-      catch(err){ toast(err.message, true); }
+    case 'miss-newround': openMissNewRound(); return true;
+    case 'miss-preset-rand': document.querySelectorAll('[data-mpot]').forEach(el => { el.value = '1'; }); missNrPreview(); return true;
+    case 'miss-preset-13': document.querySelectorAll('[data-mpot]').forEach(el => { el.value = el.dataset.mpot === '2' ? '2' : '1'; }); missNrPreview(); return true;
+    case 'miss-preset-each': document.querySelectorAll('[data-mpot]').forEach(el => { el.value = el.dataset.mpot; }); missNrPreview(); return true;
+    case 'miss-nr-go': {
+      const v = missNrRead(); if (!v) return true;
+      if (!confirmClick(t, 'Naozaj? Je to nevratné – kliknite znova')) return true;
+      t.disabled = true;
+      try { const r = await api.missNewRound(v.elim, v.size, v.pots, v.ends); closeModal(); toast(`Začalo ${r.round}. kolo: postúpilo ${r.advanced}, vypadlo ${r.eliminated}, ${r.groups} skupín.`); state.missPage = 1; await loadMiss(); renderMiss(); }
+      catch(err){ toast(err.message, true); t.disabled = false; }
       return true;
     }
   }

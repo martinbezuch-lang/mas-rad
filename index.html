@@ -497,7 +497,8 @@
   .mgc-b{padding:4px 6px;font-size:12px}
   .mig{position:absolute;bottom:9px;right:40px;height:20px;display:inline-flex;align-items:center;padding:0 7px;border-radius:999px;color:#fff;font-size:10.5px;font-weight:700;text-decoration:none;letter-spacing:.01em;background:linear-gradient(45deg,#feda75 0%,#fa7e1e 22%,#d62976 50%,#962fbf 75%,#4f5bd5 100%);box-shadow:0 1px 3px rgba(0,0,0,.35)}
   .mig:hover{filter:brightness(1.1)}
-  @media (max-width:640px){.mig{height:18px;padding:0 6px;font-size:9.5px;right:6px;bottom:38px}.mflagbig{font-size:24px;bottom:6px;left:5px}.mstar{font-size:15px}}
+  .mig.nostar{right:6px}
+  @media (max-width:640px){.mig{height:18px;padding:0 6px;font-size:9.5px;right:6px;bottom:38px}.mig.nostar{bottom:9px}.mflagbig{font-size:24px;bottom:6px;left:5px}.mstar{font-size:15px}}
   .mflagbig{position:absolute;left:6px;bottom:4px;border:0;background:none;padding:0;font-size:34px;line-height:1;cursor:pointer;filter:drop-shadow(0 1px 3px rgba(0,0,0,.45));transition:transform .12s}
   .mflagbig:hover{transform:scale(1.12)}
   .mneedpill{position:absolute;top:6px;right:6px;font-style:normal;font-size:11px;font-weight:800;padding:2px 7px;border-radius:999px;background:var(--down);color:#fff}
@@ -505,7 +506,7 @@
   .mnm{font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
   .mnm small{font-weight:500;color:var(--muted);margin-left:4px;font-size:11.5px}
   .mline .mvotes{margin:0;white-space:nowrap;font-size:11.5px}
-  .mline .mvotes b{font-size:13px}
+  .mline .mvotes b{font-size:16px}
   .mflagbtn{border:0;background:none;padding:0;font:inherit;cursor:pointer}
   .mflags{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0}
   .mflags .chip{font-size:13px}
@@ -2358,7 +2359,7 @@ function demoMiss(){
   const K = { set:'mr_miss_set', c:'mr_miss_c', v:'mr_miss_v', w:'mr_miss_w' };
   const sess = () => store.get('mr_session', {});
   if (!store.get(K.set)){
-    store.set(K.set, { id:1, title:'MISS 2026', registration_until:'2027-06-30T21:59:59Z', current_round:1, voting_open:true, group_size:5, vote_hours:12, eliminate_count:2, round_ends_at:new Date(Date.now() + 9 * 864e5).toISOString() });
+    store.set(K.set, { id:1, title:'MISS 2026', registration_until:'2027-06-30T21:59:59Z', current_round:1, voting_open:true, group_size:5, vote_hours:8, eliminate_count:2, ui:{ instagram:true, star:true, need:true }, round_ends_at:new Date(Date.now() + 9 * 864e5).toISOString() });
     const names = ['Lucia','Natália','Simona','Kristína','Veronika','Michaela','Barbora','Petra','Dominika','Nikola','Laura','Ema','Sofia','Zuzana','Tereza','Klára','Anna','Monika','Lenka','Viktória','Alexandra','Diana','Ivana','Martina','Karolína','Paulína','Sára','Adriána','Bianka','Denisa','Eva','Jana'];
     const cc = ['SK','SK','SK','CZ','SK','PL','HU','SK','UA','CZ','AT','SK'];
     store.set(K.c, names.map((n, i) => ({ id:i + 1, user_id:'fake-' + i, first_name:n, country:cc[i % cc.length], birth_date:`${1990 + (i * 7) % 16}-0${1 + i % 9}-1${i % 9}`,
@@ -2488,6 +2489,7 @@ function missToggleFav(id){
 const missElim = () => { const e = Number(state.miss?.st.eliminate_count); return Number.isFinite(e) ? e : 2; };
 const missAdvOf = n => Math.max(1, n - missElim());
 const missEnded = () => { const e = Date.parse(state.miss?.st.round_ends_at || ''); return !!e && e <= Date.now(); };
+const missUi = k => ((state.miss?.st.ui) || {})[k] !== false;
 const missVoteOpen = () => !!state.miss?.st.voting_open && !missEnded();
 function missSorted(g){ return state.miss.board.filter(c => c.group_no === g).sort((a, b) => b.votes - a.votes || a.id - b.id); }
 function missPos(id){
@@ -2663,7 +2665,7 @@ function missGroupCompact(g){
         <span class="mmini-n ${r <= adv ? 'adv' : ''}">${r === 1 && c.votes > 0 ? '👑' : r + '.'}</span>
         <button class="mflagbtn mgc-f" data-mflag="${esc(c.country)}" title="${esc(COUNTRY[c.country] || c.country)}">${flagOf(c.country)}</button>
         <button class="mgc-name" data-mopen="${c.id}">${esc(c.first_name)}${fav.includes(c.id) ? ' <span class="mgc-star">★</span>' : ''}</button>
-        <span class="mgc-v"><b>${c.votes}</b>${r > adv ? `<i class="mneed">−${list[adv - 1].votes - c.votes + 1}</i>` : ''}</span>
+        <span class="mgc-v"><b>${c.votes}</b>${r > adv && missUi('need') ? `<i class="mneed">−${list[adv - 1].votes - c.votes + 1}</i>` : ''}</span>
         <button class="btn ${mine ? '' : 'primary'} mgc-b" data-mvote="${c.id}" ${cd || !open ? 'disabled' : ''}>${mine ? '✓' : 'Hlasovať'}</button></div>`; }).join('')}</div>`;
 }
 function missGroup(g){
@@ -2674,10 +2676,10 @@ function missGroup(g){
       const ph = missPhotoOf(c), mineHere = cd && cd.contestant === c.id, r = i + 1, isFav = fav.includes(c.id);
       return `<div class="mcard ${f ? (c.country === f ? 'hl' : 'dim') : ''} ${r === adv + 1 ? 'cutl' : ''} ${r > adv ? 'outz' : ''}">
         <div style="position:relative"><button class="mphoto" data-mopen="${c.id}" aria-label="Profil ${esc(c.first_name)}">${ph ? `<img src="${esc(ph)}" alt="${esc(c.first_name)}" loading="lazy">` : `<span>${esc(c.first_name[0] || '?')}</span>`}<i class="mrank ${r <= adv ? 'adv' : ''}" title="${r <= adv ? 'Postupové miesto' : 'Nepostupové miesto'}">${r === 1 && c.votes > 0 ? '👑 ' : ''}${r}.</i></button>
-        <button class="mstar ${isFav ? 'on' : ''}" data-mfav="${c.id}" aria-label="${isFav ? 'Odobrať z favoritiek' : 'Pridať medzi favoritky'}">${isFav ? '★' : '☆'}</button>
-        ${c.instagram ? `<a class="mig" href="${esc(normLink('instagram', c.instagram))}" target="_blank" rel="nofollow noopener ugc" title="Instagram – ${esc(c.first_name)}" aria-label="Instagram ${esc(c.first_name)}">Instagram</a>` : ''}
+        ${missUi('star') ? `<button class="mstar ${isFav ? 'on' : ''}" data-mfav="${c.id}" aria-label="${isFav ? 'Odobrať z favoritiek' : 'Pridať medzi favoritky'}">${isFav ? '★' : '☆'}</button>` : ''}
+        ${c.instagram && missUi('instagram') ? `<a class="mig ${missUi('star') ? '' : 'nostar'}" href="${esc(normLink('instagram', c.instagram))}" target="_blank" rel="nofollow noopener ugc" title="Instagram – ${esc(c.first_name)}" aria-label="Instagram ${esc(c.first_name)}">Instagram</a>` : ''}
         <button class="mflagbig" data-mflag="${esc(c.country)}" title="${esc(COUNTRY[c.country] || c.country)} – zvýrazniť všetky súťažiace z krajiny">${flagOf(c.country)}</button>
-        ${r > adv ? `<i class="mneedpill" title="Toľko hlasov jej chýba, aby sa dostala na postupové ${adv}. miesto">chýba ${list[adv - 1].votes - c.votes + 1}</i>` : ''}</div>
+        ${r > adv && missUi('need') ? `<i class="mneedpill" title="Toľko hlasov jej chýba, aby sa dostala na postupové ${adv}. miesto">chýba ${list[adv - 1].votes - c.votes + 1}</i>` : ''}</div>
         <div class="mline"><span class="mnm">${esc(c.first_name)}<small>${c.age}</small></span><span class="mvotes"><b>${c.votes}</b> ${hlasy(c.votes)}</span></div>
         <button class="btn ${mineHere ? '' : 'primary'} mvote" data-mvote="${c.id}" ${cd || !missVoteOpen() ? 'disabled' : ''}>${mineHere ? '✓ Váš hlas' : missEnded() ? 'Kolo skončilo' : 'Hlasovať'}</button>
       </div>`; }).join('')}</div></section>`;
@@ -2792,6 +2794,8 @@ async function renderMissAdmin(){
       <div class="field"><label class="l">Koniec registrácie</label><input type="datetime-local" id="mst_r" value="${local}"></div>
       <div class="field"><label class="l">Koniec aktuálneho kola</label><input type="datetime-local" id="mst_e" value="${st.round_ends_at ? new Date(Date.parse(st.round_ends_at) - new Date().getTimezoneOffset() * 6e4).toISOString().slice(0, 16) : ''}"></div>
       <label class="check field"><input type="checkbox" id="mst_o" ${st.voting_open ? 'checked' : ''}> Hlasovanie otvorené</label>
+      ${'ui' in st ? `<div class="field" style="grid-column:1/-1"><label class="l">Zobrazovať na kartách súťažiacich</label><div class="actions" style="justify-content:flex-start;gap:14px;flex-wrap:wrap">
+        ${[['instagram', 'tlačidlo Instagram'], ['star', 'hviezdičku (favoritky)'], ['need', '„chýba X“ hlasov na postup']].map(([k, l]) => `<label class="check"><input type="checkbox" data-mui="${k}" ${missUi(k) ? 'checked' : ''}> ${l}</label>`).join('')}</div></div>` : ''}
       <div class="actions"><button class="btn">Uložiť nastavenia</button></div></form>
     <div class="actions" style="justify-content:flex-start;flex-wrap:wrap;margin-top:6px">
       <input type="email" id="mg_e" class="search" placeholder="e-mail používateľa"><input type="number" id="mg_a" class="search" style="width:90px" value="100">
@@ -2802,7 +2806,8 @@ async function renderMissAdmin(){
   $('#missSet').addEventListener('submit', async e => {
     e.preventDefault();
     try { await api.missSaveSettings({ title: $('#mst_t').value.trim() || 'MISS', registration_until: new Date($('#mst_r').value).toISOString(), voting_open: $('#mst_o').checked,
-        ...('round_ends_at' in st ? { round_ends_at: $('#mst_e').value ? new Date($('#mst_e').value).toISOString() : null } : {}) });
+        ...('round_ends_at' in st ? { round_ends_at: $('#mst_e').value ? new Date($('#mst_e').value).toISOString() : null } : {}),
+        ...('ui' in st ? { ui: Object.fromEntries([...document.querySelectorAll('[data-mui]')].map(i => [i.dataset.mui, i.checked])) } : {}) });
       toast('Nastavenia uložené.'); await loadMiss(); renderMiss(); } catch(err){ toast(err.message, true); }
   });
 }

@@ -450,6 +450,19 @@
   .mcard.cutl::before{content:'';position:absolute;left:-8px;top:2px;bottom:2px;border-left:1px dashed var(--down);opacity:.55}
   .mcard.cutl::after{content:'nepostupuje';position:absolute;left:-8px;top:50%;transform:translate(calc(-50% + 1px),-50%) rotate(-90deg);font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:var(--down);background:var(--card);padding:0 4px;white-space:nowrap;opacity:.8}
   .mneed{color:var(--down);font-weight:700}
+  .mlay{margin-left:auto;display:flex;gap:6px}
+  .mgc{padding:10px 12px}
+  .mgc-h{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px}
+  .mgc-r{display:grid;grid-template-columns:24px 24px 1fr auto 84px;align-items:center;gap:6px;padding:3px 0;border-radius:8px}
+  .mgc-r.hl{background:var(--accent-soft)}
+  .mgc-r.dim{opacity:.35}
+  .mgc-f{font-size:20px;line-height:1}
+  .mgc-name{border:0;background:none;padding:0;font:inherit;font-weight:600;text-align:left;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+  .mgc-name:hover{text-decoration:underline}
+  .mgc-star{color:#ffc83d}
+  .mgc-v{font-variant-numeric:tabular-nums;white-space:nowrap;text-align:right}
+  .mgc-v .mneed{font-style:normal;font-size:11px;margin-left:5px}
+  .mgc-b{padding:4px 6px;font-size:12px}
   .mflagbig{position:absolute;left:6px;bottom:4px;border:0;background:none;padding:0;font-size:34px;line-height:1;cursor:pointer;filter:drop-shadow(0 1px 3px rgba(0,0,0,.45));transition:transform .12s}
   .mflagbig:hover{transform:scale(1.12)}
   .mneedpill{position:absolute;top:6px;right:6px;font-style:normal;font-size:11px;font-weight:800;padding:2px 7px;border-radius:999px;background:var(--down);color:#fff}
@@ -2484,13 +2497,27 @@ function renderMiss(){
     ${missCountBox()}
     ${isAdmin() ? '<div id="missAdmin"></div>' : ''}
     ${missMeBox()}
-    <div class="mtabs">${[['all', 'Všetky pätice'], ['fav', `⭐ Moje favoritky (${missFavs().filter(id => m.board.some(c => c.id === id)).length})`], ['stats', '📊 Štatistiky']].map(([k, l]) => `<button class="chip ${view === k ? 'on' : ''}" data-mview="${k}">${l}</button>`).join('')}</div>
+    <div class="mtabs">${[['all', 'Všetky pätice'], ['fav', `⭐ Moje favoritky (${missFavs().filter(id => m.board.some(c => c.id === id)).length})`], ['stats', '📊 Štatistiky']].map(([k, l]) => `<button class="chip ${view === k ? 'on' : ''}" data-mview="${k}">${l}</button>`).join('')}
+      ${view === 'all' ? `<span class="mlay"><button class="chip ${missLayout() === 'photo' ? 'on' : ''}" data-mlayout="photo" title="S fotkami">▦ S fotkami</button><button class="chip ${missLayout() === 'list' ? 'on' : ''}" data-mlayout="list" title="Bez fotiek">☰ Bez fotiek</button></span>` : ''}</div>
     ${view === 'fav' ? missFavView() : view === 'stats' ? missStatsView() : `${missFlagBar()}${pager}
-    ${shown.length ? shown.map(g => missGroup(g)).join('') : '<div class="list"><div class="empty">Zatiaľ tu nie sú žiadne schválené súťažiace.</div></div>'}
+    ${shown.length ? (missLayout() === 'list' ? `<div class="mfavs">${shown.map(g => missGroupCompact(g)).join('')}</div>` : shown.map(g => missGroup(g)).join('')) : '<div class="list"><div class="empty">Zatiaľ tu nie sú žiadne schválené súťažiace.</div></div>'}
     ${pager}`}`;
   if (isAdmin()) renderMissAdmin();
   renderMissTips();
   if (isAdmin() && missEnded() && state.missNrShown !== st.current_round && !$('#modal:not([hidden])')){ state.missNrShown = st.current_round; openMissNewRound(); }
+}
+const missLayout = () => store.get('mr_miss_layout', 'photo') === 'list' ? 'list' : 'photo';
+function missGroupCompact(g){
+  const list = missSorted(g), adv = missAdvOf(list.length), fav = missFavs(), f = state.missFlag;
+  const cd = state.user ? missCooldown(g) : null, open = missVoteOpen();
+  return `<div class="mfav mgc"><div class="mgc-h"><b>Pätica ${g}</b><span class="small">${cd ? `ďalší hlas o ${fmtLeft(cd.left)}` : missEnded() ? 'kolo skončilo' : `postupujú 1.–${adv}.`}</span></div>
+    ${list.map((c, i) => { const r = i + 1, mine = cd && cd.contestant === c.id;
+      return `${i === adv ? '<div class="mmini-cut">vypadávajú</div>' : ''}<div class="mgc-r ${f ? (c.country === f ? 'hl' : 'dim') : ''} ${fav.includes(c.id) ? 'fav' : ''}">
+        <span class="mmini-n ${r <= adv ? 'adv' : ''}">${r === 1 && c.votes > 0 ? '👑' : r + '.'}</span>
+        <button class="mflagbtn mgc-f" data-mflag="${esc(c.country)}" title="${esc(COUNTRY[c.country] || c.country)}">${flagOf(c.country)}</button>
+        <button class="mgc-name" data-mopen="${c.id}">${esc(c.first_name)}${fav.includes(c.id) ? ' <span class="mgc-star">★</span>' : ''}</button>
+        <span class="mgc-v"><b>${c.votes}</b>${r > adv ? `<i class="mneed">−${list[adv - 1].votes - c.votes + 1}</i>` : ''}</span>
+        <button class="btn ${mine ? '' : 'primary'} mgc-b" data-mvote="${c.id}" ${cd || !open ? 'disabled' : ''}>${mine ? '✓' : 'Hlasovať'}</button></div>`; }).join('')}</div>`;
 }
 function missGroup(g){
   const list = missSorted(g), adv = missAdvOf(list.length), fav = missFavs(), f = state.missFlag;
@@ -2685,6 +2712,7 @@ async function onMissClick(t){
   if (d.mvotecred){ const n = Math.floor(Number($('#mcred').value)); if (!(n > 0)) return true; if (await onMissVote(Number(d.mvotecred), n)) closeModal(); return true; }
   if (d.mfav){ const on = missToggleFav(Number(d.mfav)); toast(on ? 'Pridané medzi favoritky ⭐' : 'Odobrané z favoritiek.'); renderMiss(); return true; }
   if (d.mflag){ state.missFlag = state.missFlag === d.mflag ? null : d.mflag; state.missView = 'all'; renderMiss(); return true; }
+  if (d.mlayout){ store.set('mr_miss_layout', d.mlayout); renderMiss(); return true; }
   if (d.mview){ state.missView = d.mview; renderMiss(); return true; }
   if (d.mshare){ const id = Number(d.mshare); try { await navigator.share({ title: state.miss.st.title, text: missShareText(id), url: missUrl(id) }); } catch {} return true; }
   if (d.mcopy){ const id = Number(d.mcopy); try { await navigator.clipboard.writeText(`${missShareText(id)}\n${missUrl(id)}`); toast('Skopírované – vlož ho kamkoľvek.'); } catch { toast('Kopírovanie nefunguje – označte text ručne.', true); } return true; }

@@ -108,6 +108,14 @@
   .thumb.chosen.down{background:var(--down);border-color:var(--down);color:#fff}
   .thumb:disabled:not(.chosen){opacity:.45;cursor:default}
   .thumb:disabled.chosen{cursor:default}
+  .thumb.up.top,.thumb.up.top:hover:not(:disabled),.thumb.up.top:disabled{background:linear-gradient(135deg,#1f9d55,#d4a017);border-color:#d4a017;color:#fff;box-shadow:0 0 0 2px rgba(212,160,23,.3);opacity:1}
+  .thumb.top svg + svg{margin-left:-9px}
+  .row.topfav-row,.row.topfav-row:hover{background:linear-gradient(90deg,rgba(212,160,23,.3),rgba(31,157,85,.2));box-shadow:inset 5px 0 0 #d4a017}
+  .row.topfav-row .votes{position:relative}
+  .topfav{color:#b8860b;font-weight:900;font-size:11px;letter-spacing:.08em;white-space:nowrap;align-self:center;text-shadow:0 0 1px rgba(212,160,23,.35)}
+  [data-theme="dark"] .topfav{color:#f2c94c}
+  .row .votes .topfav{position:absolute;right:calc(100% + 10px);top:50%;transform:translateY(-50%)}
+  @media (max-width:860px){ .row .votes .topfav{position:static;transform:none;margin-right:4px} }
   .chart{display:flex;flex-direction:column;gap:4px;min-width:0}
   .bar{height:8px;border-radius:99px;background:var(--down);overflow:hidden;display:flex}
   .bar.bar-none{background:var(--track)}
@@ -750,6 +758,14 @@ function toast(msg, isErr){
 /* =====================================================================
    BACKEND: DEMO (localStorage)
    ===================================================================== */
+/* TOP FAVORIT (demo): { uid: { scope: { t:itemId } | { p:personId } } } */
+const demoTops = () => store.get('mr_top', {});
+const demoTopCount = (key, id) => Object.values(demoTops()).reduce((n, m) => n + Object.values(m).filter(x => x[key] === id).length, 0);
+function demoSetTop(uid, scope, key, id, on){
+  const all = demoTops(), m = all[uid] || (all[uid] = {});
+  if (on) m[scope] = { [key]: id }; else if (m[scope] && m[scope][key] === id) delete m[scope];
+  store.set('mr_top', all);
+}
 function makeDemoApi(){
   const K = { persons:'mr_persons', votes:'mr_votes', session:'mr_session', profiles:'mr_profiles' };
   if (!store.get(K.persons)){
@@ -800,11 +816,17 @@ function makeDemoApi(){
       const v = votes();
       return persons().filter(p => p.approved !== false).map(p => ({
         ...p,
-        up: p.seed_up + v.filter(x => x.person_id === p.id && x.value === 1).length,
+        up: p.seed_up + v.filter(x => x.person_id === p.id && x.value === 1).length + demoTopCount('p', p.id),
         down: p.seed_down + v.filter(x => x.person_id === p.id && x.value === -1).length
       }));
     },
     async myVotes(uid){ return votes().filter(x => x.user_id === uid && !x.is_test); },
+    async myTops(uid){ return Object.entries(demoTops()[uid] || {}).map(([scope, x]) => ({ scope, trust_item_id: x.t ?? null, person_id: x.p ?? null })); },
+    async setTopPerson(uid, pid, on){
+      const p = persons().find(x => x.id === pid);
+      if (on && !votes().some(x => x.user_id === uid && x.person_id === pid && x.value === 1)) throw new Error('Top favoritom môže byť iba osobnosť, ktorej ste dali palec hore.');
+      demoSetTop(uid, p.section || secOf(p), 'p', pid, on);
+    },
     async vote(uid, isAdmin, pid, value){
       const v = votes();
       if (!isAdmin && v.some(x => x.user_id === uid && x.person_id === pid && !x.is_test))
@@ -858,6 +880,9 @@ async function makeSupabaseApi(){
     async listAllPersons(){ return chk(await sb.from('persons').select('*').order('last_name')); },
     async approvePerson(id){ chk(await sb.from('persons').update({ approved: true }).eq('id', id)); },
     async myVotes(uid){ return chk(await sb.from('votes').select('person_id,value').eq('user_id', uid).eq('is_test', false)); },
+    async myTops(){ return chk(await sb.from('top_favorites').select('scope,trust_item_id,person_id')); },
+    async setTopPerson(uid, pid, on){ chk(await sb.rpc('set_top_person', { p_person: pid, p_on: on })); },
+    async setTopTrust(uid, id, on){ chk(await sb.rpc('set_top_trust', { p_item: id, p_on: on })); },
     async vote(uid, isAdmin, pid, value){ chk(await sb.rpc('cast_vote', { p_person_id: pid, p_value: value })); },
     async savePerson(p){
       const row = { last_name:p.last_name, first_name:p.first_name, nickname:p.nickname, birth_year:p.birth_year, birth_date:p.birth_date, category:p.category, detail:p.detail, approved:p.approved, gender:p.gender, entity:p.entity || 'osoba' };
@@ -885,6 +910,10 @@ const ICON_THUMB = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" s
 const ICON_G = '<svg viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="m6.3 14.7 6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg>';
 const ICON_FB = '<svg viewBox="0 0 24 24" fill="#fff"><path d="M24 12.07C24 5.4 18.63 0 12 0S0 5.4 0 12.07C0 18.1 4.39 23.1 10.13 24v-8.44H7.08v-3.49h3.04V9.41c0-3.02 1.8-4.7 4.54-4.7 1.31 0 2.68.24 2.68.24v2.97h-1.5c-1.5 0-1.96.93-1.96 1.89v2.26h3.33l-.53 3.49h-2.8V24C19.62 23.1 24 18.1 24 12.07z"/></svg>';
 
+/* TOP FAVORIT – jedna položka v každom zozname môže dostať 2 palce hore */
+const isTopP = p => !!state.myTop && state.myTop.get(p.section || secOf(p)) === p.id;
+const isTopT = i => !!state.myTop && state.myTop.get(i.kind) === i.id;
+const TOP_LABEL = '<span class="topfav">TOP FAVORIT</span>';
 function bar(up, down){
   const t = up + down;
   if (!t) return `<div class="bar bar-none" role="img" aria-label="bez hlasov"></div>`;
@@ -969,17 +998,18 @@ function renderList(){
   $('#list').innerHTML = head + list.map((p, i) => {
     const mine = state.myVotes.get(p.id);
     const locked = !isAdmin() && mine !== undefined;
+    const top = isTopP(p);
     const t = p.up + p.down;
     const pct = t ? Math.round(p.up / t * 100) : null;
     const age = ageOf(p);
-    return `<div class="row">
+    return `<div class="row${top ? ' topfav-row' : ''}">
       <div class="rank ${i < 3 && state.sort === 'score' ? 'top' : ''}">${i + 1}.${moveArrow(moves.get(p.id))}</div>
       <div class="namecell" data-popen="${p.id}" role="link" tabindex="0" title="Profil a štatistiky">${nameHTML(p)}</div>
       <div class="gen">${genderLabel(p)}</div>
       <div class="cat"><span class="tag">${esc(p.category)}</span>${plat(p)}${p.detail && state.psec !== 'influencer' ? `<span class="detail">${esc(p.detail)}</span>` : ''}</div>
       <div class="meta"><span>${genderLabel(p)}</span><span class="tag">${esc(p.category)}</span>${plat(p)}${p.detail && state.psec !== 'influencer' ? `<span class="detail">${esc(p.detail)}</span>` : ''}</div>
-      <div class="votes">
-        <button class="thumb up ${mine === 1 ? 'chosen' : ''}" data-vote="1" data-id="${p.id}" ${locked ? 'disabled' : ''} title="Páči sa mi" aria-label="Palec hore pre ${esc(fullName(p))}">${ICON_THUMB}<span>${p.up}</span></button>
+      <div class="votes">${top ? TOP_LABEL : ''}
+        <button class="thumb up ${mine === 1 ? 'chosen' : ''}${top ? ' top' : ''}" data-vote="1" data-id="${p.id}" ${locked && mine !== 1 ? 'disabled' : ''} title="${top ? 'Top favorit – 2 palce hore. Kliknite znova pre zrušenie top favorita.' : mine === 1 ? 'Kliknite znova = 2 palce hore (TOP FAVORIT)' : 'Páči sa mi'}" aria-label="Palec hore pre ${esc(fullName(p))}">${top ? ICON_THUMB + ICON_THUMB : ICON_THUMB}<span>${p.up}</span></button>
         <button class="thumb down ${mine === -1 ? 'chosen' : ''}" data-vote="-1" data-id="${p.id}" ${locked ? 'disabled' : ''} title="Nepáči sa mi" aria-label="Palec dole pre ${esc(fullName(p))}">${ICON_THUMB}<span>${p.down}</span></button>
       </div>
       <div class="chart">${bar(p.up, p.down)}<div class="chart-txt">${pct === null ? 'bez hlasov' : `<b>${pct} %</b> · ${t} ${t === 1 ? 'hlas' : (t < 5 ? 'hlasy' : 'hlasov')}`}</div></div>
@@ -1006,8 +1036,8 @@ async function openPersonCard(id, days){
       <div class="pc-rank"><b>${crank ? crank + '.' : '–'}</b><span class="small">v kategórii ${esc(p.category)}</span></div>
       <div class="pc-rank"><b>${p.up - p.down > 0 ? '+' : ''}${p.up - p.down}</b><span class="small">skóre</span></div>
     </div>
-    <div class="votes" style="margin:10px 0 4px">
-      <button class="thumb up ${mine === 1 ? 'chosen' : ''}" data-vote="1" data-id="${p.id}" ${locked ? 'disabled' : ''} title="Páči sa mi">${ICON_THUMB}<span>${p.up}</span></button>
+    <div class="votes" style="margin:10px 0 4px">${isTopP(p) ? TOP_LABEL : ''}
+      <button class="thumb up ${mine === 1 ? 'chosen' : ''}${isTopP(p) ? ' top' : ''}" data-vote="1" data-id="${p.id}" ${locked && mine !== 1 ? 'disabled' : ''} title="${isTopP(p) ? 'Top favorit – kliknite znova pre zrušenie' : mine === 1 ? 'Kliknite znova = 2 palce hore (TOP FAVORIT)' : 'Páči sa mi'}">${isTopP(p) ? ICON_THUMB + ICON_THUMB : ICON_THUMB}<span>${p.up}</span></button>
       <button class="thumb down ${mine === -1 ? 'chosen' : ''}" data-vote="-1" data-id="${p.id}" ${locked ? 'disabled' : ''} title="Nepáči sa mi">${ICON_THUMB}<span>${p.down}</span></button>
       ${locked ? '<span class="small" style="align-self:center">Už ste hlasovali.</span>' : ''}</div>
     <div class="dtools"><h3>Vývoj obľúbenosti</h3><div class="seg-sm" role="group">${periods.map(([d, l]) => `<button data-pdays="${d}" class="${state.pcard.days === d ? 'on' : ''}">${l}</button>`).join('')}</div></div>
@@ -1065,7 +1095,8 @@ async function loadAuth(){
   if (state.user && state.profile){
     (await api.myVotes(state.user.id)).forEach(v => state.myVotes.set(Number(v.person_id), v.value));
   }
-  state.myTrust = new Map(); state.myPolls = new Map(); state.miss = null;
+  state.myTrust = new Map(); state.myPolls = new Map(); state.miss = null; state.myTop = new Map();
+  if (state.user && state.profile) (await api.myTops(state.user.id).catch(() => [])).forEach(x => state.myTop.set(x.scope, Number(x.trust_item_id ?? x.person_id)));
   if (state.user && state.profile){
     const [t, pv] = await Promise.all([api.myTrust(state.user.id).catch(() => []), api.myPolls(state.user.id).catch(() => [])]);
     t.forEach(v => state.myTrust.set(Number(v.item_id), v.value));
@@ -1243,6 +1274,7 @@ async function onVote(btn){
   const pid = Number(btn.dataset.id), value = Number(btn.dataset.vote);
   if (!state.user) return openLogin();
   if (!state.profile) return openProfile();
+  if (value === 1 && state.myVotes.get(pid) === 1) return onTopPerson(pid, btn);
   if (!isAdmin() && state.myVotes.has(pid)) return toast('Za túto osobnosť ste už hlasovali.', true);
   btn.disabled = true;
   try {
@@ -1251,10 +1283,21 @@ async function onVote(btn){
     value === 1 ? p.up++ : p.down++;
     if (!isAdmin()) state.myVotes.set(pid, value);
     renderList(); if (state.pcard?.id === pid && $('#pctl') && !$('#modal').hidden) openPersonCard(pid);
-    toast(value === 1 ? '👍 Hlas zaznamenaný' : '👎 Hlas zaznamenaný');
+    toast(value === 1 ? (isAdmin() ? '👍 Hlas zaznamenaný' : '👍 Hlas zaznamenaný – kliknite na 👍 ešte raz a bude to váš TOP FAVORIT (2 palce)') : '👎 Hlas zaznamenaný');
   } catch(err){
     toast(err.message, true); btn.disabled = false;
   }
+}
+async function onTopPerson(pid, btn){
+  const p = state.persons.find(x => x.id === pid), sec = p.section || secOf(p), prevId = state.myTop.get(sec), on = prevId !== pid;
+  btn.disabled = true;
+  try {
+    await api.setTopPerson(state.user.id, pid, on);
+    if (on){ const prev = prevId != null && state.persons.find(x => x.id === prevId); if (prev) prev.up--; p.up++; state.myTop.set(sec, pid); }
+    else { p.up--; state.myTop.delete(sec); }
+    renderList(); if (state.pcard?.id === pid && $('#pctl') && !$('#modal').hidden) openPersonCard(pid);
+    toast(on ? `⭐ TOP FAVORIT – ${fullName(p)} má od vás 2 palce hore${prevId != null && prevId !== pid ? ' (predchádzajúci top favorit má späť 1 palec)' : ''}` : 'Top favorit zrušený – zostáva 1 palec hore');
+  } catch(err){ toast(err.message, true); btn.disabled = false; }
 }
 
 /* =====================================================================
@@ -1271,8 +1314,8 @@ const ANN_ICON = { info:'ℹ️', sutaz:'🎁', dolezite:'⚠️' };
 const ICON_BELL = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>';
 const FOOT = {
   miss: 'Súťaž je určená iba pre plnoleté ženy. Profily schvaľuje administrátor. Hlasy za kredity sú nevratné.',
-  masrad: 'Skóre = počet 👍 mínus počet 👎. Šípky ukazujú posun v poradí za posledných 7 dní. Výsledky sú orientačné a nepredstavujú reprezentatívny prieskum.',
-  dovera: 'Dôvera = podiel 👍 zo všetkých aktuálnych hlasov. „Nepoznám“ sa do dôvery nezapočítava, ukazuje iba, koľko ľudí položku pozná. Hlas môžete kedykoľvek zmeniť alebo zrušiť. Graf v čase ukazuje stav hlasov na konci každého dňa (UTC).',
+  masrad: 'Skóre = počet 👍 mínus počet 👎. Druhým klikom na 👍 si v každom zozname vyberiete jedného TOP FAVORITA – dostane od vás 2 palce hore. Šípky ukazujú posun v poradí za posledných 7 dní. Výsledky sú orientačné a nepredstavujú reprezentatívny prieskum.',
+  dovera: 'Dôvera = podiel 👍 zo všetkých aktuálnych hlasov. Druhým klikom na 👍 si v každom zozname vyberiete jedného TOP FAVORITA – dostane od vás 2 palce hore. „Nepoznám“ sa do dôvery nezapočítava, ukazuje iba, koľko ľudí položku pozná. Hlas môžete kedykoľvek zmeniť alebo zrušiť. Graf v čase ukazuje stav hlasov na konci každého dňa (UTC).',
   ankety: 'Výsledky ankiet sú orientačné a nepredstavujú reprezentatívny prieskum.',
   clanky: 'Články vychádzajú z hlasovaní na tomto webe. Výsledky sú orientačné a nepredstavujú reprezentatívny prieskum.'
 };
@@ -1361,7 +1404,7 @@ function demoExtra(){
   return {
     async listTrust(){
       const cur = latest(() => true);
-      return items().filter(i => i.active || isAdm()).map(i => ({ ...i, up: cur.filter(e => e.item_id === i.id && e.value === 1).length, down: cur.filter(e => e.item_id === i.id && e.value === -1).length, unknown: cur.filter(e => e.item_id === i.id && e.value === 2).length }));
+      return items().filter(i => i.active || isAdm()).map(i => ({ ...i, up: cur.filter(e => e.item_id === i.id && e.value === 1).length + demoTopCount('t', i.id), down: cur.filter(e => e.item_id === i.id && e.value === -1).length, unknown: cur.filter(e => e.item_id === i.id && e.value === 2).length }));
     },
     async trustPrev(){ const cut = new Date(Date.now() - 7 * 864e5).toISOString(); const m = new Map();
       evs().filter(e => e.created_at < cut).sort((a, b) => a.created_at < b.created_at ? -1 : 1).forEach(e => m.set(e.item_id + '|' + e.user_id, e));
@@ -1373,6 +1416,12 @@ function demoExtra(){
       const cur = latest(e => e.user_id === uid && e.item_id === id)[0]?.value || 0;
       if (cur === v) return;
       const l = evs(); l.push({ item_id:id, user_id:uid, value:v, created_at:new Date().toISOString() }); store.set(K.ev, l);
+      if (v !== 1){ const it = items().find(x => x.id === id); demoSetTop(uid, it.kind, 't', id, false); }
+    },
+    async setTopTrust(uid, id, on){
+      const it = items().find(x => x.id === id);
+      if (on) await this.setTrust(uid, id, 1);
+      demoSetTop(uid, it.kind, 't', id, on);
     },
     async trustTimeline(ids, days){ return computeTimeline(evs(), ids, days); },
     async trustBreakdown(id){
@@ -1600,11 +1649,12 @@ function trustSorted(list){
   return [...list].sort((a, b) => by(a, b) || collator.compare(a.name, b.name));
 }
 function trustThumbs(i){
-  const mine = state.myTrust.get(i.id) || 0;
-  const t = (v, cls, lbl) => `<button class="thumb tog ${cls} ${mine === v ? 'chosen' : ''}" data-tvote="${v}" data-id="${i.id}" title="${mine === v ? 'Kliknite znova pre zrušenie hlasu' : lbl}" aria-pressed="${mine === v}" aria-label="${lbl}: ${esc(i.name)}">${ICON_THUMB}<span>${v === 1 ? i.up : i.down}</span></button>`;
+  const mine = state.myTrust.get(i.id) || 0, top = isTopT(i);
+  const tip = (v, lbl) => v === 1 && top ? 'TOP FAVORIT – 2 palce hore. Kliknite znova pre zrušenie hlasu' : v === 1 && mine === 1 ? 'Kliknite znova = 2 palce hore (TOP FAVORIT)' : mine === v ? 'Kliknite znova pre zrušenie hlasu' : lbl;
+  const t = (v, cls, lbl) => `<button class="thumb tog ${cls} ${mine === v ? 'chosen' : ''}${v === 1 && top ? ' top' : ''}" data-tvote="${v}" data-id="${i.id}" title="${tip(v, lbl)}" aria-pressed="${mine === v}" aria-label="${lbl}: ${esc(i.name)}">${v === 1 && top ? ICON_THUMB + ICON_THUMB : ICON_THUMB}<span>${v === 1 ? i.up : i.down}</span></button>`;
   const u = `<button class="thumb tog unk ${mine === 2 ? 'chosen' : ''}" data-tvote="2" data-id="${i.id}" title="${mine === 2 ? 'Kliknite znova pre zrušenie' : 'Nepoznám'}" aria-pressed="${mine === 2}" aria-label="Nepoznám: ${esc(i.name)}"><span class="qm">?</span></button>`;
   const T = TERM(i.kind);
-  return t(1, 'up', T.up) + t(-1, 'down', T.down) + u;
+  return (top ? TOP_LABEL : '') + t(1, 'up', T.up) + t(-1, 'down', T.down) + u;
 }
 const knownPct = i => { const k = i.up + i.down, all = k + (i.unknown || 0); return all ? Math.round(k / all * 100) : null; };
 const knownTxt = i => (i.unknown ? ` · pozná ${knownPct(i)} %` : '');
@@ -1624,7 +1674,7 @@ function renderTrustRows(){
   const head = `<div class="row trow head"><div></div><div>#</div><div>${KIND_LABEL[state.tkind]}</div><div>${TT.head}</div><div>${TT.col}</div></div>`;
   $('#dvRows').innerHTML = head + (list.length ? list.map((i, n) => {
     const t = i.up + i.down, pct = pctOf(i.up, i.down);
-    return `<div class="row trow">
+    return `<div class="row trow${isTopT(i) ? ' topfav-row' : ''}">
       <div class="cmpc"><input type="checkbox" class="cmp" data-cmp="${i.id}" ${state.cmp.has(i.id) ? 'checked' : ''} title="Porovnať v grafe (max. 3)" aria-label="Porovnať ${esc(i.name)}"></div>
       <div class="rank ${n < 3 && state.tsort === 'ratio' && t >= TRUST_MIN ? 'top' : ''}">${n + 1}.${moveArrow(moves.get(i.id))}</div>
       <div class="namecell" data-open="${i.id}" role="link" tabindex="0"><span class="last">${esc(i.name)}</span>${i.detail ? `<span class="detail">${esc(i.detail)}</span>` : ''}</div>
@@ -1763,18 +1813,33 @@ async function onTrustVote(btn){
   if (!state.user) return openLogin();
   if (!state.profile) return openProfile();
   const id = Number(btn.dataset.id), val = Number(btn.dataset.tvote);
-  const cur = state.myTrust.get(id) || 0, next = cur === val ? 0 : val;
+  const it0 = state.trustById.get(id), wasTop = isTopT(it0);
+  const cur = state.myTrust.get(id) || 0;
+  if (val === 1 && cur === 1 && !wasTop) return onTopTrust(it0);
+  const next = cur === val ? 0 : val;
   document.querySelectorAll(`[data-tvote][data-id="${id}"]`).forEach(b => b.disabled = true);
   try {
     await api.setTrust(state.user.id, id, next);
     const it = state.trustById.get(id);
+    if (wasTop && next !== 1){ it.up--; state.myTop.delete(it.kind); }
     if (cur === 1) it.up--; else if (cur === -1) it.down--; else if (cur === 2) it.unknown = Math.max(0, (it.unknown || 0) - 1);
     if (next === 1) it.up++; else if (next === -1) it.down++; else if (next === 2) it.unknown = (it.unknown || 0) + 1;
     next ? state.myTrust.set(id, next) : state.myTrust.delete(id);
     const T = TERM(it.kind);
-    toast(next === 1 ? `👍 ${T.up} – uložené` : next === -1 ? `👎 ${T.down} – uložené` : next === 2 ? 'Nepoznám – uložené' : 'Hlas zrušený');
+    toast(next === 1 ? `👍 ${T.up} – uložené. Kliknite na 👍 ešte raz a bude to váš TOP FAVORIT (2 palce)` : next === -1 ? `👎 ${T.down} – uložené` : next === 2 ? 'Nepoznám – uložené' : 'Hlas zrušený');
     if (state.artTrust && location.hash.startsWith('#clanok-')) renderArticle(); else if (state.detailIds && state.detailIds.length) renderDetail(); else renderTrustRows();
   } catch(err){ toast(err.message, true); document.querySelectorAll(`[data-tvote][data-id="${id}"]`).forEach(b => b.disabled = false); }
+}
+async function onTopTrust(it){
+  const prevId = state.myTop.get(it.kind);
+  document.querySelectorAll(`[data-tvote][data-id="${it.id}"]`).forEach(b => b.disabled = true);
+  try {
+    await api.setTopTrust(state.user.id, it.id, true);
+    const prev = prevId != null && prevId !== it.id && state.trustById.get(prevId); if (prev) prev.up--;
+    it.up++; state.myTop.set(it.kind, it.id);
+    toast(`⭐ TOP FAVORIT – ${it.name} má od vás 2 palce hore${prev ? ' (predchádzajúci top favorit má späť 1 palec)' : ''}`);
+    if (state.artTrust && location.hash.startsWith('#clanok-')) renderArticle(); else if (state.detailIds && state.detailIds.length) renderDetail(); else renderTrustRows();
+  } catch(err){ toast(err.message, true); document.querySelectorAll(`[data-tvote][data-id="${it.id}"]`).forEach(b => b.disabled = false); }
 }
 async function openTrustAdmin(){
   const kind = state.tkind;

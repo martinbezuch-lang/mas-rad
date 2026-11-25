@@ -425,6 +425,30 @@
   .mname{font-weight:800;font-size:14px;margin-top:7px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .mmeta{font-size:12px;color:var(--muted);margin:2px 0 7px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .mvote{width:100%;padding:6px 4px}
+  .mrank{position:absolute;top:6px;left:6px;font-style:normal;font-size:12px;font-weight:800;padding:2px 7px;border-radius:999px;background:rgba(0,0,0,.55);color:#fff}
+  .mrank.adv{background:var(--up,#1a7f37)}
+  .mstar{position:absolute;bottom:6px;right:6px;font-size:18px;line-height:1;padding:3px 5px;border-radius:999px;background:rgba(0,0,0,.4);color:#fff;border:0;cursor:pointer}
+  .mstar.on{color:#ffc83d}
+  .mcard.dim{opacity:.28;filter:grayscale(.8)}
+  .mcard.hl .mphoto{outline:3px solid var(--accent,#2b6cb0);outline-offset:2px}
+  .mflagbtn{border:0;background:none;padding:0;font:inherit;cursor:pointer}
+  .mflags{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0}
+  .mflags .chip{font-size:13px}
+  .mtabs{display:flex;gap:6px;flex-wrap:wrap;margin:14px 0 4px}
+  .mcut{grid-column:1/-1;height:0}
+  .mshare{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+  .mshare-txt{font-size:13px;background:var(--bg,#f6f7f9);border:1px solid var(--line);border-radius:10px;padding:8px 10px;margin-top:8px;white-space:pre-line}
+  .mfav{display:grid;grid-template-columns:64px 1fr auto;gap:12px;align-items:center;padding:10px 0;border-top:1px solid var(--line)}
+  .mfav:first-child{border-top:0}
+  .mfav .mphoto{width:64px}
+  .mst-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:10px 0}
+  .mst-tile{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+  .mst-tile b{display:block;font-size:22px}
+  .mst-row{display:grid;grid-template-columns:150px 1fr 150px;gap:10px;align-items:center;font-size:13px;padding:5px 0}
+  .mst-bar{height:10px;border-radius:5px;background:var(--line);overflow:hidden}
+  .mst-bar i{display:block;height:100%;background:var(--s1,#2b6cb0);border-radius:5px}
+  .mtip{border-top:1px solid var(--line);padding:8px 0}.mtip:first-child{border-top:0}
+  @media (max-width:640px){.mst-row{grid-template-columns:105px 1fr 118px;font-size:12px}}
   .mvotes{font-size:12px;color:var(--muted);margin-top:5px;font-variant-numeric:tabular-nums}
   .mvotes b{color:var(--ink);font-size:14px}
   .mprof{display:grid;grid-template-columns:240px 1fr;gap:20px}
@@ -2133,7 +2157,7 @@ function demoMiss(){
   const K = { set:'mr_miss_set', c:'mr_miss_c', v:'mr_miss_v', w:'mr_miss_w' };
   const sess = () => store.get('mr_session', {});
   if (!store.get(K.set)){
-    store.set(K.set, { id:1, title:'MISS 2026', registration_until:'2027-06-30T21:59:59Z', current_round:1, voting_open:true, group_size:5, vote_hours:12 });
+    store.set(K.set, { id:1, title:'MISS 2026', registration_until:'2027-06-30T21:59:59Z', current_round:1, voting_open:true, group_size:5, vote_hours:12, advance_count:3, round_ends_at:new Date(Date.now() + 9 * 864e5).toISOString() });
     const names = ['Lucia','Natália','Simona','Kristína','Veronika','Michaela','Barbora','Petra','Dominika','Nikola','Laura','Ema','Sofia','Zuzana','Tereza','Klára','Anna','Monika','Lenka','Viktória','Alexandra','Diana','Ivana','Martina','Karolína','Paulína','Sára','Adriána','Bianka','Denisa','Eva','Jana'];
     const cc = ['SK','SK','SK','CZ','SK','PL','HU','SK','UA','CZ','AT','SK'];
     store.set(K.c, names.map((n, i) => ({ id:i + 1, user_id:'fake-' + i, first_name:n, country:cc[i % cc.length], birth_date:`${1990 + (i * 7) % 16}-0${1 + i % 9}-1${i % 9}`,
@@ -2175,6 +2199,8 @@ function demoMiss(){
       store.set(K.c, l);
     },
     async missCloseRound(){ throw new Error('V demo režime nie je k dispozícii.'); },
+    async missTips(){ return [{ id:1, title:'Prechod „pred / po“ na beat', body:'Natoč 2 zábery – bežný a vyladený – a strihni ich presne na úder hudby. Prvé 2 sekundy rozhodujú, tak začni hneď pohybom.', format:'transition', created_at:new Date().toISOString() },
+      { id:2, title:'Deň v mojom živote za 15 sekúnd', body:'Krátke rýchle zábery z bežného dňa, text na obrazovke a na konci výzva: „Hlasuj za mňa v MISS – odkaz v bio“.', format:'vlog', created_at:new Date().toISOString() }]; },
     async missGrant(email, amount){ const w = store.get(K.w, {}), uid = sess().id; w[uid] = (w[uid] || 0) + amount; store.set(K.w, w); return w[uid]; }
   };
 }
@@ -2203,7 +2229,8 @@ function liveMiss(sb, chk){
     async missPending(){ return chk(await sb.from('miss_contestants').select('*').eq('status', 'pending').order('created_at')); },
     async missSetStatus(id, status){ chk(await sb.from('miss_contestants').update({ status }).eq('id', id)); },
     async missCloseRound(n){ return chk(await sb.rpc('miss_close_round', { p_advance:n })); },
-    async missGrant(email, amount){ return chk(await sb.rpc('miss_grant_credits', { p_email:email, p_amount:amount })); }
+    async missGrant(email, amount){ return chk(await sb.rpc('miss_grant_credits', { p_email:email, p_amount:amount })); },
+    async missTips(){ return chk(await sb.from('miss_tips').select('id,title,body,format,created_at').eq('active', true).order('created_at', { ascending:false }).limit(6)); }
   };
 }
 
@@ -2222,6 +2249,9 @@ async function loadMiss(){
   const [st, board] = await Promise.all([api.missSettings(), api.missBoard()]);
   const mine = state.user ? await Promise.all([api.myMissVotes(state.user.id, st.current_round).catch(() => []), api.missWallet(state.user.id).catch(() => 0), api.myContestant(state.user.id).catch(() => null)]) : [[], 0, null];
   state.miss = { st, board: board.map(c => ({ ...c, id: Number(c.id) })), myVotes: mine[0], credits: mine[1], me: mine[2] };
+  const fav = missFavs(); let ch = false;
+  for (const v of state.miss.myVotes){ const id = Number(v.contestant_id); if (!fav.includes(id) && !missUnfav().includes(id)){ fav.push(id); ch = true; } }
+  if (ch) store.set('mr_miss_fav', fav);
   const a = document.querySelector('.nav a[data-tab="miss"]'); if (a) a.textContent = '👑 ' + st.title;
 }
 function missCooldown(group){
@@ -2231,6 +2261,126 @@ function missCooldown(group){
   const left = Date.parse(mine.created_at) + hrs - Date.now();
   return left > 0 ? { left, contestant: Number(mine.contestant_id) } : null;
 }
+const missFavs = () => (store.get('mr_miss_fav', []) || []).map(Number);
+const missUnfav = () => (store.get('mr_miss_unfav', []) || []).map(Number);
+function missToggleFav(id){
+  const f = missFavs(), u = missUnfav();
+  if (f.includes(id)){ store.set('mr_miss_fav', f.filter(x => x !== id)); store.set('mr_miss_unfav', [...new Set([...u, id])]); return false; }
+  store.set('mr_miss_fav', [...f, id]); store.set('mr_miss_unfav', u.filter(x => x !== id)); return true;
+}
+const missAdv = () => Math.max(1, Number(state.miss?.st.advance_count) || 3);
+function missSorted(g){ return state.miss.board.filter(c => c.group_no === g).sort((a, b) => b.votes - a.votes || a.id - b.id); }
+function missPos(id){
+  const c = state.miss?.board.find(x => x.id === id); if (!c) return null;
+  const list = missSorted(c.group_no), rank = list.findIndex(x => x.id === id) + 1, adv = missAdv();
+  const need = rank > adv ? list[adv - 1].votes - c.votes + 1 : 0;
+  const lead = rank > adv ? 0 : (list[adv] ? c.votes - list[adv].votes : null);
+  return { c, rank, size: list.length, adv, advancing: rank <= adv, need, lead };
+}
+function missEndsLeft(){ const e = Date.parse(state.miss?.st.round_ends_at || ''); return e && e > Date.now() ? e - Date.now() : null; }
+function fmtDur(ms){
+  const h = Math.floor(ms / 36e5), d = Math.floor(h / 24);
+  if (d >= 2) return `${d} dní a ${h % 24} h`;
+  if (d === 1) return `1 deň a ${h % 24} h`;
+  return fmtLeft(ms);
+}
+const ORD = n => `${n}.`;
+function missShareText(id){
+  const p = missPos(id); if (!p) return '';
+  const n = p.c.first_name, r = state.miss.st.current_round, left = missEndsLeft();
+  const t = left ? `Do konca ${r}. kola zostáva už len ${fmtDur(left)}` : `Práve beží ${r}. kolo`;
+  if (!p.advancing) return `🚨 ${n} potrebuje tvoju pomoc! ${t} a ${n} je aktuálne na ${ORD(p.rank)} mieste vo svojej pätici – to je NEPOSTUPOVÉ miesto. Potrebuje sa dostať aspoň na ${ORD(p.adv)} miesto. Hlasuj za ňu, zaberie to 5 sekúnd 👇`;
+  if (p.rank === 1) return `👑 ${n} vedie svoju päticu v ${state.miss.st.title}! ${t}. Pomôž jej udržať 1. miesto a istý postup – každý hlas sa počíta 👇`;
+  return `💪 ${n} je na ${ORD(p.rank)} mieste vo svojej pätici a zatiaľ postupuje. ${t}, súperky môžu ešte dobehnúť – pomôž jej poistiť postup ďalším hlasom 👇`;
+}
+const missUrl = id => `${location.origin}${location.pathname}#miss-${id}`;
+function missShareBox(id, own){
+  const txt = missShareText(id), url = missUrl(id), full = `${txt}\n${url}`, e = encodeURIComponent;
+  const mob = /Android|iPhone|iPad/i.test(navigator.userAgent);
+  return `<div class="box" style="margin-top:12px"><b>${own ? 'Pošli kamarátkam a kamarátom' : 'Zdieľaj a pomôž jej'}</b>
+    <div class="mshare-txt">${esc(txt)}</div>
+    <div class="mshare">
+      ${navigator.share ? `<button class="btn primary" data-mshare="${id}">📤 Zdieľať</button>` : ''}
+      <a class="btn" target="_blank" rel="noopener" href="https://wa.me/?text=${e(full)}">WhatsApp</a>
+      ${mob ? `<a class="btn" href="fb-messenger://share/?link=${e(url)}">Messenger</a>` : ''}
+      <a class="btn" target="_blank" rel="noopener" href="https://www.facebook.com/sharer/sharer.php?u=${e(url)}">Facebook</a>
+      <a class="btn" target="_blank" rel="noopener" href="https://t.me/share/url?url=${e(url)}&text=${e(txt)}">Telegram</a>
+      <a class="btn" target="_blank" rel="noopener" href="https://x.com/intent/tweet?text=${e(txt)}&url=${e(url)}">X</a>
+      <button class="btn" data-mcopy="${id}">Kopírovať text</button></div>
+    <p class="small" style="margin:6px 0 0">Na Instagram: skopíruj text a vlož ho do príbehu s nálepkou odkazu.</p></div>`;
+}
+function missPosLine(p){
+  if (!p) return '';
+  if (p.advancing) return `<b style="color:var(--up,#1a7f37)">${p.rank}. miesto – postupuje</b>${p.lead != null ? ` <span class="small">· náskok ${p.lead} ${hlasy(p.lead)}</span>` : ''}`;
+  return `<b style="color:var(--down,#c62828)">${p.rank}. miesto – nepostupuje</b> <span class="small">· na ${p.adv}. miesto chýba ${p.need} ${hlasy(p.need)}</span>`;
+}
+const hlasy = n => n === 1 ? 'hlas' : (n > 1 && n < 5 ? 'hlasy' : 'hlasov');
+function missMeBox(){
+  const m = state.miss; if (!m.me || m.me.status !== 'approved') return '';
+  const p = missPos(Number(m.me.id)); if (!p) return '';
+  return `<section class="mgroup"><div class="mgroup-h"><b>Moja pozícia – pätica ${p.c.group_no}</b><span>${missPosLine(p)}</span></div>
+    ${missShareBox(p.c.id, true)}<div id="missTips" style="margin-top:12px"></div></section>`;
+}
+async function renderMissTips(){
+  const el = $('#missTips'); if (!el) return;
+  let t = []; try { t = await api.missTips(); } catch {}
+  if (!t.length) return;
+  el.innerHTML = `<div class="box"><b>💡 Tipy na reels, ktoré ti môžu pomôcť postúpiť</b>
+    ${t.map(x => `<div class="mtip"><b>${esc(x.title)}</b><div class="small" style="white-space:pre-line">${esc(x.body)}</div></div>`).join('')}
+    <p class="small" style="margin:6px 0 0">Do videa pridaj výzvu „hlasuj za mňa“ a odkaz na svoj profil daj do bio.</p></div>`;
+}
+function missFlagBar(){
+  const m = state.miss, cnt = {};
+  for (const c of m.board) cnt[c.country] = (cnt[c.country] || 0) + 1;
+  const list = Object.entries(cnt).sort((a, b) => b[1] - a[1]);
+  if (list.length < 2) return '';
+  const f = state.missFlag;
+  let note = '';
+  if (f){ const mine = m.board.filter(c => c.country === f), adv = mine.filter(c => missPos(c.id).advancing).length;
+    note = `<p class="small" style="margin:0 0 8px">${flagOf(f)} ${esc(COUNTRY[f] || f)}: ${mine.length} v súťaži, <b>${adv}</b> na postupových miestach${mine.length - adv ? ` – <b>${mine.length - adv}</b> potrebuje tvoju pomoc` : ''}.</p>`; }
+  return `<div class="mflags"><span class="small" style="align-self:center">Podpor svoju krajinu:</span>${list.map(([k, n]) => `<button class="chip ${f === k ? 'on' : ''}" data-mflag="${esc(k)}" title="${esc(COUNTRY[k] || k)}">${flagOf(k)} ${n}</button>`).join('')}</div>${note}`;
+}
+function missFavView(){
+  const ids = missFavs(), list = ids.map(id => missPos(id)).filter(Boolean)
+    .sort((a, b) => (a.advancing - b.advancing) || (b.need - a.need));
+  if (!list.length) return `<div class="list"><div class="empty">Zatiaľ nemáte favoritky. Po hlasovaní sa súťažiaca pridá sem automaticky, alebo kliknite na ☆ pri fotke.</div></div>`;
+  const cd = g => state.user ? missCooldown(g) : null;
+  return `<section class="mgroup">${list.map(p => { const c = p.c, ph = missPhoto(c.photo_path), w = cd(c.group_no);
+    return `<div class="mfav"><button class="mphoto" data-mopen="${c.id}">${ph ? `<img src="${esc(ph)}" alt="" loading="lazy">` : `<span>${esc(c.first_name[0] || '?')}</span>`}</button>
+      <div><b>${esc(c.first_name)}</b> <span class="small">${flagOf(c.country)} · pätica ${c.group_no} · ${c.votes} ${hlasy(c.votes)}</span><br>${missPosLine(p)}</div>
+      <div class="actions" style="flex-direction:column;align-items:stretch;gap:6px">
+        <button class="btn primary" data-mvote="${c.id}" ${w || !state.miss.st.voting_open ? 'disabled' : ''}>${w ? 'o ' + fmtLeft(w.left) : 'Hlasovať'}</button>
+        <button class="btn" data-mopen="${c.id}">Zdieľať</button></div></div>`; }).join('')}
+    <p class="small" style="margin:8px 0 0">Favoritky sú uložené v tomto prehliadači. Odobrať: ★ pri fotke v päticiach.</p></section>`;
+}
+function missStatsView(){
+  const m = state.miss, b = m.board; if (!b.length) return '<div class="list"><div class="empty">Zatiaľ bez súťažiacich.</div></div>';
+  const by = {}, ages = { '18–20':0, '21–24':0, '25–29':0, '30–34':0, '35+':0 };
+  for (const c of b){
+    const o = by[c.country] ||= { n:0, adv:0, lead:0 }, p = missPos(c.id);
+    o.n++; if (p.advancing) o.adv++; if (p.rank === 1) o.lead++;
+    const a = c.age; ages[a <= 20 ? '18–20' : a <= 24 ? '21–24' : a <= 29 ? '25–29' : a <= 34 ? '30–34' : '35+']++;
+  }
+  const rows = Object.entries(by).sort((x, y) => y[1].n - x[1].n), maxN = Math.max(...rows.map(r => r[1].n)), maxA = Math.max(...Object.values(ages), 1);
+  const groups = new Set(b.map(c => c.group_no)).size, avgAge = Math.round(b.reduce((s, c) => s + c.age, 0) / b.length);
+  const advTotal = b.filter(c => missPos(c.id).advancing).length;
+  const race = [...rows].sort((x, y) => y[1].adv - x[1].adv || y[1].lead - x[1].lead);
+  const left = missEndsLeft();
+  return `<div class="mst-grid">
+      <div class="mst-tile"><span class="small">Súťažiace</span><b>${b.length}</b></div>
+      <div class="mst-tile"><span class="small">Krajiny</span><b>${rows.length}</b></div>
+      <div class="mst-tile"><span class="small">Pätice</span><b>${groups}</b></div>
+      <div class="mst-tile"><span class="small">Priemerný vek</span><b>${avgAge} r.</b></div>
+      <div class="mst-tile"><span class="small">Na postupových miestach</span><b>${advTotal}</b></div>
+      ${left ? `<div class="mst-tile"><span class="small">Do konca kola</span><b>${fmtDur(left)}</b></div>` : ''}</div>
+    <section class="mgroup"><div class="mgroup-h"><b>🏁 Súboj krajín – kto má viac postupujúcich</b></div>
+      ${race.map(([k, o], i) => `<div class="mst-row"><span>${i + 1}. ${flagOf(k)} ${esc(COUNTRY[k] || k)}</span><div class="mst-bar"><i style="width:${Math.round(100 * o.adv / Math.max(1, race[0][1].adv))}%"></i></div><span style="white-space:nowrap"><b>${o.adv}</b> na postupe${o.lead ? ` · ${o.lead}×👑` : ''}</span></div>`).join('')}
+      <p class="small" style="margin:6px 0 0">Kliknutím na vlajku v päticiach zvýrazníte súťažiace svojej krajiny.</p></section>
+    <section class="mgroup"><div class="mgroup-h"><b>Súťažiace podľa krajiny</b><span class="small">% na postupe</span></div>
+      ${rows.map(([k, o]) => `<div class="mst-row"><span>${flagOf(k)} ${esc(COUNTRY[k] || k)}</span><div class="mst-bar"><i style="width:${Math.round(100 * o.n / maxN)}%"></i></div><span style="white-space:nowrap"><b>${o.n}</b> · ${Math.round(100 * o.adv / o.n)} % na postupe</span></div>`).join('')}</section>
+    <section class="mgroup"><div class="mgroup-h"><b>Súťažiace podľa veku</b></div>
+      ${Object.entries(ages).filter(([, n]) => n).map(([k, n]) => `<div class="mst-row"><span>${k} rokov</span><div class="mst-bar"><i style="width:${Math.round(100 * n / maxA)}%"></i></div><span><b>${n}</b> (${Math.round(100 * n / b.length)} %)</span></div>`).join('')}</section>`;
+}
 function renderMiss(){
   const m = state.miss, st = m.st, el = $('#view-miss');
   const groups = [...new Set(m.board.map(c => c.group_no))].sort((a, b) => a - b);
@@ -2238,7 +2388,7 @@ function renderMiss(){
   state.missPage = Math.min(Math.max(1, state.missPage || 1), pages);
   const shown = groups.slice((state.missPage - 1) * MISS_PER_PAGE, state.missPage * MISS_PER_PAGE);
   const regOpen = Date.now() < Date.parse(st.registration_until);
-  const isWoman = state.profile?.gender === 'zena';
+  const isWoman = state.profile?.gender === 'zena', view = state.missView || 'all';
   let cta = '';
   if (m.me) cta = `<button class="btn primary" data-act="miss-signup">Môj súťažný profil</button> <span class="pill">${{ pending:'čaká na schválenie', approved:'schválený', rejected:'zamietnutý' }[m.me.status]}</span>`;
   else if (regOpen && (!state.user || isWoman)) cta = `<button class="btn primary" data-act="miss-signup">Prihlásiť sa do súťaže</button>`;
@@ -2246,31 +2396,34 @@ function renderMiss(){
   const pager = pages > 1 ? `<div class="pager">${Array.from({ length: pages }, (_, i) => `<button class="chip ${state.missPage === i + 1 ? 'on' : ''}" data-mpage="${i + 1}">${i + 1}</button>`).join('')}</div>` : '';
   el.innerHTML = `
     <section class="hero miss-hero"><h1>👑 ${esc(st.title)}</h1>
-      <p>Súťaž o dievča roka. Hlasuje sa celý rok v kolách – z každej pätice postupujú najlepšie do ďalšieho kola. V každej pätici máte <b>1 hlas každých ${st.vote_hours} hodín</b> (nekumuluje sa) a ďalšie hlasy môžete pridať za kredity.
+      <p>Súťaž o dievča roka. Hlasuje sa celý rok v kolách – z každej pätice postupujú ${missAdv() === 1 ? 'víťazky' : `prvé ${missAdv()}`} do ďalšieho kola. V každej pätici máte <b>1 hlas každých ${st.vote_hours} hodín</b> (nekumuluje sa) a ďalšie hlasy môžete pridať za kredity.
       ${regOpen ? `Prihlásiť sa môžu ženy staršie ako 18 rokov do <b>${new Date(st.registration_until).toLocaleDateString('sk-SK')}</b>.` : 'Registrácia je uzavretá.'}</p>
-      <div class="miss-bar"><span class="pill">${st.current_round}. kolo</span>${st.voting_open ? '' : '<span class="pill">hlasovanie pozastavené</span>'}
+      <div class="miss-bar"><span class="pill">${st.current_round}. kolo</span>${missEndsLeft() ? `<span class="pill">⏳ do konca kola ${fmtDur(missEndsLeft())}</span>` : ''}${st.voting_open ? '' : '<span class="pill">hlasovanie pozastavené</span>'}
         <span class="small">${m.board.length} súťažiacich · ${groups.length} pätíc</span><span class="spacer"></span>
         ${state.user ? `<span class="small">Kredity: <b>${m.credits}</b></span> <button class="btn" data-act="miss-credits">Kúpiť kredity</button>` : ''} ${cta}</div>
     </section>
     ${isAdmin() ? '<div id="missAdmin"></div>' : ''}
-    ${pager}
+    ${missMeBox()}
+    <div class="mtabs">${[['all', 'Všetky pätice'], ['fav', `⭐ Moje favoritky (${missFavs().filter(id => m.board.some(c => c.id === id)).length})`], ['stats', '📊 Štatistiky']].map(([k, l]) => `<button class="chip ${view === k ? 'on' : ''}" data-mview="${k}">${l}</button>`).join('')}</div>
+    ${view === 'fav' ? missFavView() : view === 'stats' ? missStatsView() : `${missFlagBar()}${pager}
     ${shown.length ? shown.map(g => missGroup(g)).join('') : '<div class="list"><div class="empty">Zatiaľ tu nie sú žiadne schválené súťažiace.</div></div>'}
-    ${pager}`;
+    ${pager}`}`;
   if (isAdmin()) renderMissAdmin();
+  renderMissTips();
 }
 function missGroup(g){
-  const list = state.miss.board.filter(c => c.group_no === g).sort((a, b) => a.id - b.id);
+  const list = missSorted(g), adv = missAdv(), fav = missFavs(), f = state.missFlag;
   const cd = state.user ? missCooldown(g) : null;
-  const lead = Math.max(...list.map(c => c.votes));
-  return `<section class="mgroup"><div class="mgroup-h"><b>Pätica ${g}</b>${cd ? `<span class="small">Ďalší hlas v tejto pätici o ${fmtLeft(cd.left)}</span>` : ''}</div>
-    <div class="mrow">${list.map(c => {
-      const ph = missPhoto(c.photo_path), mineHere = cd && cd.contestant === c.id;
-      return `<div class="mcard">
-        <button class="mphoto" data-mopen="${c.id}" aria-label="Profil ${esc(c.first_name)}">${ph ? `<img src="${esc(ph)}" alt="${esc(c.first_name)}" loading="lazy">` : `<span>${esc(c.first_name[0] || '?')}</span>`}${c.votes === lead && lead > 0 ? '<i class="crown" title="Vedie v pätici">👑</i>' : ''}</button>
+  return `<section class="mgroup"><div class="mgroup-h"><b>Pätica ${g}</b>${cd ? `<span class="small">Ďalší hlas v tejto pätici o ${fmtLeft(cd.left)}</span>` : `<span class="small">postupujú ${adv === 1 ? '1.' : `1.–${adv}.`}</span>`}</div>
+    <div class="mrow">${list.map((c, i) => {
+      const ph = missPhoto(c.photo_path), mineHere = cd && cd.contestant === c.id, r = i + 1, isFav = fav.includes(c.id);
+      return `<div class="mcard ${f ? (c.country === f ? 'hl' : 'dim') : ''}">
+        <div style="position:relative"><button class="mphoto" data-mopen="${c.id}" aria-label="Profil ${esc(c.first_name)}">${ph ? `<img src="${esc(ph)}" alt="${esc(c.first_name)}" loading="lazy">` : `<span>${esc(c.first_name[0] || '?')}</span>`}<i class="mrank ${r <= adv ? 'adv' : ''}" title="${r <= adv ? 'Postupové miesto' : 'Nepostupové miesto'}">${r === 1 && c.votes > 0 ? '👑 ' : ''}${r}.</i></button>
+        <button class="mstar ${isFav ? 'on' : ''}" data-mfav="${c.id}" aria-label="${isFav ? 'Odobrať z favoritiek' : 'Pridať medzi favoritky'}">${isFav ? '★' : '☆'}</button></div>
         <div class="mname">${esc(c.first_name)}</div>
-        <div class="mmeta">${flagOf(c.country)} ${esc(COUNTRY[c.country] || c.country)} · ${c.age} r.</div>
+        <div class="mmeta"><button class="mflagbtn" data-mflag="${esc(c.country)}" title="Zvýrazniť krajinu">${flagOf(c.country)}</button> ${esc(COUNTRY[c.country] || c.country)} · ${c.age} r.</div>
         <button class="btn ${mineHere ? '' : 'primary'} mvote" data-mvote="${c.id}" ${cd || !state.miss.st.voting_open ? 'disabled' : ''}>${mineHere ? '✓ Váš hlas' : 'Hlasovať'}</button>
-        <div class="mvotes"><b>${c.votes}</b> ${c.votes === 1 ? 'hlas' : (c.votes > 1 && c.votes < 5 ? 'hlasy' : 'hlasov')}</div>
+        <div class="mvotes"><b>${c.votes}</b> ${hlasy(c.votes)}</div>
       </div>`; }).join('')}</div></section>`;
 }
 async function onMissVote(id, credits){
@@ -2278,7 +2431,8 @@ async function onMissVote(id, credits){
   if (!state.profile) return openProfile();
   try {
     await api.missVote(state.user.id, id, credits || 0);
-    toast(credits ? `Pridaných ${credits} hlasov 👑` : 'Hlas zaznamenaný 👑');
+    if (!missFavs().includes(id)) store.set('mr_miss_fav', [...missFavs(), id]);
+    toast(credits ? `Pridaných ${credits} hlasov 👑` : 'Hlas zaznamenaný 👑 – súťažiaca je vo vašich favoritkách.');
     await loadMiss(); renderMiss();
     return true;
   } catch(err){ toast(err.message, true); return false; }
@@ -2294,7 +2448,7 @@ async function openMissProfile(id){
     <div class="mprof-photo">${ph ? `<img src="${esc(ph)}" alt="${esc(c.first_name)}">` : `<span>${esc(c.first_name[0] || '?')}</span>`}</div>
     <div class="mprof-body"><h2>${esc(c.first_name)}</h2>
       <p class="sub">${flagOf(c.country)} ${esc(COUNTRY[c.country] || c.country)} · ${c.age} rokov${c.city ? ' · ' + esc(c.city) : ''}</p>
-      ${inRound ? `<div class="mstat"><b>${c.votes}</b> hlasov v ${c.round}. kole · pätica ${c.group_no}</div>` : c.eliminated_round ? `<div class="mstat">Súťaž ukončila v ${c.eliminated_round}. kole</div>` : ''}
+      ${inRound ? `<div class="mstat"><b>${c.votes}</b> ${hlasy(c.votes)} v ${c.round}. kole · pätica ${c.group_no}${missPos(c.id) ? '<br>' + missPosLine(missPos(c.id)) : ''}${missEndsLeft() ? `<br><span class="small">⏳ do konca kola ${fmtDur(missEndsLeft())}</span>` : ''}</div>` : c.eliminated_round ? `<div class="mstat">Súťaž ukončila v ${c.eliminated_round}. kole</div>` : ''}
       ${row('Obľúbené jedlo', c.favorite_food)}${row('Obľúbené mesto', c.favorite_city)}${row('Voľný čas', c.hobbies)}
       ${c.about ? `<p style="white-space:pre-line;margin:10px 0">${esc(c.about)}</p>` : ''}
       <div class="mlinks">${LINK_DEFS.filter(([k]) => links[k]).map(([k, l]) => `<a class="chip" href="${esc(normLink(k, links[k]))}" target="_blank" rel="nofollow noopener ugc">${l}</a>`).join('')}</div>
@@ -2303,7 +2457,7 @@ async function openMissProfile(id){
           <button class="btn primary" data-mvote="${c.id}" data-close-after="1">Hlasovať (1 bezplatný hlas)</button>
           <input type="number" id="mcred" min="1" max="100000" value="10" class="search" style="width:90px" aria-label="Počet kreditov">
           <button class="btn" data-mvotecred="${c.id}">Pridať hlasy za kredity</button></div>
-        <p class="small" style="margin:6px 0 0">1 kredit = 1 hlas. ${state.user ? `Máte ${state.miss?.credits ?? 0} kreditov.` : ''}</p></div>` : ''}
+        <p class="small" style="margin:6px 0 0">1 kredit = 1 hlas. ${state.user ? `Máte ${state.miss?.credits ?? 0} kreditov.` : ''}</p></div>${missPos(c.id) ? missShareBox(c.id, state.miss?.me && Number(state.miss.me.id) === c.id) : ''}` : ''}
       <p class="small" style="margin-top:10px">Odkaz na profil: <a href="#miss-${c.id}">${esc(location.origin + location.pathname)}#miss-${c.id}</a></p>
     </div></div>`, true);
 }
@@ -2379,18 +2533,21 @@ async function renderMissAdmin(){
     <form id="missSet" class="row2" style="margin-top:14px">
       <div class="field"><label class="l">Názov súťaže</label><input type="text" id="mst_t" value="${esc(st.title)}"></div>
       <div class="field"><label class="l">Koniec registrácie</label><input type="datetime-local" id="mst_r" value="${local}"></div>
+      <div class="field"><label class="l">Koniec aktuálneho kola</label><input type="datetime-local" id="mst_e" value="${st.round_ends_at ? new Date(Date.parse(st.round_ends_at) - new Date().getTimezoneOffset() * 6e4).toISOString().slice(0, 16) : ''}"></div>
+      <div class="field"><label class="l">Postupuje z pätice</label><select id="mst_a" class="sort">${[1, 2, 3, 4].map(n => `<option value="${n}" ${missAdv() === n ? 'selected' : ''}>${n}</option>`).join('')}</select></div>
       <label class="check field"><input type="checkbox" id="mst_o" ${st.voting_open ? 'checked' : ''}> Hlasovanie otvorené</label>
       <div class="actions"><button class="btn">Uložiť nastavenia</button></div></form>
     <div class="actions" style="justify-content:flex-start;flex-wrap:wrap;margin-top:6px">
       <input type="email" id="mg_e" class="search" placeholder="e-mail používateľa"><input type="number" id="mg_a" class="search" style="width:90px" value="100">
       <button class="btn" data-act="miss-grant">Pripísať kredity</button>
       <span class="spacer" style="flex:1"></span>
-      <select id="mcl_n" class="sort"><option value="1">postupuje 1 z pätice</option><option value="2">postupujú 2 z pätice</option></select>
+      <select id="mcl_n" class="sort">${[1, 2, 3, 4].map(n => `<option value="${n}" ${missAdv() === n ? 'selected' : ''}>${n === 1 ? 'postupuje 1' : `postupujú ${n}`} z pätice</option>`).join('')}</select>
       <button class="btn danger" data-act="miss-close">Ukončiť ${st.current_round}. kolo</button></div>
     <p class="small">Ukončenie kola je nevratné: z každej pätice postúpia najlepšie, ostatné vypadnú a postupujúce sa náhodne rozdelia do nových pätíc. Dá sa spustiť až po skončení registrácie.</p></div>`;
   $('#missSet').addEventListener('submit', async e => {
     e.preventDefault();
-    try { await api.missSaveSettings({ title: $('#mst_t').value.trim() || 'MISS', registration_until: new Date($('#mst_r').value).toISOString(), voting_open: $('#mst_o').checked });
+    try { await api.missSaveSettings({ title: $('#mst_t').value.trim() || 'MISS', registration_until: new Date($('#mst_r').value).toISOString(), voting_open: $('#mst_o').checked,
+        ...('advance_count' in st ? { advance_count: Number($('#mst_a').value), round_ends_at: $('#mst_e').value ? new Date($('#mst_e').value).toISOString() : null } : {}) });
       toast('Nastavenia uložené.'); await loadMiss(); renderMiss(); } catch(err){ toast(err.message, true); }
   });
 }
@@ -2399,6 +2556,11 @@ async function onMissClick(t){
   if (d.mopen){ openMissProfile(Number(d.mopen)); return true; }
   if (d.mvote){ t.disabled = true; const ok = await onMissVote(Number(d.mvote)); if (ok && d.closeAfter) closeModal(); else t.disabled = false; return true; }
   if (d.mvotecred){ const n = Math.floor(Number($('#mcred').value)); if (!(n > 0)) return true; if (await onMissVote(Number(d.mvotecred), n)) closeModal(); return true; }
+  if (d.mfav){ const on = missToggleFav(Number(d.mfav)); toast(on ? 'Pridané medzi favoritky ⭐' : 'Odobrané z favoritiek.'); renderMiss(); return true; }
+  if (d.mflag){ state.missFlag = state.missFlag === d.mflag ? null : d.mflag; state.missView = 'all'; renderMiss(); return true; }
+  if (d.mview){ state.missView = d.mview; renderMiss(); return true; }
+  if (d.mshare){ const id = Number(d.mshare); try { await navigator.share({ title: state.miss.st.title, text: missShareText(id), url: missUrl(id) }); } catch {} return true; }
+  if (d.mcopy){ const id = Number(d.mcopy); try { await navigator.clipboard.writeText(`${missShareText(id)}\n${missUrl(id)}`); toast('Skopírované – vlož ho kamkoľvek.'); } catch { toast('Kopírovanie nefunguje – označte text ručne.', true); } return true; }
   if (d.mpage){ state.missPage = Number(d.mpage); renderMiss(); window.scrollTo({ top: 0, behavior: 'smooth' }); return true; }
   if (d.mst){ try { await api.missSetStatus(Number(d.id), d.mst); toast(d.mst === 'approved' ? 'Schválené.' : 'Zamietnuté.'); await loadMiss(); renderMiss(); } catch(err){ toast(err.message, true); } return true; }
   switch (d.act){

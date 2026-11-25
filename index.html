@@ -108,13 +108,12 @@
   .thumb.chosen.down{background:var(--down);border-color:var(--down);color:#fff}
   .thumb:disabled:not(.chosen){opacity:.45;cursor:default}
   .thumb:disabled.chosen{cursor:default}
-  .thumb.up.top,.thumb.up.top:hover:not(:disabled),.thumb.up.top:disabled{background:linear-gradient(135deg,#1f9d55,#d4a017);border-color:#d4a017;color:#fff;box-shadow:0 0 0 2px rgba(212,160,23,.3);opacity:1}
-  .thumb.top svg + svg{margin-left:-9px}
-  .row.topfav-row,.row.topfav-row:hover{background:linear-gradient(90deg,rgba(212,160,23,.3),rgba(31,157,85,.2));box-shadow:inset 5px 0 0 #d4a017}
-  .row.topfav-row .votes{position:relative}
-  .topfav{color:#b8860b;font-weight:900;font-size:11px;letter-spacing:.08em;white-space:nowrap;align-self:center;text-shadow:0 0 1px rgba(212,160,23,.35)}
-  [data-theme="dark"] .topfav{color:#f2c94c}
-  .row .votes .topfav{position:absolute;right:calc(100% + 10px);top:50%;transform:translateY(-50%)}
+  .thumb.up.top,.thumb.up.top:hover:not(:disabled),.thumb.up.top:disabled{background:linear-gradient(135deg,#f6d365,#d4a017);border-color:#c8950f;color:#4a3300;box-shadow:0 0 0 2px rgba(212,160,23,.25);opacity:1}
+  [data-theme="dark"] .thumb.up.top,[data-theme="dark"] .thumb.up.top:hover:not(:disabled){background:linear-gradient(135deg,#e0b43a,#a87a08);color:#1d1400}
+  .row .votes{position:relative}
+  .topfav{border:1px solid #e9c46a;background:linear-gradient(135deg,#fff4d6,#ffe6a8);color:#6b4a00;border-radius:99px;padding:3px 9px;font-weight:800;font-size:11px;letter-spacing:.04em;white-space:nowrap;align-self:center;flex:none}
+  [data-theme="dark"] .topfav{background:#3a2f10;border-color:#6b5520;color:#f6d77a}
+  .row .votes .topfav{position:absolute;right:calc(100% + 8px);top:50%;transform:translateY(-50%)}
   @media (max-width:860px){ .row .votes .topfav{position:static;transform:none;margin-right:4px} }
   .chart{display:flex;flex-direction:column;gap:4px;min-width:0}
   .bar{height:8px;border-radius:99px;background:var(--down);overflow:hidden;display:flex}
@@ -913,7 +912,7 @@ const ICON_FB = '<svg viewBox="0 0 24 24" fill="#fff"><path d="M24 12.07C24 5.4 
 /* TOP FAVORIT – jedna položka v každom zozname môže dostať 2 palce hore */
 const isTopP = p => !!state.myTop && state.myTop.get(p.section || secOf(p)) === p.id;
 const isTopT = i => !!state.myTop && state.myTop.get(i.kind) === i.id;
-const TOP_LABEL = '<span class="topfav">TOP FAVORIT</span>';
+const TOP_LABEL = '<span class="topfav">⭐ TOP FAVORIT</span>';
 function bar(up, down){
   const t = up + down;
   if (!t) return `<div class="bar bar-none" role="img" aria-label="bez hlasov"></div>`;
@@ -1002,14 +1001,14 @@ function renderList(){
     const t = p.up + p.down;
     const pct = t ? Math.round(p.up / t * 100) : null;
     const age = ageOf(p);
-    return `<div class="row${top ? ' topfav-row' : ''}">
+    return `<div class="row">
       <div class="rank ${i < 3 && state.sort === 'score' ? 'top' : ''}">${i + 1}.${moveArrow(moves.get(p.id))}</div>
       <div class="namecell" data-popen="${p.id}" role="link" tabindex="0" title="Profil a štatistiky">${nameHTML(p)}</div>
       <div class="gen">${genderLabel(p)}</div>
       <div class="cat"><span class="tag">${esc(p.category)}</span>${plat(p)}${p.detail && state.psec !== 'influencer' ? `<span class="detail">${esc(p.detail)}</span>` : ''}</div>
       <div class="meta"><span>${genderLabel(p)}</span><span class="tag">${esc(p.category)}</span>${plat(p)}${p.detail && state.psec !== 'influencer' ? `<span class="detail">${esc(p.detail)}</span>` : ''}</div>
       <div class="votes">${top ? TOP_LABEL : ''}
-        <button class="thumb up ${mine === 1 ? 'chosen' : ''}${top ? ' top' : ''}" data-vote="1" data-id="${p.id}" ${locked && mine !== 1 ? 'disabled' : ''} title="${top ? 'Top favorit – 2 palce hore. Kliknite znova pre zrušenie top favorita.' : mine === 1 ? 'Kliknite znova = 2 palce hore (TOP FAVORIT)' : 'Páči sa mi'}" aria-label="Palec hore pre ${esc(fullName(p))}">${top ? ICON_THUMB + ICON_THUMB : ICON_THUMB}<span>${p.up}</span></button>
+        <button class="thumb up ${mine === 1 ? 'chosen' : ''}${top ? ' top' : ''}" data-vote="1" data-id="${p.id}" ${locked && mine !== 1 ? 'disabled' : ''} title="${top ? 'Top favorit – 2 palce hore. Kliknite znova pre zrušenie top favorita.' : mine === 1 ? 'Kliknite znova = 2 palce hore (TOP FAVORIT)' : 'Páči sa mi'}" aria-label="Palec hore pre ${esc(fullName(p))}">${ICON_THUMB}<span>${p.up}</span></button>
         <button class="thumb down ${mine === -1 ? 'chosen' : ''}" data-vote="-1" data-id="${p.id}" ${locked ? 'disabled' : ''} title="Nepáči sa mi" aria-label="Palec dole pre ${esc(fullName(p))}">${ICON_THUMB}<span>${p.down}</span></button>
       </div>
       <div class="chart">${bar(p.up, p.down)}<div class="chart-txt">${pct === null ? 'bez hlasov' : `<b>${pct} %</b> · ${t} ${t === 1 ? 'hlas' : (t < 5 ? 'hlasy' : 'hlasov')}`}</div></div>
@@ -1037,7 +1036,7 @@ async function openPersonCard(id, days){
       <div class="pc-rank"><b>${p.up - p.down > 0 ? '+' : ''}${p.up - p.down}</b><span class="small">skóre</span></div>
     </div>
     <div class="votes" style="margin:10px 0 4px">${isTopP(p) ? TOP_LABEL : ''}
-      <button class="thumb up ${mine === 1 ? 'chosen' : ''}${isTopP(p) ? ' top' : ''}" data-vote="1" data-id="${p.id}" ${locked && mine !== 1 ? 'disabled' : ''} title="${isTopP(p) ? 'Top favorit – kliknite znova pre zrušenie' : mine === 1 ? 'Kliknite znova = 2 palce hore (TOP FAVORIT)' : 'Páči sa mi'}">${isTopP(p) ? ICON_THUMB + ICON_THUMB : ICON_THUMB}<span>${p.up}</span></button>
+      <button class="thumb up ${mine === 1 ? 'chosen' : ''}${isTopP(p) ? ' top' : ''}" data-vote="1" data-id="${p.id}" ${locked && mine !== 1 ? 'disabled' : ''} title="${isTopP(p) ? 'Top favorit – kliknite znova pre zrušenie' : mine === 1 ? 'Kliknite znova = 2 palce hore (TOP FAVORIT)' : 'Páči sa mi'}">${ICON_THUMB}<span>${p.up}</span></button>
       <button class="thumb down ${mine === -1 ? 'chosen' : ''}" data-vote="-1" data-id="${p.id}" ${locked ? 'disabled' : ''} title="Nepáči sa mi">${ICON_THUMB}<span>${p.down}</span></button>
       ${locked ? '<span class="small" style="align-self:center">Už ste hlasovali.</span>' : ''}</div>
     <div class="dtools"><h3>Vývoj obľúbenosti</h3><div class="seg-sm" role="group">${periods.map(([d, l]) => `<button data-pdays="${d}" class="${state.pcard.days === d ? 'on' : ''}">${l}</button>`).join('')}</div></div>
@@ -1651,7 +1650,7 @@ function trustSorted(list){
 function trustThumbs(i){
   const mine = state.myTrust.get(i.id) || 0, top = isTopT(i);
   const tip = (v, lbl) => v === 1 && top ? 'TOP FAVORIT – 2 palce hore. Kliknite znova pre zrušenie hlasu' : v === 1 && mine === 1 ? 'Kliknite znova = 2 palce hore (TOP FAVORIT)' : mine === v ? 'Kliknite znova pre zrušenie hlasu' : lbl;
-  const t = (v, cls, lbl) => `<button class="thumb tog ${cls} ${mine === v ? 'chosen' : ''}${v === 1 && top ? ' top' : ''}" data-tvote="${v}" data-id="${i.id}" title="${tip(v, lbl)}" aria-pressed="${mine === v}" aria-label="${lbl}: ${esc(i.name)}">${v === 1 && top ? ICON_THUMB + ICON_THUMB : ICON_THUMB}<span>${v === 1 ? i.up : i.down}</span></button>`;
+  const t = (v, cls, lbl) => `<button class="thumb tog ${cls} ${mine === v ? 'chosen' : ''}${v === 1 && top ? ' top' : ''}" data-tvote="${v}" data-id="${i.id}" title="${tip(v, lbl)}" aria-pressed="${mine === v}" aria-label="${lbl}: ${esc(i.name)}">${ICON_THUMB}<span>${v === 1 ? i.up : i.down}</span></button>`;
   const u = `<button class="thumb tog unk ${mine === 2 ? 'chosen' : ''}" data-tvote="2" data-id="${i.id}" title="${mine === 2 ? 'Kliknite znova pre zrušenie' : 'Nepoznám'}" aria-pressed="${mine === 2}" aria-label="Nepoznám: ${esc(i.name)}"><span class="qm">?</span></button>`;
   const T = TERM(i.kind);
   return (top ? TOP_LABEL : '') + t(1, 'up', T.up) + t(-1, 'down', T.down) + u;
@@ -1674,7 +1673,7 @@ function renderTrustRows(){
   const head = `<div class="row trow head"><div></div><div>#</div><div>${KIND_LABEL[state.tkind]}</div><div>${TT.head}</div><div>${TT.col}</div></div>`;
   $('#dvRows').innerHTML = head + (list.length ? list.map((i, n) => {
     const t = i.up + i.down, pct = pctOf(i.up, i.down);
-    return `<div class="row trow${isTopT(i) ? ' topfav-row' : ''}">
+    return `<div class="row trow">
       <div class="cmpc"><input type="checkbox" class="cmp" data-cmp="${i.id}" ${state.cmp.has(i.id) ? 'checked' : ''} title="Porovnať v grafe (max. 3)" aria-label="Porovnať ${esc(i.name)}"></div>
       <div class="rank ${n < 3 && state.tsort === 'ratio' && t >= TRUST_MIN ? 'top' : ''}">${n + 1}.${moveArrow(moves.get(i.id))}</div>
       <div class="namecell" data-open="${i.id}" role="link" tabindex="0"><span class="last">${esc(i.name)}</span>${i.detail ? `<span class="detail">${esc(i.detail)}</span>` : ''}</div>

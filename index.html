@@ -495,9 +495,9 @@
   .mgc-v{font-variant-numeric:tabular-nums;white-space:nowrap;text-align:right}
   .mgc-v .mneed{font-style:normal;font-size:11px;margin-left:5px}
   .mgc-b{padding:4px 6px;font-size:12px}
-  .mig{position:absolute;bottom:7px;right:40px;height:26px;display:inline-flex;align-items:center;padding:0 10px;border-radius:999px;color:#fff;font-size:12px;font-weight:700;text-decoration:none;letter-spacing:.01em;background:linear-gradient(45deg,#feda75 0%,#fa7e1e 22%,#d62976 50%,#962fbf 75%,#4f5bd5 100%);box-shadow:0 1px 3px rgba(0,0,0,.35)}
+  .mig{position:absolute;bottom:9px;right:40px;height:20px;display:inline-flex;align-items:center;padding:0 7px;border-radius:999px;color:#fff;font-size:10.5px;font-weight:700;text-decoration:none;letter-spacing:.01em;background:linear-gradient(45deg,#feda75 0%,#fa7e1e 22%,#d62976 50%,#962fbf 75%,#4f5bd5 100%);box-shadow:0 1px 3px rgba(0,0,0,.35)}
   .mig:hover{filter:brightness(1.1)}
-  @media (max-width:640px){.mig{height:21px;padding:0 7px;font-size:10.5px;right:6px;bottom:38px}.mflagbig{font-size:24px;bottom:6px;left:5px}.mstar{font-size:15px}}
+  @media (max-width:640px){.mig{height:18px;padding:0 6px;font-size:9.5px;right:6px;bottom:38px}.mflagbig{font-size:24px;bottom:6px;left:5px}.mstar{font-size:15px}}
   .mflagbig{position:absolute;left:6px;bottom:4px;border:0;background:none;padding:0;font-size:34px;line-height:1;cursor:pointer;filter:drop-shadow(0 1px 3px rgba(0,0,0,.45));transition:transform .12s}
   .mflagbig:hover{transform:scale(1.12)}
   .mneedpill{position:absolute;top:6px;right:6px;font-style:normal;font-size:11px;font-weight:800;padding:2px 7px;border-radius:999px;background:var(--down);color:#fff}
@@ -2677,7 +2677,7 @@ function missGroup(g){
         <button class="mstar ${isFav ? 'on' : ''}" data-mfav="${c.id}" aria-label="${isFav ? 'Odobrať z favoritiek' : 'Pridať medzi favoritky'}">${isFav ? '★' : '☆'}</button>
         ${c.instagram ? `<a class="mig" href="${esc(normLink('instagram', c.instagram))}" target="_blank" rel="nofollow noopener ugc" title="Instagram – ${esc(c.first_name)}" aria-label="Instagram ${esc(c.first_name)}">Instagram</a>` : ''}
         <button class="mflagbig" data-mflag="${esc(c.country)}" title="${esc(COUNTRY[c.country] || c.country)} – zvýrazniť všetky súťažiace z krajiny">${flagOf(c.country)}</button>
-        ${r > adv ? `<i class="mneedpill">chýba ${list[adv - 1].votes - c.votes + 1}</i>` : ''}</div>
+        ${r > adv ? `<i class="mneedpill" title="Toľko hlasov jej chýba, aby sa dostala na postupové ${adv}. miesto">chýba ${list[adv - 1].votes - c.votes + 1}</i>` : ''}</div>
         <div class="mline"><span class="mnm">${esc(c.first_name)}<small>${c.age}</small></span><span class="mvotes"><b>${c.votes}</b> ${hlasy(c.votes)}</span></div>
         <button class="btn ${mineHere ? '' : 'primary'} mvote" data-mvote="${c.id}" ${cd || !missVoteOpen() ? 'disabled' : ''}>${mineHere ? '✓ Váš hlas' : missEnded() ? 'Kolo skončilo' : 'Hlasovať'}</button>
       </div>`; }).join('')}</div></section>`;

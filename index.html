@@ -2224,6 +2224,58 @@ const LINK_DEFS = [['instagram','Instagram','https://instagram.com/'],['tiktok',
   ['onlyfans','OnlyFans','https://onlyfans.com/'],['x','X / Twitter','https://x.com/'],['linktree','Linktree','https://linktr.ee/'],['web','Web','']];
 const MISS_PER_PAGE = 10;
 const missPhoto = p => !p ? '' : (DEMO ? p : `${CONFIG.SUPABASE_URL}/storage/v1/object/public/miss/${p}`);
+// ilustrovaný portrét pre súťažiace bez fotky (deterministický podľa id)
+function missPortrait(id){
+  let x = (Number(id) * 2654435761) >>> 0;
+  const rnd = () => { x ^= x << 13; x >>>= 0; x ^= x >> 17; x ^= x << 5; x >>>= 0; return x / 4294967296; };
+  for (let i = 0; i < 4; i++) rnd();
+  const pick = a => a[Math.floor(rnd() * a.length)];
+  const skin = pick(['#f6d3bd', '#f1c6a8', '#e8b48f', '#d9a07a', '#c58b63', '#a86f4c', '#f9dcc9']);
+  const shade = pick(['rgba(150,80,60,.18)']);
+  const hair = pick(['#2b1b14', '#3d2418', '#5a3622', '#7b4a2a', '#a8673a', '#c99a5b', '#e3c27d', '#1d1d24', '#8c3b2a', '#b5482f']);
+  const bg = pick([['#ffd1dc', '#c9a7ff'], ['#ffe3c2', '#ff9eb5'], ['#c8f0ff', '#b9a6ff'], ['#d7ffe6', '#8ed3ff'], ['#fff0b3', '#ffb08a'], ['#f3d1ff', '#9fb4ff'], ['#ffd9e8', '#ffc38a']]);
+  const top = pick(['#e64980', '#7950f2', '#15aabf', '#f76707', '#2f9e44', '#1c1c28', '#fafafa', '#c2255c', '#364fc7', '#e8590c']);
+  const lips = pick(['#d9486f', '#c2255c', '#e8738a', '#b5384f', '#e05d5d']);
+  const eye = pick(['#3b2a20', '#2f5d8a', '#3f7a4e', '#5b3a29', '#222']);
+  const style = Math.floor(rnd() * 5), tilt = (rnd() - .5) * 6, ear = rnd() < .5, ear2 = pick(['#ffd43b', '#e9ecef', '#ff8787']);
+  const neckline = rnd() < .5;
+  const back = [
+    `<path d="M48 150 C40 70 70 34 120 34 C170 34 200 70 192 150 L198 250 L42 250 Z" fill="${hair}"/>`,
+    `<path d="M58 140 C52 70 78 38 120 38 C162 38 188 70 182 140 L186 176 L54 176 Z" fill="${hair}"/>`,
+    `<path d="M62 120 C60 66 84 40 120 40 C156 40 180 66 178 120 Z" fill="${hair}"/><ellipse cx="120" cy="34" rx="26" ry="22" fill="${hair}"/>`,
+    `<g fill="${hair}"><circle cx="70" cy="90" r="34"/><circle cx="170" cy="90" r="34"/><circle cx="62" cy="140" r="32"/><circle cx="178" cy="140" r="32"/><circle cx="70" cy="190" r="30"/><circle cx="170" cy="190" r="30"/><circle cx="120" cy="58" r="40"/><circle cx="90" cy="62" r="30"/><circle cx="150" cy="62" r="30"/></g>`,
+    `<path d="M50 150 C44 72 72 36 120 36 C168 36 196 72 190 150 C200 200 186 240 196 262 L44 262 C54 240 40 200 50 150 Z" fill="${hair}"/>`
+  ][style];
+  const fringe = [
+    `<path d="M74 110 C76 68 100 54 124 56 C152 58 168 76 166 112 C152 86 128 78 96 86 C86 92 80 100 74 110 Z" fill="${hair}"/>`,
+    `<path d="M72 112 C70 70 96 52 122 54 C150 56 170 74 168 112 C160 90 150 80 140 76 C128 92 100 98 72 112 Z" fill="${hair}"/>`,
+    `<path d="M76 104 C80 66 104 54 122 54 C146 54 166 70 164 104 C150 84 136 74 120 72 C104 74 88 84 76 104 Z" fill="${hair}"/>`,
+    `<path d="M74 108 C74 70 98 54 120 54 C146 54 168 72 166 108 C144 94 120 76 104 80 C92 84 82 94 74 108 Z" fill="${hair}"/>`,
+    `<path d="M72 116 C70 72 96 52 120 52 C146 52 170 72 168 116 C162 96 140 70 120 70 C104 84 88 96 72 116 Z" fill="${hair}"/>`
+  ][style];
+  const g = `g${id}`;
+  return 'data:image/svg+xml,' + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 320"><defs><linearGradient id="${g}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${bg[0]}"/><stop offset="1" stop-color="${bg[1]}"/></linearGradient></defs>
+<rect width="240" height="320" fill="url(#${g})"/>
+<g transform="rotate(${tilt.toFixed(1)} 120 200)">
+${back}
+<path d="M20 350 L26 300 C34 262 70 240 120 240 C170 240 206 262 214 300 L220 350 Z" fill="${top}"/>
+${neckline ? `<path d="M96 240 L120 274 L144 240 Z" fill="${skin}"/>` : `<path d="M92 240 C100 256 140 256 148 240 Z" fill="${skin}"/>`}
+<path d="M104 196 L104 246 C112 252 128 252 136 246 L136 196 Z" fill="${skin}"/><path d="M104 214 C112 222 128 222 136 214 L136 204 L104 204 Z" fill="${shade}"/>
+<ellipse cx="120" cy="140" rx="46" ry="60" fill="${skin}"/>
+<ellipse cx="75" cy="146" rx="8" ry="12" fill="${skin}"/><ellipse cx="165" cy="146" rx="8" ry="12" fill="${skin}"/>
+${ear ? `<circle cx="75" cy="162" r="4" fill="${ear2}"/><circle cx="165" cy="162" r="4" fill="${ear2}"/>` : ''}
+${fringe}
+<path d="M90 124 Q102 116 112 122" stroke="${hair}" stroke-width="4" fill="none" stroke-linecap="round"/><path d="M128 122 Q138 116 150 124" stroke="${hair}" stroke-width="4" fill="none" stroke-linecap="round"/>
+<ellipse cx="101" cy="140" rx="9" ry="6.5" fill="#fff"/><ellipse cx="139" cy="140" rx="9" ry="6.5" fill="#fff"/>
+<circle cx="102" cy="140" r="5" fill="${eye}"/><circle cx="140" cy="140" r="5" fill="${eye}"/><circle cx="103.5" cy="138.5" r="1.6" fill="#fff"/><circle cx="141.5" cy="138.5" r="1.6" fill="#fff"/>
+<path d="M91 136 Q101 129 111 136" stroke="#2a1a14" stroke-width="2.4" fill="none" stroke-linecap="round"/><path d="M129 136 Q139 129 149 136" stroke="#2a1a14" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+<path d="M120 146 Q116 162 120 166 Q124 167 126 164" stroke="${shade}" stroke-width="3" fill="none" stroke-linecap="round"/>
+<ellipse cx="92" cy="164" rx="10" ry="6" fill="#ff8fa3" opacity=".35"/><ellipse cx="148" cy="164" rx="10" ry="6" fill="#ff8fa3" opacity=".35"/>
+<path d="M106 178 Q120 172 134 178 Q120 192 106 178 Z" fill="${lips}"/><path d="M106 178 Q120 182 134 178" stroke="rgba(0,0,0,.25)" stroke-width="1.2" fill="none"/>
+</g></svg>`);
+}
+const missPhotoOf = c => missPhoto(c.photo_path) || missPortrait(c.id);
+
 function normLink(key, v){
   v = (v || '').trim(); if (!v) return '';
   if (/^https?:\/\//i.test(v)) return v;
@@ -2444,7 +2496,7 @@ function missFavView(){
     .sort((a, b) => (a.advancing - b.advancing) || (b.need - a.need));
   if (!list.length) return `<div class="list"><div class="empty">Zatiaľ nemáte favoritky. Po hlasovaní sa súťažiaca pridá sem automaticky, alebo kliknite na ☆ pri fotke.</div></div>`;
   const cd = g => state.user ? missCooldown(g) : null;
-  return `<div class="mfavs">${list.map(p => { const c = p.c, ph = missPhoto(c.photo_path), w = cd(c.group_no);
+  return `<div class="mfavs">${list.map(p => { const c = p.c, ph = missPhotoOf(c), w = cd(c.group_no);
     return `<div class="mfav">
       <div class="mfav-top"><button class="mphoto" data-mopen="${c.id}">${ph ? `<img src="${esc(ph)}" alt="" loading="lazy">` : `<span>${esc(c.first_name[0] || '?')}</span>`}</button>
         <div class="mfav-info"><b>${esc(c.first_name)}</b> ${flagOf(c.country)} <span class="small">· ${c.votes} ${hlasy(c.votes)}</span><div class="mfav-st">${missPosLine(p)}</div></div></div>
@@ -2550,7 +2602,7 @@ function missGroup(g){
   const cd = state.user ? missCooldown(g) : null;
   return `<section class="mgroup"><div class="mgroup-h"><b>Pätica ${g}</b>${cd ? `<span class="small">Ďalší hlas v tejto pätici o ${fmtLeft(cd.left)}</span>` : `<span class="small">postupujú ${adv === 1 ? '1.' : `1.–${adv}.`}</span>`}</div>
     <div class="mrow">${list.map((c, i) => {
-      const ph = missPhoto(c.photo_path), mineHere = cd && cd.contestant === c.id, r = i + 1, isFav = fav.includes(c.id);
+      const ph = missPhotoOf(c), mineHere = cd && cd.contestant === c.id, r = i + 1, isFav = fav.includes(c.id);
       return `<div class="mcard ${f ? (c.country === f ? 'hl' : 'dim') : ''} ${r === adv + 1 ? 'cutl' : ''} ${r > adv ? 'outz' : ''}">
         <div style="position:relative"><button class="mphoto" data-mopen="${c.id}" aria-label="Profil ${esc(c.first_name)}">${ph ? `<img src="${esc(ph)}" alt="${esc(c.first_name)}" loading="lazy">` : `<span>${esc(c.first_name[0] || '?')}</span>`}<i class="mrank ${r <= adv ? 'adv' : ''}" title="${r <= adv ? 'Postupové miesto' : 'Nepostupové miesto'}">${r === 1 && c.votes > 0 ? '👑 ' : ''}${r}.</i></button>
         <button class="mstar ${isFav ? 'on' : ''}" data-mfav="${c.id}" aria-label="${isFav ? 'Odobrať z favoritiek' : 'Pridať medzi favoritky'}">${isFav ? '★' : '☆'}</button>
@@ -2575,7 +2627,7 @@ async function openMissProfile(id){
   openModal('<div class="empty">Načítavam…</div>');
   let c, hist = []; try { [c, hist] = await Promise.all([api.missProfile(id), api.missHistory(id).catch(() => [])]); } catch(err){ openModal(`<p>${esc(err.message)}</p>`); return; }
   if (!c){ openModal('<h2>Profil neexistuje</h2><p class="sub">Súťažiaca nebola nájdená alebo ešte nebola schválená.</p>'); return; }
-  const ph = missPhoto(c.photo_path), links = c.links || {};
+  const ph = missPhotoOf(c), links = c.links || {};
   const inRound = !c.eliminated_round && c.round === state.miss?.st.current_round && c.status === 'approved';
   const row = (l, v) => v ? `<div class="mrowi"><span>${l}</span><b>${esc(v)}</b></div>` : '';
   openModal(`<div class="mprof">

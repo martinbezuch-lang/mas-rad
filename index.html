@@ -495,6 +495,8 @@
   .mgc-v{font-variant-numeric:tabular-nums;white-space:nowrap;text-align:right}
   .mgc-v .mneed{font-style:normal;font-size:11px;margin-left:5px}
   .mgc-b{padding:4px 6px;font-size:12px}
+  .mig{position:absolute;bottom:6px;right:42px;width:30px;height:30px;display:grid;place-items:center;border-radius:999px;color:#fff;background:linear-gradient(45deg,#f9a825,#e1306c 50%,#833ab4);box-shadow:0 1px 3px rgba(0,0,0,.35)}
+  .mig:hover{filter:brightness(1.1)}
   .mflagbig{position:absolute;left:6px;bottom:4px;border:0;background:none;padding:0;font-size:34px;line-height:1;cursor:pointer;filter:drop-shadow(0 1px 3px rgba(0,0,0,.45));transition:transform .12s}
   .mflagbig:hover{transform:scale(1.12)}
   .mneedpill{position:absolute;top:6px;right:6px;font-style:normal;font-size:11px;font-weight:800;padding:2px 7px;border-radius:999px;background:var(--down);color:#fff}
@@ -2365,7 +2367,7 @@ function demoMiss(){
   }
   const age = d => { const b = new Date(d), n = new Date(); let a = n.getFullYear() - b.getFullYear(); if (n < new Date(n.getFullYear(), b.getMonth(), b.getDate())) a--; return a; };
   const votesOf = c => store.get(K.v, []).filter(v => v.contestant_id === c.id && v.round === c.round).reduce((s, v) => s + v.votes, 0);
-  const pub = c => ({ ...c, age: age(c.birth_date), votes: votesOf(c) });
+  const pub = c => ({ ...c, age: age(c.birth_date), votes: votesOf(c), instagram: (c.links || {}).instagram || null });
   return {
     async missSettings(){ return store.get(K.set); },
     async missSaveSettings(s){ store.set(K.set, { ...store.get(K.set), ...s }); },
@@ -2672,6 +2674,7 @@ function missGroup(g){
       return `<div class="mcard ${f ? (c.country === f ? 'hl' : 'dim') : ''} ${r === adv + 1 ? 'cutl' : ''} ${r > adv ? 'outz' : ''}">
         <div style="position:relative"><button class="mphoto" data-mopen="${c.id}" aria-label="Profil ${esc(c.first_name)}">${ph ? `<img src="${esc(ph)}" alt="${esc(c.first_name)}" loading="lazy">` : `<span>${esc(c.first_name[0] || '?')}</span>`}<i class="mrank ${r <= adv ? 'adv' : ''}" title="${r <= adv ? 'Postupové miesto' : 'Nepostupové miesto'}">${r === 1 && c.votes > 0 ? '👑 ' : ''}${r}.</i></button>
         <button class="mstar ${isFav ? 'on' : ''}" data-mfav="${c.id}" aria-label="${isFav ? 'Odobrať z favoritiek' : 'Pridať medzi favoritky'}">${isFav ? '★' : '☆'}</button>
+        ${c.instagram ? `<a class="mig" href="${esc(normLink('instagram', c.instagram))}" target="_blank" rel="nofollow noopener ugc" title="Instagram – ${esc(c.first_name)}" aria-label="Instagram ${esc(c.first_name)}"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg></a>` : ''}
         <button class="mflagbig" data-mflag="${esc(c.country)}" title="${esc(COUNTRY[c.country] || c.country)} – zvýrazniť všetky súťažiace z krajiny">${flagOf(c.country)}</button>
         ${r > adv ? `<i class="mneedpill">chýba ${list[adv - 1].votes - c.votes + 1}</i>` : ''}</div>
         <div class="mline"><span class="mnm">${esc(c.first_name)}<small>${c.age}</small></span><span class="mvotes"><b>${c.votes}</b> ${hlasy(c.votes)}</span></div>

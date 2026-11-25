@@ -464,9 +464,17 @@
   @media (max-width:640px){.mst-row{grid-template-columns:105px 1fr 118px;font-size:12px}}
   .mvotes{font-size:12px;color:var(--muted);margin-top:5px;font-variant-numeric:tabular-nums}
   .mvotes b{color:var(--ink);font-size:14px}
-  .mprof{display:grid;grid-template-columns:240px 1fr;gap:20px}
+  .mprof{display:grid;grid-template-columns:270px 1fr;gap:20px}
+  .mprof-mhead{display:none}
   .mprof-photo{aspect-ratio:3/4;border-radius:14px;overflow:hidden;background:linear-gradient(135deg,#f783ac,#845ef7);display:grid;place-items:center;color:#fff;font-size:60px;font-weight:800}
   .mprof-photo img{width:100%;height:100%;object-fit:cover}
+  .mprof-side{min-width:0}
+  .mprof-side .mstat{margin:10px 0 0}
+  .mhist{border:1px solid var(--line);border-radius:10px;padding:4px 10px;margin-top:10px;font-size:12.5px}
+  .mhist-r{display:grid;grid-template-columns:auto auto 1fr auto;gap:8px;padding:4px 0;border-top:1px solid var(--line);white-space:nowrap}
+  .mhist-r:first-child{border-top:0}
+  .mhist-r span:nth-child(3){color:var(--muted);text-align:right}
+  .mhist-r .up{color:var(--up)}.mhist-r .down{color:var(--down)}
   .mstat{background:var(--accent-soft);border-radius:9px;padding:7px 10px;font-size:13px;margin-bottom:10px}
   .mrowi{display:flex;justify-content:space-between;gap:10px;border-top:1px solid var(--line);padding:6px 0;font-size:13px}
   .mrowi span{color:var(--muted)}
@@ -482,6 +490,9 @@
     .mcard{scroll-snap-align:start}
     .mprof{grid-template-columns:1fr}
     .mprof-photo{max-width:260px}
+    .mprof-side .mprof-photo{margin:0 auto}
+    .mprof-mhead{display:block;margin-bottom:12px}.mprof-mhead h2{margin-right:30px}
+    .mprof-body > h2,.mprof-body > h2 + .sub{display:none}
     .mform-top{flex-direction:column}
   }
 
@@ -2216,6 +2227,9 @@ function demoMiss(){
       const by = {}; act.forEach(c => (by[c.group_no] ||= []).push(c));
       const adv = []; let out = 0;
       for (const g of Object.values(by)){ g.sort((a, b) => votesOf(b) - votesOf(a) || a.id - b.id); const keep = Math.max(g.length - elim, 1);
+        const res = store.get('mr_miss_res', []);
+        g.forEach((c, i) => { res.push({ round: st.current_round, contestant_id: c.id, group_no: c.group_no, place: i + 1, votes: votesOf(c), advanced: i < keep }); });
+        store.set('mr_miss_res', res);
         g.forEach((c, i) => { if (i < keep) adv.push({ c, rn: i + 1, pot: pots[i] || 1 }); else { c.eliminated_round = st.current_round; out++; } }); }
       const potIds = [...new Set(adv.map(a => a.pot))].sort((a, b) => a - b); let off = 0, groups = 0;
       for (const pt of potIds){ const inPot = adv.filter(a => a.pot === pt).map(a => ({ ...a, r: Math.random() })).sort((a, b) => a.rn - b.rn || a.r - b.r);
@@ -2223,6 +2237,7 @@ function demoMiss(){
       store.set(K.c, l); store.set(K.set, { ...st, current_round: st.current_round + 1, group_size: size, eliminate_count: elim, round_ends_at: ends });
       return { round: st.current_round + 1, advanced: adv.length, eliminated: out, groups };
     },
+    async missHistory(id){ return store.get('mr_miss_res', []).filter(r => r.contestant_id === id).sort((a, b) => a.round - b.round); },
     async missTips(){ return [{ id:1, title:'Prechod „pred / po“ na beat', body:'Natoč 2 zábery – bežný a vyladený – a strihni ich presne na úder hudby. Prvé 2 sekundy rozhodujú, tak začni hneď pohybom.', format:'transition', created_at:new Date().toISOString() },
       { id:2, title:'Deň v mojom živote za 15 sekúnd', body:'Krátke rýchle zábery z bežného dňa, text na obrazovke a na konci výzva: „Hlasuj za mňa v MISS – odkaz v bio“.', format:'vlog', created_at:new Date().toISOString() }]; },
     async missGrant(email, amount){ const w = store.get(K.w, {}), uid = sess().id; w[uid] = (w[uid] || 0) + amount; store.set(K.w, w); return w[uid]; }
@@ -2254,6 +2269,7 @@ function liveMiss(sb, chk){
     async missSetStatus(id, status){ chk(await sb.from('miss_contestants').update({ status }).eq('id', id)); },
     async missNewRound(elim, size, pots, ends){ return chk(await sb.rpc('miss_new_round', { p_eliminate:elim, p_group_size:size, p_pots:pots, p_round_ends:ends })); },
     async missGrant(email, amount){ return chk(await sb.rpc('miss_grant_credits', { p_email:email, p_amount:amount })); },
+    async missHistory(id){ return chk(await sb.from('miss_round_results').select('round,group_no,place,votes,advanced').eq('contestant_id', id).order('round')); },
     async missTips(){ return chk(await sb.from('miss_tips').select('id,title,body,format,created_at').eq('active', true).order('created_at', { ascending:false }).limit(6)); }
   };
 }
@@ -2484,16 +2500,17 @@ async function onMissVote(id, credits){
 }
 async function openMissProfile(id){
   openModal('<div class="empty">Načítavam…</div>');
-  let c; try { c = await api.missProfile(id); } catch(err){ openModal(`<p>${esc(err.message)}</p>`); return; }
+  let c, hist = []; try { [c, hist] = await Promise.all([api.missProfile(id), api.missHistory(id).catch(() => [])]); } catch(err){ openModal(`<p>${esc(err.message)}</p>`); return; }
   if (!c){ openModal('<h2>Profil neexistuje</h2><p class="sub">Súťažiaca nebola nájdená alebo ešte nebola schválená.</p>'); return; }
   const ph = missPhoto(c.photo_path), links = c.links || {};
   const inRound = !c.eliminated_round && c.round === state.miss?.st.current_round && c.status === 'approved';
   const row = (l, v) => v ? `<div class="mrowi"><span>${l}</span><b>${esc(v)}</b></div>` : '';
   openModal(`<div class="mprof">
-    <div class="mprof-photo">${ph ? `<img src="${esc(ph)}" alt="${esc(c.first_name)}">` : `<span>${esc(c.first_name[0] || '?')}</span>`}</div>
+    <div class="mprof-side"><div class="mprof-mhead"><h2>${esc(c.first_name)}</h2><p class="sub" style="margin:0">${flagOf(c.country)} ${esc(COUNTRY[c.country] || c.country)} · ${c.age} rokov${c.city ? ' · ' + esc(c.city) : ''}</p></div><div class="mprof-photo">${ph ? `<img src="${esc(ph)}" alt="${esc(c.first_name)}">` : `<span>${esc(c.first_name[0] || '?')}</span>`}</div>
+      ${hist.length ? `<div class="mhist">${hist.map(h => `<div class="mhist-r"><span>${h.round}. kolo</span><span>${h.place}. miesto</span><span>${h.votes} ${hlasy(h.votes)}</span><b class="${h.advanced ? 'up' : 'down'}">${h.advanced ? 'postup' : 'vypadnutie'}</b></div>`).join('')}</div>` : ''}
+      ${inRound ? `<div class="mstat"><b>${c.votes}</b> ${hlasy(c.votes)} v ${c.round}. kole · pätica ${c.group_no}${missPos(c.id) ? '<br>' + missPosLine(missPos(c.id)) : ''}${state.miss?.st.round_ends_at ? `<br><span class="small">⏳ ${missEnded() ? 'kolo skončilo' : `do konca kola <b data-mcount>${missCountTxt()}</b>`}</span>` : ''}</div>${state.miss?.board.some(x => x.id === c.id) ? missMiniTable(state.miss.board.find(x => x.id === c.id)) : ''}` : c.eliminated_round ? `<div class="mstat">Súťaž ukončila v ${c.eliminated_round}. kole</div>` : ''}</div>
     <div class="mprof-body"><h2>${esc(c.first_name)}</h2>
       <p class="sub">${flagOf(c.country)} ${esc(COUNTRY[c.country] || c.country)} · ${c.age} rokov${c.city ? ' · ' + esc(c.city) : ''}</p>
-      ${inRound ? `<div class="mstat"><b>${c.votes}</b> ${hlasy(c.votes)} v ${c.round}. kole · pätica ${c.group_no}${missPos(c.id) ? '<br>' + missPosLine(missPos(c.id)) : ''}${state.miss?.st.round_ends_at ? `<br><span class="small">⏳ ${missEnded() ? 'kolo skončilo' : `do konca kola <b data-mcount>${missCountTxt()}</b>`}</span>` : ''}</div>${state.miss?.board.some(x => x.id === c.id) ? missMiniTable(state.miss.board.find(x => x.id === c.id)) : ''}` : c.eliminated_round ? `<div class="mstat">Súťaž ukončila v ${c.eliminated_round}. kole</div>` : ''}
       ${row('Obľúbené jedlo', c.favorite_food)}${row('Obľúbené mesto', c.favorite_city)}${row('Voľný čas', c.hobbies)}
       ${c.about ? `<p style="white-space:pre-line;margin:10px 0">${esc(c.about)}</p>` : ''}
       <div class="mlinks">${LINK_DEFS.filter(([k]) => links[k]).map(([k, l]) => `<a class="chip" href="${esc(normLink(k, links[k]))}" target="_blank" rel="nofollow noopener ugc">${l}</a>`).join('')}</div>

@@ -450,7 +450,31 @@
   .mcard.cutl::before{content:'';position:absolute;left:-8px;top:2px;bottom:2px;border-left:1px dashed var(--down);opacity:.55}
   .mcard.cutl::after{content:'nepostupuje';position:absolute;left:-8px;top:50%;transform:translate(calc(-50% + 1px),-50%) rotate(-90deg);font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:var(--down);background:var(--card);padding:0 4px;white-space:nowrap;opacity:.8}
   .mneed{color:var(--down);font-weight:700}
-  .mlay{margin-left:auto;display:flex;gap:6px}
+  .mlay{margin-left:auto;display:flex;gap:4px}
+  .mlay .chip{padding:4px 9px;font-size:14px}
+  .mtabs{align-items:center}
+  .mtabs .sm{display:none}
+  @media (max-width:640px){.mtabs .sm{display:inline}}
+  .mtabs .mflags{display:flex;gap:4px;flex-wrap:wrap;margin:0 0 0 6px;padding-left:10px;border-left:1px solid var(--line)}
+  .mtabs .mflags .chip{padding:3px 8px}
+  .mhead{display:flex;align-items:center;gap:10px 18px;flex-wrap:wrap;padding:18px 0 6px}
+  .mhead-t{flex:1 1 320px;min-width:0}
+  .mhead-t h1{margin:0;font-size:clamp(22px,3vw,28px);font-weight:800;letter-spacing:-.03em}
+  .mhead-meta{font-size:12.5px;color:var(--muted)}
+  .mlink{border:0;background:none;padding:0;font:inherit;color:var(--accent);cursor:pointer;text-decoration:underline}
+  .mhead-c{display:flex;flex-direction:column;align-items:center;background:var(--accent-soft);border-radius:12px;padding:6px 14px;line-height:1.15}
+  .mhead-c span{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+  .mhead-c b{font-size:20px;color:var(--accent)}
+  .mhead-c.over{background:var(--down-soft);font-weight:700;font-size:13px}
+  .mhead-a{display:flex;align-items:center;gap:8px}
+  @media (max-width:640px){
+    .mtabs{gap:5px}
+    .mtabs > .chip{font-size:12px;padding:4px 8px}
+    .mtabs .lg{display:none}
+    .mtabs .mflags{order:3;width:100%;border-left:0;margin:2px 0 0;padding:0}
+    .mlay{order:2}
+    .mhead{padding-top:12px}
+  }
   .mgc{padding:10px 12px}
   .mgc-h{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px}
   .mgc-r{display:grid;grid-template-columns:24px 24px 1fr auto 84px;align-items:center;gap:6px;padding:3px 0;border-radius:8px}
@@ -2408,12 +2432,12 @@ function missFlagBar(){
   const m = state.miss, cnt = {};
   for (const c of m.board) cnt[c.country] = (cnt[c.country] || 0) + 1;
   const list = Object.entries(cnt).sort((a, b) => b[1] - a[1]);
-  if (list.length < 2) return '';
+  if (list.length < 2) return { chips: '', note: '' };
   const f = state.missFlag;
   let note = '';
   if (f){ const mine = m.board.filter(c => c.country === f), adv = mine.filter(c => missPos(c.id).advancing).length;
-    note = `<p class="small" style="margin:0 0 8px">${flagOf(f)} ${esc(COUNTRY[f] || f)}: ${mine.length} v súťaži, <b>${adv}</b> na postupových miestach${mine.length - adv ? ` – <b>${mine.length - adv}</b> potrebuje tvoju pomoc` : ''}.</p>`; }
-  return `<div class="mflags"><span class="small" style="align-self:center">Podpor svoju krajinu:</span>${list.map(([k, n]) => `<button class="chip ${f === k ? 'on' : ''}" data-mflag="${esc(k)}" title="${esc(COUNTRY[k] || k)}">${flagOf(k)} ${n}</button>`).join('')}</div>${note}`;
+    note = `<p class="small" style="margin:2px 0 8px">${flagOf(f)} ${esc(COUNTRY[f] || f)}: ${mine.length} v súťaži, <b>${adv}</b> na postupových miestach${mine.length - adv ? ` – <b>${mine.length - adv}</b> potrebuje tvoju pomoc` : ''}.</p>`; }
+  return { chips: `<span class="mflags" title="Podpor svoju krajinu – zvýrazni jej súťažiace">${list.map(([k, n]) => `<button class="chip ${f === k ? 'on' : ''}" data-mflag="${esc(k)}" title="${esc(COUNTRY[k] || k)}">${flagOf(k)} ${n}</button>`).join('')}</span>`, note };
 }
 function missFavView(){
   const ids = missFavs(), list = ids.map(id => missPos(id)).filter(Boolean)
@@ -2486,20 +2510,22 @@ function renderMiss(){
   else if (regOpen && (!state.user || isWoman)) cta = `<button class="btn primary" data-act="miss-signup">Prihlásiť sa do súťaže</button>`;
   else if (regOpen && state.profile) cta = `<span class="small">Do súťaže sa môžu prihlásiť iba ženy.</span>`;
   const pager = pages > 1 ? `<div class="pager">${Array.from({ length: pages }, (_, i) => `<button class="chip ${state.missPage === i + 1 ? 'on' : ''}" data-mpage="${i + 1}">${i + 1}</button>`).join('')}</div>` : '';
+  const fb = view === 'all' ? missFlagBar() : { chips: '', note: '' }, left = missEndsLeft();
+  const rules = `Súťaž o dievča roka. Hlasuje sa celý rok v kolách – z každej pätice ${missElim() === 1 ? 'vypadne najslabšia' : `vypadnú ${missElim()} najslabšie`}, ostatné postupujú do ďalšieho kola. V každej pätici máte 1 hlas každých ${st.vote_hours} hodín (nekumuluje sa) a ďalšie hlasy môžete pridať za kredity. ${regOpen ? `Prihlásiť sa môžu ženy staršie ako 18 rokov do ${new Date(st.registration_until).toLocaleDateString('sk-SK')}.` : 'Registrácia je uzavretá.'}`;
   el.innerHTML = `
-    <section class="hero miss-hero"><h1>👑 ${esc(st.title)}</h1>
-      <p>Súťaž o dievča roka. Hlasuje sa celý rok v kolách – z každej pätice ${missElim() === 1 ? 'vypadne najslabšia' : `vypadnú ${missElim()} najslabšie`}, ostatné postupujú do ďalšieho kola. V každej pätici máte <b>1 hlas každých ${st.vote_hours} hodín</b> (nekumuluje sa) a ďalšie hlasy môžete pridať za kredity.
-      ${regOpen ? `Prihlásiť sa môžu ženy staršie ako 18 rokov do <b>${new Date(st.registration_until).toLocaleDateString('sk-SK')}</b>.` : 'Registrácia je uzavretá.'}</p>
-      <div class="miss-bar"><span class="pill">${st.current_round}. kolo</span>${st.voting_open ? '' : '<span class="pill">hlasovanie pozastavené</span>'}
-        <span class="small">${m.board.length} súťažiacich · ${groups.length} pätíc</span><span class="spacer"></span>
-        ${state.user ? `<span class="small">Kredity: <b>${m.credits}</b></span> <button class="btn" data-act="miss-credits">Kúpiť kredity</button>` : ''} ${cta}</div>
+    <section class="mhead">
+      <div class="mhead-t"><h1>👑 ${esc(st.title)}</h1>
+        <span class="mhead-meta">${st.current_round}. kolo · ${m.board.length} súťažiacich · ${groups.length} pätíc · 1 hlas / ${st.vote_hours} h · <button class="mlink" data-act="miss-rules" title="${esc(rules)}">pravidlá</button>${st.voting_open ? '' : ' · <b>hlasovanie pozastavené</b>'}</span></div>
+      ${st.round_ends_at ? `<div class="mhead-c ${missEnded() ? 'over' : ''}">${missEnded() ? `⏳ ${st.current_round}. kolo skončilo` : `<span>⏳ do konca kola</span><b data-mcount>${missCountTxt()}</b>`}</div>` : ''}
+      <div class="mhead-a">${state.user ? `<span class="small">Kredity: <b>${m.credits}</b></span> <button class="btn" data-act="miss-credits">Kúpiť</button>` : ''} ${cta}</div>
     </section>
-    ${missCountBox()}
     ${isAdmin() ? '<div id="missAdmin"></div>' : ''}
     ${missMeBox()}
-    <div class="mtabs">${[['all', 'Všetky pätice'], ['fav', `⭐ Moje favoritky (${missFavs().filter(id => m.board.some(c => c.id === id)).length})`], ['stats', '📊 Štatistiky']].map(([k, l]) => `<button class="chip ${view === k ? 'on' : ''}" data-mview="${k}">${l}</button>`).join('')}
-      ${view === 'all' ? `<span class="mlay"><button class="chip ${missLayout() === 'photo' ? 'on' : ''}" data-mlayout="photo" title="S fotkami">▦ S fotkami</button><button class="chip ${missLayout() === 'list' ? 'on' : ''}" data-mlayout="list" title="Bez fotiek">☰ Bez fotiek</button></span>` : ''}</div>
-    ${view === 'fav' ? missFavView() : view === 'stats' ? missStatsView() : `${missFlagBar()}${pager}
+    <div class="mtabs">${[['all', '<span class="lg">Všetky pätice</span><span class="sm">Pätice</span>'], ['fav', `⭐ Favoritky (${missFavs().filter(id => m.board.some(c => c.id === id)).length})`], ['stats', '📊<span class="lg"> Štatistiky</span>']].map(([k, l]) => `<button class="chip ${view === k ? 'on' : ''}" data-mview="${k}">${l}</button>`).join('')}
+      ${fb.chips}
+      ${view === 'all' ? `<span class="mlay"><button class="chip ${missLayout() === 'photo' ? 'on' : ''}" data-mlayout="photo" title="S fotkami">▦</button><button class="chip ${missLayout() === 'list' ? 'on' : ''}" data-mlayout="list" title="Bez fotiek">☰</button></span>` : ''}</div>
+    ${fb.note}
+    ${view === 'fav' ? missFavView() : view === 'stats' ? missStatsView() : `${pager}
     ${shown.length ? (missLayout() === 'list' ? `<div class="mfavs">${shown.map(g => missGroupCompact(g)).join('')}</div>` : shown.map(g => missGroup(g)).join('')) : '<div class="list"><div class="empty">Zatiaľ tu nie sú žiadne schválené súťažiace.</div></div>'}
     ${pager}`}`;
   if (isAdmin()) renderMissAdmin();
@@ -2723,6 +2749,11 @@ async function onMissClick(t){
     case 'miss-credits': openMissCredits(); return true;
     case 'miss-grant': try { const b = await api.missGrant($('#mg_e').value.trim(), Number($('#mg_a').value)); toast(`Pripísané. Zostatok: ${b} kreditov.`); await loadMiss(); renderMiss(); } catch(err){ toast(err.message, true); } return true;
     case 'miss-newround': openMissNewRound(); return true;
+    case 'miss-rules': { const st = state.miss.st, regOpen = Date.now() < Date.parse(st.registration_until);
+      openModal(`<h2>Pravidlá – ${esc(st.title)}</h2><p>Súťaž o dievča roka. Hlasuje sa celý rok v kolách. Súťažiace sú rozdelené do pätíc a z každej pätice ${missElim() === 1 ? 'vypadne najslabšia' : `vypadnú <b>${missElim()} najslabšie</b>`}, ostatné postupujú do ďalšieho kola, kde sa vyžrebujú do nových skupín.</p>
+        <p>V každej pätici máte <b>1 hlas každých ${st.vote_hours} hodín</b> (nekumuluje sa). Ďalšie hlasy môžete pridať za kredity (1 kredit = 1 hlas).</p>
+        <p>${regOpen ? `Prihlásiť sa môžu ženy staršie ako 18 rokov do <b>${new Date(st.registration_until).toLocaleDateString('sk-SK')}</b>. Profily schvaľuje administrátor.` : 'Registrácia je uzavretá.'}</p>
+        <p class="small">Pri rovnosti hlasov rozhoduje skoršia prihláška. Po termíne konca kola sa už hlasovať nedá.</p>`); return true; }
     case 'miss-preset-rand': document.querySelectorAll('[data-mpot]').forEach(el => { el.value = '1'; }); missNrPreview(); return true;
     case 'miss-preset-13': document.querySelectorAll('[data-mpot]').forEach(el => { el.value = el.dataset.mpot === '2' ? '2' : '1'; }); missNrPreview(); return true;
     case 'miss-preset-each': document.querySelectorAll('[data-mpot]').forEach(el => { el.value = el.dataset.mpot; }); missNrPreview(); return true;

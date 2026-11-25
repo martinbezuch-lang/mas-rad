@@ -1287,7 +1287,7 @@ function demoExtra(){
         const base = { category:'Iné', status:'aktivna', source:'admin', duration_days:7, sources:[], published_at:q.created_at, ends_at:new Date(Date.parse(q.created_at) + 7 * 864e5).toISOString(), ...q };
         const act = base.status === 'aktivna' && (!base.ends_at || Date.parse(base.ends_at) > Date.now());
         const nc = store.get('mr_pc', []).filter(c => c.poll_id === q.id).length;
-        return { ...base, categories: base.categories && base.categories.length ? base.categories : [base.category], comments: nc, active: act, mine: base.submitted_by === me, total: vs.length, up: (vis || !act) ? vs.filter(v => v.value === 1).length : null, down: (vis || !act) ? vs.filter(v => v.value === -1).length : null }; });
+        return { ...base, categories: base.categories && base.categories.length ? base.categories : [base.category], comments: nc, active: act, mine: base.submitted_by === me, total: vs.length, up: vs.filter(v => v.value === 1).length, down: vs.filter(v => v.value === -1).length }; });
     },
     async myPolls(uid){ return store.get(K.pv, []).filter(v => v.user_id === uid); },
     async setPoll(uid, id, v){ const pv = store.get(K.pv, []).filter(x => !(x.user_id === uid && x.poll_id === id)); if (v) pv.push({ poll_id:id, user_id:uid, value:v }); store.set(K.pv, pv); },
@@ -1305,7 +1305,6 @@ function demoExtra(){
     async pollBreakdown(id){
       const me = store.get('mr_session', {})?.id, all = store.get(K.pv, []).filter(v => v.poll_id === id);
       const q = store.get(K.polls, []).find(x => x.id === id), ended = q && q.ends_at && Date.parse(q.ends_at) <= Date.now();
-      if (!isAdm() && !ended && !all.some(v => v.user_id === me)) return [];
       const y = new Date().getFullYear(), m = new Map();
       const add = (dim, b, v) => { const k = dim + '|' + b; const r = m.get(k) || { dim, bucket:b, up:0, down:0 }; v === 1 ? r.up++ : r.down++; m.set(k, r); };
       all.forEach(e => { const p = profileOf(e.user_id); if (!p) return; const a = y - p.birth_year;
@@ -1667,7 +1666,7 @@ async function onTrustVote(btn){
     next ? state.myTrust.set(id, next) : state.myTrust.delete(id);
     const T = TERM(it.kind);
     toast(next === 1 ? `👍 ${T.up} – uložené` : next === -1 ? `👎 ${T.down} – uložené` : next === 2 ? 'Nepoznám – uložené' : 'Hlas zrušený');
-    if (state.detailIds && state.detailIds.length) renderDetail(); else renderTrustRows();
+    if (state.artTrust && location.hash.startsWith('#clanok-')) renderArticle(); else if (state.detailIds && state.detailIds.length) renderDetail(); else renderTrustRows();
   } catch(err){ toast(err.message, true); document.querySelectorAll(`[data-tvote][data-id="${id}"]`).forEach(b => b.disabled = false); }
 }
 async function openTrustAdmin(){
@@ -1767,7 +1766,7 @@ function pollMeta(q){
     ${q.published_at ? `<span>zverejnená ${fmtDT(q.published_at)}</span>` : q.status === 'schvalena' ? `<span>plán: ${q.scheduled_at ? fmtDT(q.scheduled_at) : 'čas zvolí AI'}</span>` : ''}
     ${q.ends_at ? `<span>koniec ${fmtDT(q.ends_at)}</span>` : `<span>trvanie ${q.duration_days} d</span>`}</div>`;
 }
-function pollShown(q){ return q.up != null && !(realAdmin() && state.asUser && q.active && !state.myPolls.get(q.id)); }
+function pollShown(q){ return q.up != null; }
 function pollThumbs(q){
   const mine = state.myPolls.get(q.id) || 0, shown = pollShown(q);
   const th = (v, cls, lbl) => `<button class="thumb tog ${cls} ${mine === v ? 'chosen' : ''}" data-pvote="${v}" data-id="${q.id}" ${q.active ? '' : 'disabled'} title="${mine === v ? 'Kliknite znova pre zrušenie' : lbl}" aria-pressed="${mine === v}" aria-label="${lbl}">${ICON_THUMB}<span>${shown ? (v === 1 ? q.up : q.down) : lbl}</span></button>`;
@@ -2022,7 +2021,7 @@ function renderPollDetail(){
       ${pollThumbs(q)}
       ${isAdmin() ? pollMeta(q) : ''}</div>
       ${pollDonut(q, shown)}</div></div>
-    <div class="panel"><h3>Kto ako hlasoval</h3><p class="small" style="margin:2px 0 12px">Percento odpovedí „áno“ v jednotlivých skupinách. Skupiny s menej ako 3 hlasmi nezobrazujeme.</p><div id="pbd">${shown ? '<div class="small">Načítavam…</div>' : `<div class="small">Rozdelenie podľa pohlavia, veku, kraja a mesta/vidieka uvidíte po zahlasovaní.</div>`}</div></div>
+    <div class="panel"><h3>Kto ako hlasoval</h3><p class="small" style="margin:2px 0 12px">Percento odpovedí „áno“ v jednotlivých skupinách. Skupiny s menej ako 3 hlasmi nezobrazujeme.</p><div id="pbd">${shown ? '<div class="small">Načítavam…</div>' : `<div class="small">Načítavam…</div>`}</div></div>
     <div class="panel" id="disc"><h3>Diskusia <span class="small">(${komentarov(q.comments || 0)})</span></h3><div id="cform"></div><div id="clist"><div class="small">Načítavam…</div></div></div>`;
   if (shown) loadPollBreakdown(q.id);
   renderCommentForm(q); loadComments(q.id);
@@ -2155,22 +2154,36 @@ async function renderArticle(){
         ${a.social ? `<h3 style="margin-top:14px">Text pre sociálne siete</h3><div class="asocial">${esc(a.social)}</div><div class="actions" style="justify-content:flex-start"><button class="btn" data-acopy="${a.id}">Kopírovať</button></div>` : ''}</div>` : ''}
     </div>`;
   const box = $('#artData');
+  ['tl', 'bd', 'mylog', 'pbd'].forEach(id => document.querySelectorAll('#' + id).forEach(n => { if (!n.closest('#view-clanky')) n.removeAttribute('id'); }));
   if (a.poll_id){
     if (!state.polls){ try { await loadPolls(); } catch {} }
     const q = (state.polls || []).find(x => x.id === Number(a.poll_id));
     if (q && box){
       box.innerHTML = `<div class="panel"><div class="pd-grid"><div><div class="small">Anketa</div><h3 style="font-size:17px;margin:4px 0 8px"><a class="qlink" href="#anketa-${q.id}">${esc(q.question)}</a></h3>${pollWhen(q)}
-        <p class="small" style="margin-top:10px">Výsledok je orientačný – hlasujú registrovaní návštevníci webu, nejde o reprezentatívny prieskum.</p></div>${pollDonut(q, pollShown(q))}</div></div>
+        ${q.active ? `<div style="margin-top:10px"><div class="small" style="margin-bottom:4px">${state.myPolls.get(q.id) ? 'Váš hlas (kliknutím zmeníte):' : 'Hlasujte aj vy:'}</div>${pollThumbs(q)}</div>` : ''}
+        <p class="small" style="margin-top:10px">Výsledok je orientačný – hlasujú registrovaní návštevníci webu, nejde o reprezentatívny prieskum.</p></div>${pollDonut(q, true)}</div></div>
         <div class="panel"><h3>Kto ako hlasoval</h3><div id="pbd"><div class="small">Načítavam…</div></div></div>`;
-      if (pollShown(q)) loadPollBreakdown(q.id); else $('#pbd').innerHTML = '<div class="small">Podrobné štatistiky budú verejné po skončení ankety.</div>';
+      loadPollBreakdown(q.id);
     }
   }
   if (a.item_ids.length && box){
     if (!state.trust){ try { await loadTrust(); } catch {} }
     const its = a.item_ids.map(id => state.trustById?.get(id)).filter(Boolean);
-    if (its.length) box.insertAdjacentHTML('beforeend', `<div class="panel"><h3>${esc(TERM(its[0].kind).col)} dnes</h3><div class="cards">${its.map(it => `<div class="tcard"><div class="tc-top"><b>${esc(it.name)}</b></div><div class="small">${esc(KIND_ONE[it.kind])}${it.detail ? ' · ' + esc(it.detail) : ''}</div>
-      ${(() => { const t = it.up + it.down, pct = t ? Math.round(it.up / t * 100) : null; return `<div class="tc-mid"><span class="big">${pct === null ? '–' : pct + ' %'}</span><span class="small">${TERM(it.kind).today} · ${hlasov(t)}${knownTxt(it)}</span></div>${bar(it.up, it.down)}`; })()}
-      <div class="actions" style="justify-content:center"><a class="btn" href="#d-${it.id}">Vývoj v čase a hlasovanie</a></div></div>`).join('')}</div></div>`);
+    if (its.length){
+      const ids = its.map(i => i.id), T0 = TERM(its[0].kind), periods = [[30, '30 dní'], [90, '90 dní'], [365, '1 rok'], [3650, 'Všetko']];
+      state.detailIds = ids; state.artTrust = true; if (!state.days) state.days = 30;
+      box.insertAdjacentHTML('beforeend', `<div class="panel"><h3>${esc(T0.col)} dnes</h3><div class="cards">${its.map((it, k) => { const t = it.up + it.down, pct = pctOf(it.up, it.down);
+        return `<div class="tcard"><div class="tc-top">${its.length > 1 ? `<span class="sw" style="background:var(--s${k + 1})"></span>` : ''}<b>${esc(it.name)}</b></div><div class="small">${esc(KIND_ONE[it.kind])}${it.detail ? ' · ' + esc(it.detail) : ''}</div>
+          <div class="tc-mid"><span class="big">${pct === null ? '–' : pct + ' %'}</span><span class="small">${TERM(it.kind).today} · ${hlasov(t)}${knownTxt(it)}</span></div>${bar(it.up, it.down)}
+          ${it.active ? `<div class="votes" style="margin-top:10px">${trustThumbs(it)}</div>` : ''}</div>`; }).join('')}</div>
+        <div class="dtools"><h3>${T0.trend}</h3><div class="seg-sm" role="group" aria-label="Obdobie">${periods.map(([d, l]) => `<button data-days="${d}" class="${state.days === d ? 'on' : ''}">${l}</button>`).join('')}</div></div>
+        <div class="chartbox" id="tl"><div class="empty">Načítavam…</div></div>
+        ${its.length > 1 ? `<div class="chart-legend">${its.map((it, k) => `<span><span class="sw" style="background:var(--s${k + 1})"></span>${esc(it.name)}</span>`).join('')}</div>` : ''}<div class="mylog" id="mylog" hidden></div></div>
+        <div class="panel"><div class="dtools"><h3>${T0.groups}</h3>${its.length > 1 ? `<div class="seg-sm" role="group">${its.map((it, k) => `<button data-bd="${it.id}" class="${k === 0 ? 'on' : ''}">${esc(it.name.length > 22 ? it.name.slice(0, 21) + '…' : it.name)}</button>`).join('')}</div>` : ''}</div>
+          <div id="bd"><div class="empty">Načítavam…</div></div>
+          <p class="small" style="margin:12px 0 0">Skupiny s menej ako 3 hlasmi sa z dôvodu ochrany súkromia nezobrazujú.</p></div>`);
+      loadTimeline(); loadBreakdown(ids[0]);
+    }
   }
 }
 function openArticleEdit(id){
@@ -2205,7 +2218,7 @@ async function onPollVote(btn){
     await api.setPoll(state.user.id, id, next);
     next ? state.myPolls.set(id, next) : state.myPolls.delete(id);
     await loadPolls();
-    toast(next ? 'Odpoveď uložená' : 'Odpoveď zrušená'); if (state.pollId) renderPollDetail(); else renderPollBody();
+    toast(next ? 'Odpoveď uložená' : 'Odpoveď zrušená'); if (location.hash.startsWith('#clanok-')) renderArticle(); else if (state.pollId) renderPollDetail(); else renderPollBody();
   } catch(err){ toast(err.message, true); btn.disabled = false; }
 }
 
@@ -2224,57 +2237,7 @@ const LINK_DEFS = [['instagram','Instagram','https://instagram.com/'],['tiktok',
   ['onlyfans','OnlyFans','https://onlyfans.com/'],['x','X / Twitter','https://x.com/'],['linktree','Linktree','https://linktr.ee/'],['web','Web','']];
 const MISS_PER_PAGE = 10;
 const missPhoto = p => !p ? '' : (DEMO ? p : `${CONFIG.SUPABASE_URL}/storage/v1/object/public/miss/${p}`);
-// ilustrovaný portrét pre súťažiace bez fotky (deterministický podľa id)
-function missPortrait(id){
-  let x = (Number(id) * 2654435761) >>> 0;
-  const rnd = () => { x ^= x << 13; x >>>= 0; x ^= x >> 17; x ^= x << 5; x >>>= 0; return x / 4294967296; };
-  for (let i = 0; i < 4; i++) rnd();
-  const pick = a => a[Math.floor(rnd() * a.length)];
-  const skin = pick(['#f6d3bd', '#f1c6a8', '#e8b48f', '#d9a07a', '#c58b63', '#a86f4c', '#f9dcc9']);
-  const shade = pick(['rgba(150,80,60,.18)']);
-  const hair = pick(['#2b1b14', '#3d2418', '#5a3622', '#7b4a2a', '#a8673a', '#c99a5b', '#e3c27d', '#1d1d24', '#8c3b2a', '#b5482f']);
-  const bg = pick([['#ffd1dc', '#c9a7ff'], ['#ffe3c2', '#ff9eb5'], ['#c8f0ff', '#b9a6ff'], ['#d7ffe6', '#8ed3ff'], ['#fff0b3', '#ffb08a'], ['#f3d1ff', '#9fb4ff'], ['#ffd9e8', '#ffc38a']]);
-  const top = pick(['#e64980', '#7950f2', '#15aabf', '#f76707', '#2f9e44', '#1c1c28', '#fafafa', '#c2255c', '#364fc7', '#e8590c']);
-  const lips = pick(['#d9486f', '#c2255c', '#e8738a', '#b5384f', '#e05d5d']);
-  const eye = pick(['#3b2a20', '#2f5d8a', '#3f7a4e', '#5b3a29', '#222']);
-  const style = Math.floor(rnd() * 5), tilt = (rnd() - .5) * 6, ear = rnd() < .5, ear2 = pick(['#ffd43b', '#e9ecef', '#ff8787']);
-  const neckline = rnd() < .5;
-  const back = [
-    `<path d="M48 150 C40 70 70 34 120 34 C170 34 200 70 192 150 L198 250 L42 250 Z" fill="${hair}"/>`,
-    `<path d="M58 140 C52 70 78 38 120 38 C162 38 188 70 182 140 L186 176 L54 176 Z" fill="${hair}"/>`,
-    `<path d="M62 120 C60 66 84 40 120 40 C156 40 180 66 178 120 Z" fill="${hair}"/><ellipse cx="120" cy="34" rx="26" ry="22" fill="${hair}"/>`,
-    `<g fill="${hair}"><circle cx="70" cy="90" r="34"/><circle cx="170" cy="90" r="34"/><circle cx="62" cy="140" r="32"/><circle cx="178" cy="140" r="32"/><circle cx="70" cy="190" r="30"/><circle cx="170" cy="190" r="30"/><circle cx="120" cy="58" r="40"/><circle cx="90" cy="62" r="30"/><circle cx="150" cy="62" r="30"/></g>`,
-    `<path d="M50 150 C44 72 72 36 120 36 C168 36 196 72 190 150 C200 200 186 240 196 262 L44 262 C54 240 40 200 50 150 Z" fill="${hair}"/>`
-  ][style];
-  const fringe = [
-    `<path d="M74 110 C76 68 100 54 124 56 C152 58 168 76 166 112 C152 86 128 78 96 86 C86 92 80 100 74 110 Z" fill="${hair}"/>`,
-    `<path d="M72 112 C70 70 96 52 122 54 C150 56 170 74 168 112 C160 90 150 80 140 76 C128 92 100 98 72 112 Z" fill="${hair}"/>`,
-    `<path d="M76 104 C80 66 104 54 122 54 C146 54 166 70 164 104 C150 84 136 74 120 72 C104 74 88 84 76 104 Z" fill="${hair}"/>`,
-    `<path d="M74 108 C74 70 98 54 120 54 C146 54 168 72 166 108 C144 94 120 76 104 80 C92 84 82 94 74 108 Z" fill="${hair}"/>`,
-    `<path d="M72 116 C70 72 96 52 120 52 C146 52 170 72 168 116 C162 96 140 70 120 70 C104 84 88 96 72 116 Z" fill="${hair}"/>`
-  ][style];
-  const g = `g${id}`;
-  return 'data:image/svg+xml,' + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 320"><defs><linearGradient id="${g}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${bg[0]}"/><stop offset="1" stop-color="${bg[1]}"/></linearGradient></defs>
-<rect width="240" height="320" fill="url(#${g})"/>
-<g transform="rotate(${tilt.toFixed(1)} 120 200)">
-${back}
-<path d="M20 350 L26 300 C34 262 70 240 120 240 C170 240 206 262 214 300 L220 350 Z" fill="${top}"/>
-${neckline ? `<path d="M96 240 L120 274 L144 240 Z" fill="${skin}"/>` : `<path d="M92 240 C100 256 140 256 148 240 Z" fill="${skin}"/>`}
-<path d="M104 196 L104 246 C112 252 128 252 136 246 L136 196 Z" fill="${skin}"/><path d="M104 214 C112 222 128 222 136 214 L136 204 L104 204 Z" fill="${shade}"/>
-<ellipse cx="120" cy="140" rx="46" ry="60" fill="${skin}"/>
-<ellipse cx="75" cy="146" rx="8" ry="12" fill="${skin}"/><ellipse cx="165" cy="146" rx="8" ry="12" fill="${skin}"/>
-${ear ? `<circle cx="75" cy="162" r="4" fill="${ear2}"/><circle cx="165" cy="162" r="4" fill="${ear2}"/>` : ''}
-${fringe}
-<path d="M90 124 Q102 116 112 122" stroke="${hair}" stroke-width="4" fill="none" stroke-linecap="round"/><path d="M128 122 Q138 116 150 124" stroke="${hair}" stroke-width="4" fill="none" stroke-linecap="round"/>
-<ellipse cx="101" cy="140" rx="9" ry="6.5" fill="#fff"/><ellipse cx="139" cy="140" rx="9" ry="6.5" fill="#fff"/>
-<circle cx="102" cy="140" r="5" fill="${eye}"/><circle cx="140" cy="140" r="5" fill="${eye}"/><circle cx="103.5" cy="138.5" r="1.6" fill="#fff"/><circle cx="141.5" cy="138.5" r="1.6" fill="#fff"/>
-<path d="M91 136 Q101 129 111 136" stroke="#2a1a14" stroke-width="2.4" fill="none" stroke-linecap="round"/><path d="M129 136 Q139 129 149 136" stroke="#2a1a14" stroke-width="2.4" fill="none" stroke-linecap="round"/>
-<path d="M120 146 Q116 162 120 166 Q124 167 126 164" stroke="${shade}" stroke-width="3" fill="none" stroke-linecap="round"/>
-<ellipse cx="92" cy="164" rx="10" ry="6" fill="#ff8fa3" opacity=".35"/><ellipse cx="148" cy="164" rx="10" ry="6" fill="#ff8fa3" opacity=".35"/>
-<path d="M106 178 Q120 172 134 178 Q120 192 106 178 Z" fill="${lips}"/><path d="M106 178 Q120 182 134 178" stroke="rgba(0,0,0,.25)" stroke-width="1.2" fill="none"/>
-</g></svg>`);
-}
-const missPhotoOf = c => missPhoto(c.photo_path) || missPortrait(c.id);
+const missPhotoOf = c => missPhoto(c.photo_path);
 
 function normLink(key, v){
   v = (v || '').trim(); if (!v) return '';

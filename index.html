@@ -444,6 +444,12 @@
   .mpots{display:grid;grid-template-columns:repeat(auto-fill,minmax(175px,1fr));gap:6px}
   .mpot span{white-space:nowrap}
   .mpot{display:flex;align-items:center;justify-content:space-between;gap:6px;border:1px solid var(--line);border-radius:9px;padding:4px 4px 4px 10px;font-size:13px}
+  .mrow{grid-template-columns:repeat(5,calc((100% - 51px) / 5))}
+  .mcard.outz{transform:translateX(3px)}
+  .mcard.cutl{position:relative}
+  .mcard.cutl::before{content:'';position:absolute;left:-8px;top:2px;bottom:2px;border-left:1px dashed var(--down);opacity:.55}
+  .mcard.cutl::after{content:'nepostupuje';position:absolute;left:-8px;top:50%;transform:translate(calc(-50% + 1px),-50%) rotate(-90deg);font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:var(--down);background:var(--card);padding:0 4px;white-space:nowrap;opacity:.8}
+  .mneed{color:var(--down);font-weight:700}
   .mflagbtn{border:0;background:none;padding:0;font:inherit;cursor:pointer}
   .mflags{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0}
   .mflags .chip{font-size:13px}
@@ -2478,13 +2484,13 @@ function missGroup(g){
   return `<section class="mgroup"><div class="mgroup-h"><b>Pätica ${g}</b>${cd ? `<span class="small">Ďalší hlas v tejto pätici o ${fmtLeft(cd.left)}</span>` : `<span class="small">postupujú ${adv === 1 ? '1.' : `1.–${adv}.`}</span>`}</div>
     <div class="mrow">${list.map((c, i) => {
       const ph = missPhoto(c.photo_path), mineHere = cd && cd.contestant === c.id, r = i + 1, isFav = fav.includes(c.id);
-      return `<div class="mcard ${f ? (c.country === f ? 'hl' : 'dim') : ''}">
+      return `<div class="mcard ${f ? (c.country === f ? 'hl' : 'dim') : ''} ${r === adv + 1 ? 'cutl' : ''} ${r > adv ? 'outz' : ''}">
         <div style="position:relative"><button class="mphoto" data-mopen="${c.id}" aria-label="Profil ${esc(c.first_name)}">${ph ? `<img src="${esc(ph)}" alt="${esc(c.first_name)}" loading="lazy">` : `<span>${esc(c.first_name[0] || '?')}</span>`}<i class="mrank ${r <= adv ? 'adv' : ''}" title="${r <= adv ? 'Postupové miesto' : 'Nepostupové miesto'}">${r === 1 && c.votes > 0 ? '👑 ' : ''}${r}.</i></button>
         <button class="mstar ${isFav ? 'on' : ''}" data-mfav="${c.id}" aria-label="${isFav ? 'Odobrať z favoritiek' : 'Pridať medzi favoritky'}">${isFav ? '★' : '☆'}</button></div>
         <div class="mname">${esc(c.first_name)}</div>
         <div class="mmeta"><button class="mflagbtn" data-mflag="${esc(c.country)}" title="Zvýrazniť krajinu">${flagOf(c.country)}</button> ${esc(COUNTRY[c.country] || c.country)} · ${c.age} r.</div>
         <button class="btn ${mineHere ? '' : 'primary'} mvote" data-mvote="${c.id}" ${cd || !missVoteOpen() ? 'disabled' : ''}>${mineHere ? '✓ Váš hlas' : missEnded() ? 'Kolo skončilo' : 'Hlasovať'}</button>
-        <div class="mvotes"><b>${c.votes}</b> ${hlasy(c.votes)}</div>
+        <div class="mvotes"><b>${c.votes}</b> ${hlasy(c.votes)}${r > adv ? ` · <span class="mneed">chýba ${list[adv - 1].votes - c.votes + 1}</span>` : ''}</div>
       </div>`; }).join('')}</div></section>`;
 }
 async function onMissVote(id, credits){

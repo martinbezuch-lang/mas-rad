@@ -651,6 +651,7 @@
   <div id="view-ankety" hidden></div>
   <div id="view-miss" hidden></div>
   <div id="view-clanky" hidden></div>
+  <div id="view-mediamon" hidden></div>
 </main>
 
 <footer class="wrap" id="footer">Skóre = počet 👍 mínus počet 👎. Výsledky sú orientačné a nepredstavujú reprezentatívny prieskum.</footer>
@@ -1221,7 +1222,7 @@ async function openAdmin(editId){
   const pendingCount = list.filter(p => p.approved === false).length;
   openModal(`
     <h2>Správa osobností a hlasov</h2>
-    <p class="sub">Viditeľné iba pre administrátora.</p>
+    <p class="sub">Viditeľné iba pre administrátora. · <a href="#monitoring" data-act="mediamon">📡 Monitoring médií (skryté)</a></p>
     ${personForm(editing || {})}
     <div class="box">
       <h3>Hlasy</h3>
@@ -1316,7 +1317,8 @@ const FOOT = {
   masrad: 'Skóre = počet 👍 mínus počet 👎. Druhým klikom na 👍 si v každom zozname vyberiete jedného TOP FAVORITA – dostane od vás 2 palce hore. Šípky ukazujú posun v poradí za posledných 7 dní. Výsledky sú orientačné a nepredstavujú reprezentatívny prieskum.',
   dovera: 'Dôvera = podiel 👍 zo všetkých aktuálnych hlasov. Druhým klikom na 👍 si v každom zozname vyberiete jedného TOP FAVORITA – dostane od vás 2 palce hore. „Nepoznám“ sa do dôvery nezapočítava, ukazuje iba, koľko ľudí položku pozná. Hlas môžete kedykoľvek zmeniť alebo zrušiť. Graf v čase ukazuje stav hlasov na konci každého dňa (UTC).',
   ankety: 'Výsledky ankiet sú orientačné a nepredstavujú reprezentatívny prieskum.',
-  clanky: 'Články vychádzajú z hlasovaní na tomto webe. Výsledky sú orientačné a nepredstavujú reprezentatívny prieskum.'
+  clanky: 'Články vychádzajú z hlasovaní na tomto webe. Výsledky sú orientačné a nepredstavujú reprezentatívny prieskum.',
+  mediamon: 'Monitoring médií – skrytá stránka iba pre administrátora. Tón hodnotí AI z titulku a perexu; orientačné údaje.'
 };
 const SPONSOR_IDEAS = [
   ['Losovanie o výhru', 'Firma venuje sumu alebo produkt. Všetkým pošleme oznámenie „Hrá sa o … vďaka firme …“, logo a odkaz sú pri súťaži počas celého trvania.'],
@@ -1564,7 +1566,12 @@ function liveExtra(sb, chk){
     async saveAnnouncement(a){ const { id, ...row } = a; await upsert('announcements', row, id); },
     async deleteAnnouncement(id){ chk(await sb.from('announcements').delete().eq('id', id)); },
     async testUsersCount(){ return chk(await sb.rpc('test_users_count')); },
-    async deleteTestUsers(){ return chk(await sb.rpc('delete_test_users')); }
+    async deleteTestUsers(){ return chk(await sb.rpc('delete_test_users')); },
+    async mediaStats(days, section){ return chk(await sb.rpc('media_stats', { p_days:days, p_section:section || null })); },
+    async mediaSources(){ return chk(await sb.from('media_sources').select('*').order('name')); },
+    async mediaArticles(days, limit){ return chk(await sb.from('media_articles').select('id,source_id,url,title,perex,section,published_at,fetched_at,media_mentions(id,trust_item_id,label,tone,admin_tone,confidence,reason)')
+      .gte('fetched_at', new Date(Date.now() - days * 864e5).toISOString()).order('published_at', { ascending:false, nullsFirst:false }).limit(limit || 150)); },
+    async setMentionTone(id, tone){ chk(await sb.from('media_mentions').update({ admin_tone: tone, checked_at: tone === null ? null : new Date().toISOString() }).eq('id', id)); }
   };
 }
 
@@ -1573,12 +1580,12 @@ function markNav(key){ document.querySelectorAll('.nav a[data-tab]').forEach(a =
 const KIND_Q = { politik:'Dôverujete politikom?', strana:'Dôverujete politickým stranám?', novinar:'Považujete ich za objektívnych?', media:'Dôverujete médiám?', institucia:'Dôverujete inštitúciám?' };
 function route(){
   const h = decodeURIComponent(location.hash.replace(/^#/, ''));
-  const tab = (h.startsWith('dovera') || h.startsWith('d-')) ? 'dovera' : (h === 'ankety' || h.startsWith('anketa-')) ? 'ankety' : (h === 'clanky' || h.startsWith('clanok-')) ? 'clanky' : (h === 'miss' || h.startsWith('miss-')) ? 'miss' : 'masrad';
+  const tab = (h.startsWith('dovera') || h.startsWith('d-')) ? 'dovera' : (h === 'ankety' || h.startsWith('anketa-')) ? 'ankety' : (h === 'clanky' || h.startsWith('clanok-')) ? 'clanky' : (h === 'miss' || h.startsWith('miss-')) ? 'miss' : h === 'monitoring' ? 'mediamon' : 'masrad';
   state.tab = tab;
   const pid = h.startsWith('osoba-') ? Number(h.slice(6)) : null, pp = pid && state.persons?.find(x => x.id === pid);
   if (tab === 'masrad'){ const sec = pp ? secOf(pp) : h === 'influenceri' ? 'influencer' : 'osobnost'; if (sec !== state.psec){ state.psec = sec; state.cat = 'all'; } markNav(SEC[sec].nav); renderChips(); renderList(); if (pp) openPersonCard(pid); }
   else if (tab !== 'dovera') markNav(tab);
-  ['masrad', 'dovera', 'ankety', 'miss', 'clanky'].forEach(t => { $('#view-' + t).hidden = t !== tab; });
+  ['masrad', 'dovera', 'ankety', 'miss', 'clanky', 'mediamon'].forEach(t => { $('#view-' + t).hidden = t !== tab; });
   $('#footer').textContent = FOOT[tab];
   if (tab === 'dovera'){
     if (h === 'dovera-media') state.tkind = 'media';
@@ -1592,6 +1599,103 @@ function route(){
   } else if (tab === 'ankety'){ markNav('ankety'); state.pollId = h.startsWith('anketa-') ? Number(h.slice(7)) || null : null; showAnkety(); window.scrollTo(0, 0); }
   else if (tab === 'clanky'){ state.articleId = h.startsWith('clanok-') ? Number(h.slice(7)) || null : null; showClanky(); window.scrollTo(0, 0); }
   else if (tab === 'miss') showMiss(h.startsWith('miss-') ? Number(h.slice(5)) : null);
+  else if (tab === 'mediamon'){ window.scrollTo(0, 0); showMediaMon(); }
+}
+
+/* ---------- MONITORING MÉDIÍ (skrytá stránka #monitoring, iba admin) ---------- */
+const MM = { days: 30, section: '', kind: 'all', stats: null, arts: null, srcs: null, filterSrc: '', filterItem: '' };
+const MM_TONE = { '1': ['👍', 'var(--up)'], '0': ['➖', 'var(--muted)'], '-1': ['👎', 'var(--down)'] };
+const mmPct = (n, t) => t ? Math.round(n / t * 100) : 0;
+function mmBar(pos, neu, neg){
+  const t = pos + neu + neg; if (!t) return '<span class="small">–</span>';
+  return `<div title="👍 ${pos} · ➖ ${neu} · 👎 ${neg}" style="display:flex;height:10px;border-radius:99px;overflow:hidden;min-width:120px;background:var(--track)">
+    <span style="width:${pos / t * 100}%;background:var(--up)"></span><span style="width:${neu / t * 100}%;background:var(--muted);opacity:.35"></span><span style="width:${neg / t * 100}%;background:var(--down)"></span></div>`;
+}
+async function showMediaMon(){
+  const el = $('#view-mediamon');
+  if (!realAdmin()){ el.innerHTML = `<section class="hero"><h1>Stránka neexistuje</h1><p><a href="#ankety">Späť na ankety</a></p></section>`; return; }
+  if (!api.mediaStats){ el.innerHTML = `<section class="hero"><h1>📡 Monitoring médií</h1><p>V demo režime nie je dostupný.</p></section>`; return; }
+  if (!el.dataset.ready){
+    el.dataset.ready = '1';
+    el.addEventListener('change', e => { const k = e.target.dataset.mm; if (!k) return; MM[k] = k === 'days' ? Number(e.target.value) : e.target.value; if (k === 'days' || k === 'section') mmLoad(); else mmRender(); });
+    el.addEventListener('click', async e => {
+      const b = e.target.closest('[data-mmtone],[data-mmkind],[data-mmsrc],[data-mmitem],[data-mmreload],[data-mmclear]'); if (!b) return;
+      if (b.dataset.mmreload !== undefined) return mmLoad();
+      if (b.dataset.mmclear !== undefined){ MM.filterSrc = ''; MM.filterItem = ''; return mmRender(); }
+      if (b.dataset.mmkind){ MM.kind = b.dataset.mmkind; return mmRender(); }
+      if (b.dataset.mmsrc !== undefined){ MM.filterSrc = MM.filterSrc === b.dataset.mmsrc ? '' : b.dataset.mmsrc; return mmRender(); }
+      if (b.dataset.mmitem !== undefined){ MM.filterItem = MM.filterItem === b.dataset.mmitem ? '' : b.dataset.mmitem; return mmRender(); }
+      // klik na zmienku: AI tón → ďalší tón (ručná oprava) … → späť na AI
+      const id = Number(b.dataset.mmtone), m = MM.arts.flatMap(a => a.media_mentions).find(x => x.id === id); if (!m) return;
+      const cur = m.admin_tone ?? m.tone, order = [1, 0, -1], next = order[(order.indexOf(cur) + 1) % 3];
+      const val = next === m.tone ? null : next;
+      try { await api.setMentionTone(id, val); m.admin_tone = val; toast(val === null ? 'Vrátené na hodnotenie AI.' : 'Tón ručne opravený.'); const st = await api.mediaStats(MM.days, MM.section); MM.stats = st; mmRender(); }
+      catch(err){ toast(err.message, true); }
+    });
+  }
+  el.innerHTML = `<section class="hero"><h1>📡 Monitoring médií</h1>
+    <p>Skrytá stránka – vidí ju iba admin. Naplánovaná úloha 2× denne zbiera titulky a perexy denníkov a AI hodnotí tón voči politikom a stranám. Kliknutím na zmienku v zozname článkov opravíte tón ručne (opravy majú prednosť pred AI).</p></section>
+    <div class="toolbar"><div class="chips" id="mmKind"></div><div class="tools-right">
+      <select class="sort" data-mm="days" aria-label="Obdobie">${[[7,'7 dní'],[30,'30 dní'],[90,'90 dní'],[3650,'Všetko']].map(([v, l]) => `<option value="${v}"${MM.days === v ? ' selected' : ''}>${l}</option>`).join('')}</select>
+      <select class="sort" data-mm="section" aria-label="Typ článku">${[['','Všetky typy'],['spravodajstvo','Spravodajstvo'],['komentar','Komentáre'],['rozhovor','Rozhovory']].map(([v, l]) => `<option value="${v}"${MM.section === v ? ' selected' : ''}>${l}</option>`).join('')}</select>
+      <button class="btn" data-mmreload>↻</button></div></div>
+    <div id="mmBody"><div class="empty">Načítavam…</div></div>`;
+  mmLoad();
+}
+async function mmLoad(){
+  try {
+    const [st, arts, srcs] = await Promise.all([api.mediaStats(MM.days, MM.section), api.mediaArticles(MM.days, 300), api.mediaSources()]);
+    MM.stats = st; MM.arts = arts; MM.srcs = srcs; mmRender();
+  } catch(err){ const b = $('#mmBody'); if (b) b.innerHTML = `<div class="empty">Nepodarilo sa načítať: ${esc(err.message)}</div>`; }
+}
+function mmRender(){
+  const body = $('#mmBody'); if (!body || !MM.stats) return;
+  $('#mmKind').innerHTML = [['all','Všetko'],['politik','Politici'],['strana','Strany']].map(([k, l]) => `<button class="chip${MM.kind === k ? ' on' : ''}" data-mmkind="${k}">${l}</button>`).join('');
+  const st = MM.stats.filter(r => MM.kind === 'all' || r.kind === MM.kind);
+  // 1) súhrn podľa denníka
+  const bySrc = new Map();
+  st.forEach(r => { const o = bySrc.get(r.source) || { src: r.source, pos:0, neu:0, neg:0, total:0 }; o.pos += r.pos; o.neu += r.neu; o.neg += r.neg; o.total += r.total; bySrc.set(r.source, o); });
+  const srcRows = [...bySrc.values()].sort((a, b) => b.total - a.total);
+  // 2) matica: top položky × denníky
+  const byItem = new Map();
+  st.forEach(r => { const k = r.label; const o = byItem.get(k) || { label: k, kind: r.kind, total:0, pos:0, neg:0, cells: new Map() }; o.total += r.total; o.pos += r.pos; o.neg += r.neg; o.cells.set(r.source, r); byItem.set(k, o); });
+  const items = [...byItem.values()].sort((a, b) => b.total - a.total).slice(0, 30);
+  const cols = srcRows.map(r => r.src);
+  const cell = (it, src) => {
+    const r = it.cells.get(src); if (!r) return '<td class="small" style="text-align:center">·</td>';
+    const net = (r.pos - r.neg) / r.total, avg = it.total ? (it.pos - it.neg) / it.total : 0, dev = Math.round((net - avg) * 100);
+    const bg = net > 0 ? `color-mix(in srgb, var(--up) ${Math.round(Math.abs(net) * 55)}%, transparent)` : net < 0 ? `color-mix(in srgb, var(--down) ${Math.round(Math.abs(net) * 55)}%, transparent)` : 'transparent';
+    return `<td style="text-align:center;background:${bg};${r.total < 3 ? 'opacity:.45;' : ''}" title="${esc(src)} → ${esc(it.label)}: 👍 ${r.pos} · ➖ ${r.neu} · 👎 ${r.neg}. Oproti priemeru všetkých denníkov ${dev > 0 ? '+' : ''}${dev} b."><b>${r.neg}</b>/<b>${r.pos}</b><span class="small"> (${r.total})</span></td>`;
+  };
+  // 3) články
+  let arts = MM.arts || [];
+  const srcName = new Map((MM.srcs || []).map(s => [s.id, s.name]));
+  if (MM.filterSrc) arts = arts.filter(a => srcName.get(a.source_id) === MM.filterSrc);
+  if (MM.filterItem) arts = arts.filter(a => a.media_mentions.some(m => m.label === MM.filterItem || (m.trust_item_id && state.trustById?.get(Number(m.trust_item_id))?.name === MM.filterItem)));
+  if (MM.section) arts = arts.filter(a => a.section === MM.section);
+  const lastFetch = (MM.srcs || []).map(s => s.last_fetched_at).filter(Boolean).sort().pop();
+  const nMent = (MM.arts || []).reduce((n, a) => n + a.media_mentions.length, 0);
+  body.innerHTML = `
+    <p class="small" style="margin:0 0 12px">Zdroje: <b>${(MM.srcs || []).filter(s => s.active).length}</b> aktívnych · články za obdobie: <b>${(MM.arts || []).length}</b> · zmienky: <b>${nMent}</b> · posledný zber: <b>${lastFetch ? fmtDate(lastFetch) : 'zatiaľ žiadny'}</b></p>
+    ${!st.length ? `<div class="empty">Zatiaľ žiadne dáta. Prvý zber prebehne pri najbližšom behu naplánovanej úlohy.</div>` : `
+    <div class="box"><h3>Tón podľa denníka</h3>
+      <table class="atable"><thead><tr><th>Denník</th><th>Zmienky</th><th>👍</th><th>➖</th><th>👎</th><th>Rozdelenie</th></tr></thead><tbody>
+      ${srcRows.map(r => `<tr><td><a href="javascript:void 0" style="color:inherit" data-mmsrc="${esc(r.src)}"><b>${esc(r.src)}</b></a></td><td>${r.total}</td><td>${mmPct(r.pos, r.total)} %</td><td>${mmPct(r.neu, r.total)} %</td><td>${mmPct(r.neg, r.total)} %</td><td>${mmBar(r.pos, r.neu, r.neg)}</td></tr>`).join('')}
+      </tbody></table></div>
+    <div class="box" style="overflow-x:auto"><h3>Kto ako píše o kom</h3>
+      <p class="small" style="margin:0">V bunke: <b>negatívne</b>/<b>pozitívne</b> (všetky zmienky). Farba = prevaha tónu, bledé = menej ako 3 zmienky. Po prejdení myšou uvidíte odchýlku od priemeru všetkých denníkov – to je férovejšie porovnanie ako holé čísla (kauzu kritizujú všetci).</p>
+      <table class="atable"><thead><tr><th>Politik / strana</th><th>Spolu</th>${cols.map(c => `<th style="text-align:center">${esc(c)}</th>`).join('')}</tr></thead><tbody>
+      ${items.map(it => `<tr><td><a href="javascript:void 0" style="color:inherit" data-mmitem="${esc(it.label)}"><b>${esc(it.label)}</b></a> <span class="small">${it.kind === 'strana' ? 'strana' : it.kind === 'politik' ? '' : 'mimo databázy'}</span></td><td>${it.total}</td>${cols.map(c => cell(it, c)).join('')}</tr>`).join('')}
+      </tbody></table></div>`}
+    <div class="box"><h3>Články ${MM.filterSrc || MM.filterItem ? `<span class="pill">${esc([MM.filterSrc, MM.filterItem].filter(Boolean).join(' · '))}</span> <a href="javascript:void 0" class="small" data-mmclear>zrušiť filter</a>` : ''}</h3>
+      ${arts.length ? `<table class="atable"><tbody>${arts.slice(0, 150).map(a => `<tr><td style="white-space:nowrap" class="small">${esc(srcName.get(a.source_id) || '')}<br>${fmtD(a.published_at || a.fetched_at)}${a.section !== 'spravodajstvo' ? `<br><span class="pill">${esc(a.section)}</span>` : ''}</td>
+        <td><a href="${esc(a.url)}" target="_blank" rel="noopener"><b>${esc(a.title)}</b></a>${a.perex ? `<div class="small">${esc(a.perex)}</div>` : ''}</td>
+        <td style="text-align:right">${a.media_mentions.map(m => { const tv = m.admin_tone ?? m.tone, [ic, col] = MM_TONE[String(tv)]; return `<button class="chip" data-mmtone="${m.id}" style="border-color:${col};margin:2px" title="${esc(m.reason || '')}${m.admin_tone !== null && m.admin_tone !== undefined ? ' · ručne opravené' : ` · AI istota ${m.confidence ?? '?'} %`}">${ic} ${esc(m.label)}${m.admin_tone !== null && m.admin_tone !== undefined ? ' ✔' : ''}</button>`; }).join('')}</td></tr>`).join('')}</tbody></table>` : '<div class="empty">Žiadne články.</div>'}
+    </div>
+    <div class="box" style="margin-bottom:0"><h3>Zdroje</h3>
+      <table class="atable"><thead><tr><th>Denník</th><th>Stav</th><th>Poznámka</th><th>Posledný zber</th></tr></thead><tbody>
+      ${(MM.srcs || []).map(s => `<tr><td><a href="${esc(s.homepage || '#')}" target="_blank" rel="noopener"><b>${esc(s.name)}</b></a></td><td>${s.active ? 'aktívny' : '<span class="pill">vypnutý</span>'}</td><td class="small">${esc(s.notes || '')}</td><td class="small">${s.last_fetched_at ? fmtDate(s.last_fetched_at) : '–'}</td></tr>`).join('')}
+      </tbody></table></div>`;
 }
 
 /* ---------- DÔVERA ---------- */
@@ -3197,6 +3301,7 @@ document.addEventListener('click', async e => {
     case 'logout': return api.signOut();
     case 'profile': return openProfile();
     case 'admin': return openAdmin();
+    case 'mediamon': closeModal(); return;
     case 'theme': {
       const next = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
       document.documentElement.dataset.theme = next;
